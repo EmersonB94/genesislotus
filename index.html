@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Genesis Lotus - Login</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+    body {
+      min-height: 100vh;
+      background: linear-gradient(135deg, #0E3E98, #0D187D);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: #333;
+    }
+
+    .card {
+      background: white;
+      padding: 2.5rem;
+      border-radius: 15px;
+      box-shadow: 0 5px 25px rgba(0,0,0,0.15);
+      width: 100%;
+      max-width: 400px;
+      animation: fadeIn 0.6s ease;
+    }
+
+    .card h2 {
+      text-align: center;
+      margin-bottom: 1.5rem;
+      color: #0E3E98;
+      font-weight: 700;
+    }
+
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    input {
+      padding: 0.75rem;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 1rem;
+    }
+
+    button {
+      background: #0E3E98;
+      color: white;
+      border: none;
+      padding: 0.8rem;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: background 0.3s;
+    }
+
+    button:hover { background: #0D187D; }
+
+    .link {
+      text-align: center;
+      margin-top: 1rem;
+    }
+
+    .link button {
+      background: none;
+      color: #0E3E98;
+      font-size: 0.9rem;
+      border: none;
+      cursor: pointer;
+    }
+
+    .hidden { display: none; }
+
+    .erro, .alerta {
+      color: #d9534f;
+      text-align: center;
+      font-size: 0.9rem;
+    }
+
+    .alerta { color: #28a745; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(15px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ==== LOGIN ==== -->
+  <div id="telaLogin" class="card">
+    <h2>Genesis Lotus</h2>
+    <form id="loginForm">
+      <input type="email" id="emailLogin" placeholder="E-mail" required>
+      <input type="password" id="senhaLogin" placeholder="Senha" required>
+      <button type="submit">Entrar</button>
+    </form>
+    <p id="erroLogin" class="erro"></p>
+    <div class="link">
+      <p>Ainda não tem conta?</p>
+      <button id="btnIrCadastro">Criar conta</button>
+    </div>
+  </div>
+
+  <!-- ==== CADASTRO ==== -->
+  <div id="telaCadastro" class="card hidden">
+    <h2>Criar Conta</h2>
+    <form id="formCadastro">
+      <input type="text" id="nomeCadastro" placeholder="Nome completo" required>
+      <input type="email" id="emailCadastro" placeholder="E-mail" required>
+      <input type="password" id="senhaCadastro" placeholder="Senha" required>
+      <button type="submit">Cadastrar</button>
+    </form>
+    <p id="alertCadastro" class="alerta"></p>
+    <div class="link">
+      <button id="btnVoltarLogin">Voltar ao Login</button>
+    </div>
+  </div>
+
+  <script>
+    const loginForm = document.getElementById('loginForm');
+    const formCadastro = document.getElementById('formCadastro');
+    const telaLogin = document.getElementById('telaLogin');
+    const telaCadastro = document.getElementById('telaCadastro');
+    const erroLogin = document.getElementById('erroLogin');
+    const alertCadastro = document.getElementById('alertCadastro');
+
+    // Alternar telas
+    document.getElementById('btnIrCadastro').onclick = () => {
+      telaLogin.classList.add('hidden');
+      telaCadastro.classList.remove('hidden');
+    };
+    document.getElementById('btnVoltarLogin').onclick = () => {
+      telaCadastro.classList.add('hidden');
+      telaLogin.classList.remove('hidden');
+    };
+
+    // Cadastrar usuário
+    formCadastro.onsubmit = e => {
+      e.preventDefault();
+      const nome = document.getElementById('nomeCadastro').value.trim();
+      const email = document.getElementById('emailCadastro').value.trim();
+      const senha = document.getElementById('senhaCadastro').value.trim();
+
+      if (!nome || !email || !senha) {
+        alertCadastro.textContent = 'Preencha todos os campos.';
+        return;
+      }
+
+      const usuarios = JSON.parse(localStorage.getItem('usuarios')) || [];
+      if (usuarios.find(u => u.email === email)) {
+        alertCadastro.textContent = 'Este e-mail já está cadastrado.';
+        return;
+      }
+
+      usuarios.push({ nome, email, senha });
+      localStorage.setItem('usuarios', JSON.stringify(usuarios));
+
+      alertCadastro.textContent = 'Usuário cadastrado com sucesso! Faça login.';
+      formCadastro.reset();
+      setTimeout(() => {
+        telaCadastro.classList.add('hidden');
+        telaLogin.classList.remove('hidden');
+        alertCadastro.textContent = '';
+      }, 1200);
+    };
+
+    // Login
+    loginForm.onsubmit = e => {
+      e.preventDefault();
+      const email = document.getElementById('emailLogin').value.trim();
+      const senha = document.getElementById('senhaLogin').value.trim();
+
+      const usuarios = JSON.parse(localStorage.getItem('usuarios')) || [];
+      const user = usuarios.find(u => u.email === email && u.senha === senha);
+
+      if (!user) {
+        erroLogin.textContent = 'Usuário ou senha incorretos.';
+        return;
+      }
+
+      localStorage.setItem('usuarioLogado', JSON.stringify(user));
+      erroLogin.textContent = '';
+      window.location.href = 'dashboard.html';
+    };
+  </script>
+
+</body>
+</html>

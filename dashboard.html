@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Genesis Lotus - Painel</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+body { display: flex; min-height: 100vh; background: #f4f7fb; color: #333; }
+
+/* MENU LATERAL */
+.sidebar {
+  width: 250px; background: #0E3E98; color: white;
+  display: flex; flex-direction: column; padding: 1.5rem 1rem;
+}
+.sidebar h2 {
+  text-align: center; font-size: 1.5rem; margin-bottom: 2rem; font-weight: 700;
+}
+.menu button {
+  width: 100%; background: none; border: none; color: white;
+  text-align: left; padding: 0.8rem 1rem; border-radius: 8px;
+  cursor: pointer; transition: 0.3s; font-size: 1rem;
+}
+.menu button:hover, .menu button.active { background: rgba(255,255,255,0.2); }
+
+/* CONTEÚDO PRINCIPAL */
+.content { flex: 1; padding: 2rem; }
+h3 { color: #0E3E98; margin-bottom: 1.2rem; }
+section { display: none; }
+section.active { display: block; }
+
+.form-box {
+  background: white; padding: 1.5rem; border-radius: 10px;
+  box-shadow: 0 5px 20px rgba(0,0,0,0.1); max-width: 700px;
+}
+input, select, textarea {
+  width: 100%; padding: 0.7rem; margin-bottom: 1rem;
+  border: 1px solid #ccc; border-radius: 6px; font-size: 1rem;
+}
+button.submit {
+  background: #0E3E98; color: white; border: none; padding: 0.8rem 1rem;
+  border-radius: 8px; cursor: pointer; font-weight: 600; transition: 0.3s;
+}
+button.submit:hover { background: #0D187D; }
+
+table {
+  width: 100%; border-collapse: collapse; margin-top: 1rem;
+  background: white; border-radius: 10px; overflow: hidden;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+}
+th, td { padding: 0.8rem; border-bottom: 1px solid #eee; text-align: left; }
+th { background: #0E3E98; color: white; }
+tr:hover { background: #f2f6ff; }
+
+.alert { margin-top: 1rem; color: green; font-weight: 600; }
+
+@media (max-width:768px) {
+  body { flex-direction: column; }
+  .sidebar { width: 100%; flex-direction: row; overflow-x: auto; }
+  .menu { display: flex; gap: 0.5rem; }
+  .menu button { flex: 1; text-align: center; }
+}
+</style>
+</head>
+<body>
+
+<div class="sidebar">
+  <h2>Genesis Lotus</h2>
+  <div class="menu">
+    <button id="btnIndicadores" class="active">📊 Indicadores</button>
+    <button id="btnUsuarios">👥 Usuários</button>
+    <button id="btnSair">🚪 Sair</button>
+  </div>
+</div>
+
+<div class="content">
+
+  <!-- === INDICADORES === -->
+  <section id="secIndicadores" class="active">
+    <h3>Gestão de Indicadores</h3>
+
+    <div class="form-box">
+      <form id="formIndicador">
+        <label>Tipo de Indicador:</label>
+        <select id="tipoIndicador" required>
+          <option value="Absenteísmo">Absenteísmo</option>
+          <option value="Turnover">Turnover</option>
+        </select>
+
+        <div id="camposAbsenteismo" class="campos">
+          <label>Horas Faltas:</label>
+          <input type="number" id="faltas" min="0" step="0.1">
+          <label>Horas Justificadas:</label>
+          <input type="number" id="justificadas" min="0" step="0.1">
+          <label>Horas Previstas:</label>
+          <input type="number" id="previstas" min="0" step="0.1">
+        </div>
+
+        <div id="camposTurnover" class="campos" style="display:none;">
+          <label>Total Admitidos:</label>
+          <input type="number" id="admitidos" min="0">
+          <label>Total Demitidos:</label>
+          <input type="number" id="demitidos" min="0">
+          <label>Colaboradores Ativos:</label>
+          <input type="number" id="ativos" min="0">
+        </div>
+
+        <label>Análise:</label>
+        <textarea id="analise" rows="3" placeholder="Descreva sua análise"></textarea>
+
+        <label>Plano de Ação:</label>
+        <textarea id="plano" rows="3" placeholder="Informe ações corretivas"></textarea>
+
+        <button type="submit" class="submit">Salvar Indicador</button>
+        <div id="alertIndicador" class="alert"></div>
+      </form>
+    </div>
+
+    <div style="margin-top:2rem;">
+      <h4>Histórico de Indicadores</h4>
+      <select id="filtroIndicador">
+        <option value="Todos">Todos</option>
+        <option value="Absenteísmo">Absenteísmo</option>
+        <option value="Turnover">Turnover</option>
+      </select>
+      <table id="tabelaIndicadores">
+        <thead>
+          <tr><th>Data</th><th>Tipo</th><th>Valor (%)</th><th>Análise</th><th>Plano de Ação</th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- === USUÁRIOS === -->
+  <section id="secUsuarios">
+    <h3>Cadastro e Permissões de Usuários</h3>
+
+    <div class="form-box">
+      <form id="formUsuario">
+        <input type="text" id="nomeUsuario" placeholder="Nome completo" required>
+        <input type="email" id="emailUsuario" placeholder="E-mail" required>
+        <input type="password" id="senhaUsuario" placeholder="Senha" required>
+        <input type="text" id="cargoUsuario" placeholder="Cargo">
+        <input type="text" id="empresaUsuario" placeholder="Empresa">
+        <label>Permissão:</label>
+        <select id="permissaoUsuario">
+          <option value="Leitor">Leitor</option>
+          <option value="Editar">Editar</option>
+          <option value="Inserir">Inserir</option>
+          <option value="Administrador">Administrador</option>
+        </select>
+        <button type="submit" class="submit">Cadastrar Usuário</button>
+        <div id="alertUsuario" class="alert"></div>
+      </form>
+    </div>
+
+    <h4 style="margin-top:2rem;">Usuários Cadastrados</h4>
+    <table id="tabelaUsuarios">
+      <thead>
+        <tr><th>Nome</th><th>E-mail</th><th>Cargo</th><th>Empresa</th><th>Permissão</th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </section>
+</div>
+
+<script>
+// ======== MENU =========
+document.getElementById('btnIndicadores').onclick = () => showSection('secIndicadores');
+document.getElementById('btnUsuarios').onclick = () => showSection('secUsuarios');
+document.getElementById('btnSair').onclick = () => { localStorage.removeItem('usuarioLogado'); window.location.href='index.html'; };
+
+function showSection(id){
+  document.querySelectorAll('section').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.querySelectorAll('.menu button').forEach(b=>b.classList.remove('active'));
+  const btn = id==='secIndicadores'?'btnIndicadores':'btnUsuarios';
+  document.getElementById(btn).classList.add('active');
+}
+
+// ======== INDICADORES ========
+const tipo = document.getElementById('tipoIndicador');
+tipo.onchange = () => {
+  document.getElementById('camposAbsenteismo').style.display = tipo.value==="Absenteísmo"?"block":"none";
+  document.getElementById('camposTurnover').style.display = tipo.value==="Turnover"?"block":"none";
+};
+
+document.getElementById('formIndicador').onsubmit = e => {
+  e.preventDefault();
+  const indicadores = JSON.parse(localStorage.getItem('indicadores')||'[]');
+  let valor = 0;
+  if(tipo.value==="Absenteísmo"){
+    const f = +document.getElementById('faltas').value||0;
+    const j = +document.getElementById('justificadas').value||0;
+    const p = +document.getElementById('previstas').value||1;
+    valor = ((f+j)/p)*100;
+  } else {
+    const a = +document.getElementById('admitidos').value||0;
+    const d = +document.getElementById('demitidos').value||0;
+    const at = +document.getElementById('ativos').value||1;
+    valor = ((a+d)/at)*100;
+  }
+  const novo = {
+    tipo: tipo.value,
+    valor: valor.toFixed(2),
+    analise: document.getElementById('analise').value,
+    plano: document.getElementById('plano').value,
+    data: new Date().toLocaleDateString()
+  };
+  indicadores.push(novo);
+  localStorage.setItem('indicadores', JSON.stringify(indicadores));
+  document.getElementById('alertIndicador').textContent = "Indicador salvo!";
+  atualizarTabelaIndicadores();
+  e.target.reset();
+  setTimeout(()=>document.getElementById('alertIndicador').textContent="",2000);
+};
+
+document.getElementById('filtroIndicador').onchange = atualizarTabelaIndicadores;
+
+function atualizarTabelaIndicadores(){
+  const tbody = document.querySelector('#tabelaIndicadores tbody');
+  tbody.innerHTML = '';
+  const filtro = document.getElementById('filtroIndicador').value;
+  const indicadores = JSON.parse(localStorage.getItem('indicadores')||'[]');
+  indicadores
+    .filter(i => filtro==='Todos' || i.tipo===filtro)
+    .forEach(i=>{
+      const tr=document.createElement('tr');
+      tr.innerHTML=`<td>${i.data}</td><td>${i.tipo}</td><td>${i.valor}</td><td>${i.analise}</td><td>${i.plano}</td>`;
+      tbody.appendChild(tr);
+    });
+}
+atualizarTabelaIndicadores();
+
+// ======== USUÁRIOS ========
+document.getElementById('formUsuario').onsubmit = e => {
+  e.preventDefault();
+  const usuarios = JSON.parse(localStorage.getItem('usuarios')||'[]');
+  const novo = {
+    nome: nomeUsuario.value,
+    email: emailUsuario.value,
+    senha: senhaUsuario.value,
+    cargo: cargoUsuario.value,
+    empresa: empresaUsuario.value,
+    permissao: permissaoUsuario.value
+  };
+  if(usuarios.find(u=>u.email===novo.email)){
+    alertUsuario.textContent="E-mail já cadastrado!";
+    return;
+  }
+  usuarios.push(novo);
+  localStorage.setItem('usuarios', JSON.stringify(usuarios));
+  alertUsuario.textContent="Usuário cadastrado!";
+  atualizarUsuarios();
+  e.target.reset();
+  setTimeout(()=>alertUsuario.textContent="",2000);
+};
+
+function atualizarUsuarios(){
+  const usuarios = JSON.parse(localStorage.getItem('usuarios')||'[]');
+  const tbody = document.querySelector('#tabelaUsuarios tbody');
+  tbody.innerHTML = '';
+  usuarios.forEach(u=>{
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${u.nome}</td><td>${u.email}</td><td>${u.cargo}</td><td>${u.empresa}</td><td>${u.permissao}</td>`;
+    tbody.appendChild(tr);
+  });
+}
+atualizarUsuarios();
+
+// ======== VERIFICA LOGIN ========
+if(!localStorage.getItem('usuarioLogado')) window.location.href='index.html';
+</script>
+</body>
+</html>
