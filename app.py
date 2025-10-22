@@ -82,7 +82,7 @@ def usuarios():
 def login():
     data = request.json
     email = (data.get('email') or "").strip().lower()
-    senha = (data.get('senha') or "").strip()
+    senha = (data.get('senha') or "").strip().lower()
 
     print("Tentando login com:", email, senha)
 
@@ -121,3 +121,4 @@ def usuario_html():
 
 if __name__ == '__main__':
     app.run(debug=True)
+
