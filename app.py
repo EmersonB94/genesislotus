@@ -7,7 +7,7 @@ import os
 app = Flask(__name__)
 CORS(app)
 
-# === CONEXÃO COM SUPABASE VIA API (não usa psycopg2) ===
+# === CONEXÃO COM SUPABASE ===
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
@@ -29,23 +29,20 @@ def usuarios():
         setor = data.get("setor", "")
         contato = data.get("contato", "")
         senha = data.get("senha")
-        tipo = data.get("tipo", "Leitor")
+        tipo = data.get("tipo", "leitor")
         dtcadastro = datetime.now().isoformat()
 
         try:
-            # Verifica se e-mail já existe
             existente = supabase.table("usuariocad").select("*").eq("email", email).execute()
             if existente.data:
                 return jsonify({"erro": "E-mail já cadastrado"}), 400
 
-            # Insere novo usuário
             supabase.table("usuariocad").insert({
                 "nome": nome,
                 "email": email,
                 "setor": setor,
                 "contato": contato,
                 "senha": senha,
-                "perfil": tipo,
                 "tipo": tipo,
                 "dtcadastro": dtcadastro
             }).execute()
@@ -63,7 +60,7 @@ def usuarios():
         contato = data.get("contato", "")
         senha = data.get("senha")
         tipo = data.get("tipo")
-        status = data.get("status", "Suspensa")
+        status = data.get("status", "suspensa")
 
         try:
             supabase.table("usuariocad").update({
@@ -73,7 +70,6 @@ def usuarios():
                 "contato": contato,
                 "senha": senha,
                 "tipo": tipo,
-                "perfil": tipo,
                 "status": status
             }).eq("email", id_email).execute()
 
@@ -85,25 +81,29 @@ def usuarios():
 @app.route('/login', methods=['POST'])
 def login():
     data = request.json
-    email = data.get('email')
-    senha = data.get('senha')
+    email = (data.get('email') or "").strip().lower()
+    senha = (data.get('senha') or "").strip()
+
+    print("Tentando login com:", email, senha)
 
     try:
-        result = supabase.table("usuariocad").select("*").eq("email", email).eq("senha", senha).execute() # .eq("email", email).eq("senha", senha)
-        if not result.data:
-            
+        result = supabase.table("usuariocad").select("*").eq("email", email).eq("senha", senha).execute()
+        print("Resultado da consulta:", result.data)
+
+        if not result.data or len(result.data) == 0:
+            print("⚠️ Usuário ou senha incorretos")
             return jsonify({"erro": "Usuário ou senha incorretos"}), 401
 
         usuario = result.data[0]
-        print("Consulta retornou:", usuario)
+        print("✅ Login bem-sucedido:", usuario)
 
-        # Atualiza dtacesso
         supabase.table("usuariocad").update({
             "dtacesso": datetime.now().isoformat()
         }).eq("email", email).execute()
 
         return jsonify({"mensagem": "Login realizado com sucesso!", "usuario": usuario})
     except Exception as e:
+        print("Erro no login:", e)
         return jsonify({"erro": str(e)}), 500
 
 # === SERVE O HTML ===
@@ -121,7 +121,3 @@ def usuario_html():
 
 if __name__ == '__main__':
     app.run(debug=True)
-
-
-
-
