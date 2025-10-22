@@ -89,12 +89,13 @@ def login():
     senha = data.get('senha')
 
     try:
-        result = supabase.table("usuariocad").select("*").execute() # .eq("email", email).eq("senha", senha)
+        result = supabase.table("usuariocad").select("*").eq("email", email).eq("senha", senha).execute() # .eq("email", email).eq("senha", senha)
         if not result.data:
-            print("Consulta retornou:", usuario)
+            
             return jsonify({"erro": "Usuário ou senha incorretos"}), 401
 
         usuario = result.data[0]
+        print("Consulta retornou:", usuario)
 
         # Atualiza dtacesso
         supabase.table("usuariocad").update({
@@ -120,6 +121,7 @@ def usuario_html():
 
 if __name__ == '__main__':
     app.run(debug=True)
+
 
 
 
