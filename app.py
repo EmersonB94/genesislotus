@@ -8,14 +8,16 @@ app = Flask(__name__)
 CORS(app)
 
 # === CONEXÃO COM O BANCO (SUPABASE) ===
+import os
+
 def get_db_connection():
     conn = psycopg2.connect(
-        host='db.ywxvnonihvqfenuhdifr.supabase.co',
-        port=5432,
-        dbname='postgres',
-        user='postgres',
-        password='@dados@',
-        sslmode='require'  # obrigatorio para Supabase
+        host=os.getenv("DB_HOST"),
+        port=os.getenv("DB_PORT"),
+        dbname=os.getenv("DB_NAME"),
+        user=os.getenv("DB_USER"),
+        password=os.getenv("DB_PASSWORD"),
+        sslmode='require'
     )
     return conn
 
@@ -128,3 +130,4 @@ def usuario_html():
 
 if __name__ == '__main__':
     app.run(debug=True)
+
