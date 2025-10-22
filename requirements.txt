@@ -1,6 +1,4 @@
-streamlit
-pandas
+Flask
+Flask-Cors
+gunicorn
 psycopg2-binary
-fpdf
-plotly
-streamlit-option-menu
