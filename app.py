@@ -1,38 +1,24 @@
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
-import psycopg2
-from psycopg2.extras import RealDictCursor
 from datetime import datetime
+from supabase import create_client
+import os
 
 app = Flask(__name__)
 CORS(app)
 
-# === CONEXÃO COM O BANCO (SUPABASE) ===
-import os
-
-def get_db_connection():
-    conn = psycopg2.connect(
-        host=os.getenv("DB_HOST"),
-        port=os.getenv("DB_PORT"),
-        dbname=os.getenv("DB_NAME"),
-        user=os.getenv("DB_USER"),
-        password=os.getenv("DB_PASSWORD"),
-        sslmode='require'
-    )
-    return conn
+# === CONEXÃO COM SUPABASE VIA API (não usa psycopg2) ===
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 # === ROTA: CADASTRO / EDIÇÃO DE USUÁRIO ===
 @app.route('/usuarios', methods=['GET', 'POST', 'PUT'])
 def usuarios():
     if request.method == 'GET':
         try:
-            conn = get_db_connection()
-            cur = conn.cursor(cursor_factory=RealDictCursor)
-            cur.execute('SELECT * FROM "usuariocad" ORDER BY "nome"')
-            usuarios = cur.fetchall()
-            cur.close()
-            conn.close()
-            return jsonify(usuarios)
+            response = supabase.table("usuariocad").select("*").order("nome", desc=False).execute()
+            return jsonify(response.data)
         except Exception as e:
             return jsonify({"erro": str(e)}), 500
 
@@ -44,25 +30,29 @@ def usuarios():
         contato = data.get("contato", "")
         senha = data.get("senha")
         tipo = data.get("tipo", "Leitor")
-        dtcadastro = datetime.now()
+        dtcadastro = datetime.now().isoformat()
 
         try:
-            conn = get_db_connection()
-            cur = conn.cursor()
-            cur.execute('SELECT * FROM "usuariocad" WHERE "email"=%s', (email,))
-            if cur.fetchone():
+            # Verifica se e-mail já existe
+            existente = supabase.table("usuariocad").select("*").eq("email", email).execute()
+            if existente.data:
                 return jsonify({"erro": "E-mail já cadastrado"}), 400
 
-            cur.execute('''
-                INSERT INTO "usuariocad" ("nome","email","setor","contato","senha","perfil","tipo","dtcadastro")
-                VALUES (%s,%s,%s,%s,%s,%s,%s,%s)
-            ''', (nome,email,setor,contato,senha,tipo,tipo,dtcadastro))
-            conn.commit()
-            cur.close()
-            conn.close()
-            return jsonify({"mensagem":"Usuário cadastrado com sucesso!"})
+            # Insere novo usuário
+            supabase.table("usuariocad").insert({
+                "nome": nome,
+                "email": email,
+                "setor": setor,
+                "contato": contato,
+                "senha": senha,
+                "perfil": tipo,
+                "tipo": tipo,
+                "dtcadastro": dtcadastro
+            }).execute()
+
+            return jsonify({"mensagem": "Usuário cadastrado com sucesso!"})
         except Exception as e:
-            return jsonify({"erro": str(e)}),500
+            return jsonify({"erro": str(e)}), 500
 
     elif request.method == 'PUT':
         data = request.json
@@ -76,20 +66,20 @@ def usuarios():
         status = data.get("status", "Suspensa")
 
         try:
-            conn = get_db_connection()
-            cur = conn.cursor()
-            cur.execute('''
-                UPDATE "usuariocad"
-                SET "nome"=%s, "email"=%s, "setor"=%s, "contato"=%s,
-                    "senha"=%s, "tipo"=%s, "perfil"=%s
-                WHERE "email"=%s
-            ''', (nome,email,setor,contato,senha,tipo,tipo,id_email))
-            conn.commit()
-            cur.close()
-            conn.close()
-            return jsonify({"mensagem":"Usuário atualizado com sucesso!"})
+            supabase.table("usuariocad").update({
+                "nome": nome,
+                "email": email,
+                "setor": setor,
+                "contato": contato,
+                "senha": senha,
+                "tipo": tipo,
+                "perfil": tipo,
+                "status": status
+            }).eq("email", id_email).execute()
+
+            return jsonify({"mensagem": "Usuário atualizado com sucesso!"})
         except Exception as e:
-            return jsonify({"erro": str(e)}),500
+            return jsonify({"erro": str(e)}), 500
 
 # === ROTA: LOGIN DE USUÁRIO ===
 @app.route('/login', methods=['POST'])
@@ -99,21 +89,20 @@ def login():
     senha = data.get('senha')
 
     try:
-        conn = get_db_connection()
-        cur = conn.cursor(cursor_factory=RealDictCursor)
-        cur.execute('SELECT * FROM "usuariocad" WHERE "email"=%s AND "senha"=%s', (email, senha))
-        usuario = cur.fetchone()
-        if not usuario:
-            return jsonify({"erro":"Usuário ou senha incorretos"}),401
+        result = supabase.table("usuariocad").select("*").eq("email", email).eq("senha", senha).execute()
+        if not result.data:
+            return jsonify({"erro": "Usuário ou senha incorretos"}), 401
+
+        usuario = result.data[0]
 
         # Atualiza dtacesso
-        cur.execute('UPDATE "usuariocad" SET "dtacesso"=NOW() WHERE "email"=%s', (email,))
-        conn.commit()
-        cur.close()
-        conn.close()
-        return jsonify({"mensagem":"Login realizado com sucesso!","usuario":usuario})
+        supabase.table("usuariocad").update({
+            "dtacesso": datetime.now().isoformat()
+        }).eq("email", email).execute()
+
+        return jsonify({"mensagem": "Login realizado com sucesso!", "usuario": usuario})
     except Exception as e:
-        return jsonify({"erro": str(e)}),500
+        return jsonify({"erro": str(e)}), 500
 
 # === SERVE O HTML ===
 @app.route('/')
@@ -130,4 +119,3 @@ def usuario_html():
 
 if __name__ == '__main__':
     app.run(debug=True)
-
