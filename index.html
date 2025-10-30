@@ -1,101 +1,219 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Genesis Lotus</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #0E3E98;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-        }
-        .login-container {
-            background: #fff;
-            padding: 30px;
-            border-radius: 10px;
-            width: 350px;
-            text-align: center;
-            box-shadow: 0px 0px 10px rgba(0,0,0,0.2);
-        }
-        h2 {
-            color: #0E3E98;
-        }
-        input {
-            width: 90%;
-            padding: 10px;
-            margin: 10px 0;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-        }
-        button {
-            width: 95%;
-            background-color: #0E3E98;
-            color: white;
-            padding: 10px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-        button:hover {
-            background-color: #0D187D;
-        }
-        .mensagem {
-            margin-top: 10px;
-            color: red;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Genesis Lotus - Login / Cadastro</title>
+  
+  <link rel="stylesheet" href="css/style.css">
+  
+  <style>
+    body {
+      background-color: #0E3E98;
+      font-family: 'Poppins', sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;  
+      height: 100vh;
+      margin: 0;
+      min-height: 100vh;
+
+      /*
+      min-height: 100vh;
+      color: #fff;
+      font-family: 'Poppins', sans-serif;*/
+
+      background-image: url('static/image/fundo.png');
+      background-size: cover;        /* Faz a imagem cobrir toda a tela */
+      background-position: center;   /* Centraliza a imagem */
+      background-repeat: no-repeat;  /* Evita que a imagem se repita */
+
+    }
+    h1 {
+      color: #0E3E98;
+      margin-bottom: 20px;
+      font-size: 2rem;
+    }
+    input, select {
+      width: 100%;
+      padding: 10px;
+      margin: 8px 0;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+    button {
+      width: 100%;
+      padding: 10px;
+      background-color: #0E3E98;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      margin-top: 10px;
+    }
+    button:hover {
+      background-color: #0D187D;
+    }
+    .tabs {
+      display: flex;
+      justify-content: space-around;
+      margin-top: 15px;
+      cursor: pointer;
+    }
+    .tab {
+      padding: 10px 20px;
+      border-radius: 6px;
+      background-color: #0E3E98;
+      color: #fff;
+      font-weight: 600;
+    }
+    .tab.active {
+      background-color: #0D187D;
+    }
+    .form-section {
+      display: none;
+      margin-top: 10px;
+    }
+    .form-section.active {
+      display: block;
+    }
+    .erro {
+      color: red;
+      margin-top: 10px;
+      font-weight: 600;
+      text-align: center;
+    }
+    .sucesso {
+      color: green;
+      margin-top: 10px;
+      font-weight: 600;
+      text-align: center;
+    }
+    .containerLogin {
+      background-color: #ffffff;
+      padding: 30px;
+      border-radius: 10px;
+      width: 400px;
+      box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+      text-align: center;
+    }
+    
+  </style>
 </head>
 <body>
-    <div class="login-container">
-        <h2>GENESIS LOTUS</h2>
-        <form id="formLogin">
-            <input type="email" id="email" name="email" placeholder="E-mail" required>
-            <input type="password" id="senha" name="senha" placeholder="Senha" required>
-            <button type="submit">Entrar</button>
-        </form>
-        <div id="mensagem" class="mensagem"></div>
+
+  <div class="containerLogin">
+
+    <h1>GENESIS LOTUS</h1>
+
+    <!-- === LOGIN === -->
+    <div id="formLogin" class="form-section active">
+      <input type="email" id="loginEmail" placeholder="E-mail" required>
+      <input type="password" id="loginSenha" placeholder="Senha" required>
+      <button id="btnLogin">Entrar</button>
+
+      <!-- ABAS -->
+      <div class="tabs">
+        <div id="tabLogin" class="tab active">Login</div>
+        <div id="tabCadastro" class="tab">Criar Conta</div>
+      </div>
+      <div id="erroLogin" class="erro"></div>
     </div>
 
-    <script>
-        document.getElementById("formLogin").addEventListener("submit", async function(e) {
-            e.preventDefault();
+    <!-- === CADASTRO === -->
+    <div id="formCadastro" class="form-section">
+      <input type="text" id="cadNome" placeholder="Nome completo" required>
+      <input type="email" id="cadEmail" placeholder="E-mail" required>
+      <input type="password" id="cadSenha" placeholder="Senha" required>
+      <input type="text" id="cadTipo" placeholder="Tipo (Ex: Administrador, Colaborador)">
+      <input type="text" id="cadCargo" placeholder="Cargo / Setor">
+      <input type="text" id="cadEmpresa" placeholder="Empresa">
+      <button id="btnCadastrar">Criar Conta</button>
+      <div id="msgCadastro" class="sucesso"></div>
+    </div>
+  </div>
 
-            const email = document.getElementById("email").value;
-            const senha = document.getElementById("senha").value;
+  <script>
+    // === ABAS LOGIN / CADASTRO ===
+    document.getElementById('tabLogin').onclick = () => {
+      document.getElementById('formLogin').classList.add('active');
+      document.getElementById('formCadastro').classList.remove('active');
+      document.getElementById('tabLogin').classList.add('active');
+      document.getElementById('tabCadastro').classList.remove('active');
+    };
 
-            try {
-                const response = await fetch("/login", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ email: email, senha: senha })
-                });
+    document.getElementById('tabCadastro').onclick = () => {
+      document.getElementById('formCadastro').classList.add('active');
+      document.getElementById('formLogin').classList.remove('active');
+      document.getElementById('tabCadastro').classList.add('active');
+      document.getElementById('tabLogin').classList.remove('active');
+    };
 
-                const data = await response.json();
-                const msg = document.getElementById("mensagem");
+    // === LOGIN ===
+    document.getElementById('btnLogin').onclick = async () => {
+      const email = document.getElementById('loginEmail').value.trim();
+      const senha = document.getElementById('loginSenha').value.trim();
 
-                if (response.ok) {
-                    msg.textContent = data.mensagem || "Login realizado com sucesso!";
-                    msg.style.color = "green";
-                    setTimeout(() => {
-                        window.location.href = "/dashboard"; // futura tela principal
-                    }, 1000);
-                } else {
-                    msg.textContent = data.erro || "Usuário ou senha incorretos.";
-                    msg.style.color = "red";
-                }
-            } catch (error) {
-                console.error("Erro no login:", error);
-                const msg = document.getElementById("mensagem");
-                msg.textContent = "Erro de conexão com o servidor.";
-                msg.style.color = "red";
-            }
+      const resp = await fetch("http://localhost:5000/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, senha })
+      });
+
+      const data = await resp.json();
+
+      if (resp.ok && data.sucesso) {
+        localStorage.setItem('usuarioLogado', JSON.stringify(data.usuario));
+        window.location.href = "inicio";
+      } else {
+        document.getElementById('erroLogin').textContent = data.mensagem || "Erro no login.";
+      }
+    };
+
+    // === CADASTRO ===
+    document.getElementById('btnCadastrar').onclick = async () => {
+      const nome = document.getElementById('cadNome').value.trim();
+      const email = document.getElementById('cadEmail').value.trim();
+      const senha = document.getElementById('cadSenha').value.trim();
+      const setor = document.getElementById('cadCargo').value.trim();
+      const nivel_usuario = document.getElementById('cadTipo').value.trim();
+
+      if (!nome || !email || !senha) {
+        document.getElementById('msgCadastro').textContent = "Preencha todos os campos obrigatórios.";
+        document.getElementById('msgCadastro').className = "erro";
+        return;
+      }
+
+      try {
+        const resp = await fetch("http://localhost:5000/cadastrar", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ nome, email, senha, setor, nivel_usuario })
         });
-    </script>
+
+        const data = await resp.json();
+
+        if (resp.ok && data.sucesso) {
+          document.getElementById('msgCadastro').textContent = "Usuário cadastrado com sucesso!";
+          document.getElementById('msgCadastro').className = "sucesso";
+
+          // Limpar campos após cadastro
+          document.getElementById('cadNome').value = "";
+          document.getElementById('cadEmail').value = "";
+          document.getElementById('cadSenha').value = "";
+          document.getElementById('cadTipo').value = "";
+          document.getElementById('cadCargo').value = "";
+        } else {
+          document.getElementById('msgCadastro').textContent = data.mensagem || "Erro no cadastro.";
+          document.getElementById('msgCadastro').className = "erro";
+        }
+      } catch (error) {
+        console.error("Erro no cadastro:", error);
+        document.getElementById('msgCadastro').textContent = "Erro de conexão com o servidor.";
+        document.getElementById('msgCadastro').className = "erro";
+      }
+    };
+  </script>
 </body>
 </html>
-
-

@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Indicadores - Genesis Lotus</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+  body { display:flex; min-height:100vh; margin:0; background:#0E3E98; color:white; font-family:'Poppins',sans-serif; }
+  aside { width:250px; background:#0D187D; padding:20px; display:flex; flex-direction:column; justify-content:space-between; }
+  .logo { font-weight:700; text-align:center; margin-bottom:30px; font-size:1.5rem; }
+  nav a { display:block; color:white; text-decoration:none; padding:12px 15px; border-radius:8px; margin-bottom:8px; transition:background 0.3s; }
+  nav a:hover, nav a.active { background:#0E3E98; }
+  main { flex:1; padding:30px; background:#0E3E98; display:flex; flex-direction:column; }
+  header { display:flex; justify-content:space-between; align-items:center; margin-bottom:25px; }
+  header h1 { font-size:1.5rem; font-weight:600; }
+  .btn { background:#fff; color:#0E3E98; border:none; padding:10px 18px; border-radius:8px; cursor:pointer; font-weight:600; transition:0.3s; }
+  .btn:hover { background:#0D187D; color:#fff; }
+  section { background:#0D187D; border-radius:12px; padding:20px; box-shadow:0 4px 10px rgba(0,0,0,0.3); flex:1; }
+  form { display:flex; flex-wrap:wrap; gap:15px; margin-bottom:20px; }
+  input, select, textarea { padding:10px; border:none; border-radius:8px; flex:1; min-width:200px; }
+  table { width:100%; border-collapse:collapse; margin-top:10px; }
+  th, td { text-align:left; padding:10px; border-bottom:1px solid rgba(255,255,255,0.2); }
+  th { color:#fff; }
+  td { color:#f0f0f0; }
+  .btn-edit, .btn-status { background:#fff; color:#0E3E98; padding:6px 12px; border:none; border-radius:6px; cursor:pointer; margin-right:5px; }
+  .btn-edit:hover, .btn-status:hover { background:#0E3E98; color:white; }
+  .inactive { color:#ff4b4b; font-weight:bold; }
+  .grupo-departamento { margin-top:20px; }
+  .grupo-departamento h3 { border-bottom:1px solid white; padding-bottom:5px; }
+</style>
+</head>
+<body>
+  <aside>
+    <div>
+      <div class="logo">GENESIS LOTUS</div>
+      <nav>
+        <a href="dashboard.html"><i class="fa-solid fa-chart-line"></i> Dashboard</a>
+        <a href="indicadores.html"><i class="fa-solid fa-users"></i> Indicadores</a>
+        <a href="cadindicadores.html"><i class="fa-solid fa-users"></i> Cadastro Indicadores</a>
+        <a href="acoestreinamentos.html"><i class="active"><i class="fa-solid fa-chalkboard-teacher"></i> Ações e Treinamentos</a>
+        <a href="requisicaopessoal.html"><i class="fa-solid fa-users"></i> Requisição de pessoal</a>
+        <a href="avaliacaoexperiencia.html"><i class="fa-solid fa-users"></i> Avaliação de experiência</a>
+        <a href="usuario.html"><i class="fa-solid fa-users"></i> Usuários</a>
+        <a href="empresa.html"><i class="fa-solid fa-building"></i> Empresas</a>
+      </nav>
+    </div>
+    <footer style="text-align:center; font-size:0.8rem; opacity:0.8;">© 2025 Genesis Lotus</footer>
+  </aside>
+
+  <main>
+    <header>
+      <h1>Cadastro de Indicadores</h1>
+      <button class="btn" onclick="sair()">Sair</button>
+    </header>
+
+    <section>
+      <div id="formIndicador"></div>
+      <div id="tabelaIndicadores"></div>
+    </section>
+  </main>
+
+<script>
+  const usuarioLogado = JSON.parse(localStorage.getItem("usuarioLogado"));
+  let indicadores = JSON.parse(localStorage.getItem("indicadores")) || [];
+  const formArea = document.getElementById("formIndicador");
+  const tabelaArea = document.getElementById("tabelaIndicadores");
+
+  function sair(){
+    localStorage.removeItem("usuarioLogado");
+    window.location.href="index.html";
+  }
+
+  function salvarIndicador(event){
+    event.preventDefault();
+    const nome = document.getElementById("nomeIndicador").value;
+    const tipoMedicao = document.getElementById("tipoMedicao").value;
+    const definicao = document.getElementById("definicao").value;
+    const meta = document.getElementById("meta").value;
+    const fonte = document.getElementById("fonte").value;
+    const departamento = document.getElementById("departamento").value;
+    const tipo = document.getElementById("tipo").value;
+    const status = document.getElementById("status").value;
+
+    const idEditar = document.getElementById("editIndex").value;
+
+    const indicador = {
+      nome, tipoMedicao, definicao, meta, fonte, departamento, tipo, status,
+      cadastradoPor: usuarioLogado.nome,
+      dataHoraCadastro: new Date().toLocaleString()
+    };
+
+    if(idEditar){
+      indicadores[idEditar] = indicador;
+    } else {
+      indicadores.push(indicador);
+    }
+
+    localStorage.setItem("indicadores", JSON.stringify(indicadores));
+    carregarPagina();
+  }
+
+  function editarIndicador(index){
+    const i = indicadores[index];
+    formArea.innerHTML = `
+      <form onsubmit="salvarIndicador(event)">
+        <input type="hidden" id="editIndex" value="${index}">
+        <input type="text" id="nomeIndicador" value="${i.nome}" placeholder="Nome do Indicador" required>
+        <select id="tipoMedicao">
+          <option value="Real" ${i.tipoMedicao==="Real"?"selected":""}>Real</option>
+          <option value="Porcentagem" ${i.tipoMedicao==="Porcentagem"?"selected":""}>Porcentagem</option>
+          <option value="Valor Absoluto" ${i.tipoMedicao==="Valor Absoluto"?"selected":""}>Valor Absoluto</option>
+        </select>
+        <textarea id="definicao" placeholder="Definição" required>${i.definicao}</textarea>
+        <input type="text" id="meta" value="${i.meta}" placeholder="Meta" required>
+        <input type="text" id="fonte" value="${i.fonte}" placeholder="Fonte de informação" required>
+        <input type="text" id="departamento" value="${i.departamento}" placeholder="Departamento Responsável" required>
+        <select id="tipo">
+          <option value="Tático" ${i.tipo==="Tático"?"selected":""}>Tático</option>
+          <option value="Estratégico" ${i.tipo==="Estratégico"?"selected":""}>Estratégico</option>
+          <option value="Operacional" ${i.tipo==="Operacional"?"selected":""}>Operacional</option>
+        </select>
+        <select id="status">
+          <option value="Ativo" ${i.status==="Ativo"?"selected":""}>Ativo</option>
+          <option value="Inativo" ${i.status==="Inativo"?"selected":""}>Inativo</option>
+        </select>
+        <button type="submit" class="btn">Salvar</button>
+      </form>
+    `;
+  }
+
+  function carregarPagina(){
+    if(!usuarioLogado){ window.location.href="index.html"; return; }
+
+    // Formulário vazio
+    formArea.innerHTML = `
+      <form onsubmit="salvarIndicador(event)">
+        <input type="hidden" id="editIndex">
+        <input type="text" id="nomeIndicador" placeholder="Nome do Indicador" required>
+        <select id="tipoMedicao">
+          <option value="Real">Real</option>
+          <option value="Porcentagem">Porcentagem</option>
+          <option value="Valor Absoluto">Valor Absoluto</option>
+        </select>
+        <textarea id="definicao" placeholder="Definição" required></textarea>
+        <input type="text" id="meta" placeholder="Meta" required>
+        <input type="text" id="fonte" placeholder="Fonte de informação" required>
+        <input type="text" id="departamento" placeholder="Departamento Responsável" required>
+        <select id="tipo">
+          <option value="Tático">Tático</option>
+          <option value="Estratégico">Estratégico</option>
+          <option value="Operacional">Operacional</option>
+        </select>
+        <select id="status">
+          <option value="Ativo">Ativo</option>
+          <option value="Inativo">Inativo</option>
+        </select>
+        <button type="submit" class="btn">Cadastrar</button>
+      </form>
+    `;
+
+    // Tabela agrupada por departamento
+    const departamentos = [...new Set(indicadores.map(i=>i.departamento))];
+    tabelaArea.innerHTML = departamentos.map(dep => {
+      const itens = indicadores.filter(i=>i.departamento===dep);
+      return `
+        <div class="grupo-departamento">
+          <h3>Departamento: ${dep}</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>Nome</th><th>Tipo Medição</th><th>Definição</th><th>Meta</th><th>Fonte</th><th>Tipo</th><th>Status</th><th>Cadastrado Por</th><th>Data/Hora</th><th>Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${itens.map((i,index) => `
+                <tr>
+                  <td>${i.nome}</td>
+                  <td>${i.tipoMedicao}</td>
+                  <td>${i.definicao}</td>
+                  <td>${i.meta}</td>
+                  <td>${i.fonte}</td>
+                  <td>${i.tipo}</td>
+                  <td class="${i.status==="Inativo"?"inactive":""}">${i.status}</td>
+                  <td>${i.cadastradoPor}</td>
+                  <td>${i.dataHoraCadastro}</td>
+                  <td>
+                    <button class="btn-edit" onclick="editarIndicador(${index})">Editar</button>
+                    <button class="btn-status" onclick="alternarStatus(${index})">${i.status==="Ativo"?"Inativar":"Ativar"}</button>
+                  </td>
+                </tr>
+              `).join("")}
+            </tbody>
+          </table>
+        </div>
+      `;
+    }).join("");
+  }
+
+  function alternarStatus(index){
+    indicadores[index].status = indicadores[index].status==="Ativo"?"Inativo":"Ativo";
+    localStorage.setItem("indicadores", JSON.stringify(indicadores));
+    carregarPagina();
+  }
+
+  carregarPagina();
+</script>
+</body>
+</html>
