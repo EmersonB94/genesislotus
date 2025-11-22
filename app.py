@@ -72,7 +72,7 @@ def esqueci_senha():
         conn.close()
 
 # === LOGIN ===    
-@app.route('/genesislotus/login', methods=['POST'])
+@app.route('/login', methods=['POST'])
 def login_user():
     data = request.get_json()
     email = data.get('email')
@@ -1624,3 +1624,4 @@ def atualizar_cadindicador(id):
 if __name__ == '__main__':
 
     app.run(debug=True)
+
