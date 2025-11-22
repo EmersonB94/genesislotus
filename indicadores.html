@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Genesis Lotus - Indicadores</title>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link rel="stylesheet" href="/static/css/style.css">
+
+<style>
+/* 🔹 Estilo modal completo (seu padrão ajustado) */
+.overlay {
+  position: fixed;
+  inset: 0;
+  display: none;
+  justify-content: center;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  z-index: 9999;
+  animation: fadeIn 0.3s ease;
+}
+.overlay.mostrar { display: flex; }
+
+@keyframes fadeIn {
+  from {opacity: 0; transform: scale(0.95);}
+  to {opacity: 1; transform: scale(1);}
+}
+
+.modal {
+  background: #fff;
+  padding: 25px 30px;
+  border-radius: 10px;
+  width: 400px;
+  max-width: 90%;
+  z-index: 10000;
+  position: relative;
+  box-shadow: 0 0 25px rgba(0,0,0,0.2);
+  animation: fadeIn 0.3s ease;
+}
+
+.modal h3 {
+  color: #656565;
+  text-align: center;
+  margin-bottom: 15px;
+}
+
+.modal label {
+  display: block;
+  margin-top: 10px;
+  font-weight: 600;
+  color: #333;
+}
+
+.modal input,
+.modal textarea,
+.modal select {
+  width: 100%;
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  margin-top: 5px;
+}
+
+.close {
+  position: absolute;
+  top: 10px; right: 15px;
+  font-size: 24px;
+  color: #555;
+  cursor: pointer;
+}
+</style>
+</head>
+
+<body>
+<aside>
+  <div>
+    <div class="logo">
+      <img src="/static/image/LogoGenesis-Lotus2.png" alt="Genesis Lotus" class="logo-img">
+    </div>
+    <h4>Olá, <span id="usuarioLogado"></span></p></h4>
+    <nav>
+      <a href="inicio"><i class="fa-solid fa-chart-line"></i> Início</a>
+      <a href="indicadores" class="active"><i class="fa-solid fa-bullseye"></i> Indicadores</a>
+    </nav>
+  </div>
+  <footer style="text-align:center; font-size:0.8rem; opacity:0.8;">
+    <div class="logo">
+      <img src="/static/image/Genesis1.png" alt="Genesis Lotus" class="logo-img">
+    </div>
+    <h4>© 2025 Genesis Lotus</h4>
+  </footer>
+</aside>
+
+<main>
+  <header>
+    <h1>Gestão de Indicadores</h1>
+    <div style="display: flex; align-items: center; gap: 10px;">
+      <button class="btn" onclick="abrirFormulario()"><i class="fa-solid fa-plus"></i> Novo Registro</button>
+      <button class="btn" onclick="exportarTabela()"><i class="fa-solid fa-file-export"></i> Exportar</button>
+      <select id="selectUnidade" class="btn" style="padding: 9px 14px;">
+        <option value="">Selecione a Unidade</option>
+      </select>
+      <button class="btn" onclick="sair()">Sair</button>
+    </div>
+  </header>
+
+  <!-- FILTROS -->
+  <div style="display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap;">
+    <select class="btn" id="filtroIndicador" style="padding: 8px; border-radius: 6px;">
+      <option value="">Todos os Indicadores</option>
+    </select>
+    <select class="btn" id="filtroMes" style="padding: 8px; border-radius: 6px;">
+      <option value="">Todos os Meses</option>
+      <option>Janeiro</option><option>Fevereiro</option><option>Março</option>
+      <option>Abril</option><option>Maio</option><option>Junho</option>
+      <option>Julho</option><option>Agosto</option><option>Setembro</option>
+      <option>Outubro</option><option>Novembro</option><option>Dezembro</option>
+    </select>
+    <input class="btn" type="number" id="filtroAno" placeholder="Ano" style="padding: 8px; border-radius: 6px; width: 100px;">
+    <button class="btn" onclick="carregarIndicadores()"><i class="fa-solid fa-filter"></i> Filtrar</button>
+  </div>
+
+  <!-- 🔧 FORMULÁRIO MODAL -->
+  <div class="overlay" id="overlay">
+    <div class="modal" id="formContainer" onclick="event.stopPropagation()">
+      <span class="close" onclick="fecharFormulario()">&times;</span>
+      <h3 id="tituloForm">Novo Indicador</h3>
+      <form id="formIndicador">
+        <input type="hidden" id="id">
+        <label>Indicador:</label>
+        <input type="text" id="indicador" required>
+        <label>Mês:</label>
+        <input type="text" id="mes" required>
+        <label>Ano:</label>
+        <input type="number" id="ano" required>
+        <label>Valor:</label>
+        <input type="text" id="valor" placeholder="Ex: 85%">
+        <label>Análise Crítica:</label>
+        <textarea id="analise_critica" rows="2"></textarea>
+        <label>Ação Corretiva:</label>
+        <textarea id="acao_corretiva" rows="2"></textarea>
+        <label>Prazo:</label>
+        <input type="date" id="prazo">
+        <label>Status:</label>
+        <select id="status">
+          <option value="Pendente">Pendente</option>
+          <option value="Em desenvolvimento">Em desenvolvimento</option>
+          <option value="Realizado">Realizado</option>
+        </select>
+        <br><br>
+        <button class="btn" type="submit">Salvar</button>
+        <button class="btn" type="button" onclick="fecharFormulario()">Cancelar</button>
+      </form>
+    </div>
+  </div>
+  <!-- 🔧 FIM DO FORMULÁRIO MODAL -->
+
+  <!-- TABELA -->
+  <table id="tabelaIndicadores">
+    <thead>
+      <tr>
+        <th>ID</th><th>Empresa</th><th>Indicador</th><th>Mês</th><th>Ano</th>
+        <th>Valor</th><th>Análise</th><th>Plano de Ação</th><th>Status</th><th>Registro</th><th>Ações</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+const usuarioLogado = JSON.parse(localStorage.getItem("usuarioLogado"));
+document.getElementById("usuarioLogado").innerText = usuarioLogado?.nome || "";
+
+const tabela = document.querySelector("#tabelaIndicadores tbody");
+const overlay = document.getElementById("overlay");
+const form = document.getElementById("formIndicador");
+let editando = false;
+
+// 🔧 ABRIR MODAL (Novo ou Editar)
+function abrirFormulario(indicador = null) {
+  overlay.classList.add("mostrar");
+
+  if (indicador) {
+    document.getElementById("tituloForm").textContent = "Editar Indicador";
+    document.getElementById("id").value = indicador.id;
+    document.getElementById("indicador").value = indicador.indicador;
+    document.getElementById("mes").value = indicador.mes;
+    document.getElementById("ano").value = indicador.ano;
+    document.getElementById("valor").value = indicador.valor;
+    document.getElementById("analise_critica").value = indicador.analise_critica;
+    document.getElementById("acao_corretiva").value = indicador.acao_corretiva;
+    document.getElementById("prazo").value = indicador.prazo ? indicador.prazo.split('T')[0] : "";
+    document.getElementById("status").value = indicador.status;
+    editando = true;
+  } else {
+    form.reset();
+    document.getElementById("id").value = "";
+    document.getElementById("tituloForm").textContent = "Novo Indicador";
+    editando = false;
+  }
+}
+
+// 🔧 FECHAR MODAL
+function fecharFormulario() {
+  overlay.classList.remove("mostrar");
+  form.reset();
+  editando = false;
+}
+
+// 🔧 Fechar ao clicar fora
+overlay.addEventListener("click", fecharFormulario);
+
+// ======================== CRUD ==========================
+function formatarData(dataISO) {
+  if (!dataISO) return "";
+  const data = new Date(dataISO);
+  return `${String(data.getDate()).padStart(2,"0")}/${String(data.getMonth()+1).padStart(2,"0")}/${data.getFullYear()}`;
+}
+
+async function carregarIndicadores() {
+  const unidadeSelecionada = JSON.parse(localStorage.getItem("unidadeSelecionada"));
+  if (!unidadeSelecionada) {
+    tabela.innerHTML = "<tr><td colspan='10'>Selecione uma unidade.</td></tr>";
+    return;
+  }
+
+  const params = new URLSearchParams({
+    indicador: document.getElementById("filtroIndicador").value || "",
+    mes: document.getElementById("filtroMes").value || "",
+    ano: document.getElementById("filtroAno").value || "",
+    unidade: unidadeSelecionada.nome
+  });
+
+  const res = await fetch(`/api/indicadores?${params.toString()}`);
+  const data = await res.json();
+  tabela.innerHTML = "";
+
+  if (!data.length) {
+    tabela.innerHTML = "<tr><td colspan='10'>Nenhum resultado encontrado.</td></tr>";
+    return;
+  }
+
+  data.forEach(ind => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${ind.id}</td>
+      <td>${ind.empresa || "-"}</td>
+      <td>${ind.indicador}</td>
+      <td>${ind.mes}</td>
+      <td>${ind.ano}</td>
+      <td>${ind.valor}</td>
+      <td>${ind.analise_critica || ""}</td>
+      <td>${ind.acao_corretiva || ""}</td>
+      <td>${ind.status}</td>
+      <td>${formatarData(ind.dtregistro)}</td>
+      <td>
+        <button class="btn" onclick='abrirFormulario(${JSON.stringify(ind)})'><i class="fa-solid fa-pen-to-square"></i> Editar</button>
+        <button class="btn" onclick='excluirIndicador(${ind.id})'><i class="fa-solid fa-trash"></i> Excluir</button>
+      </td>`;
+    tabela.appendChild(tr);
+  });
+
+  atualizarFiltroIndicadores(data);
+}
+
+function atualizarFiltroIndicadores(lista) {
+  const filtro = document.getElementById("filtroIndicador");
+  const indicadores = [...new Set(lista.map(i => i.indicador))];
+  filtro.innerHTML = `<option value="">Todos os Indicadores</option>`;
+  indicadores.forEach(ind => {
+    const opt = document.createElement("option");
+    opt.value = ind;
+    opt.textContent = ind;
+    filtro.appendChild(opt);
+  });
+}
+
+async function excluirIndicador(id) {
+  if (!confirm("Deseja excluir este indicador?")) return;
+  await fetch(`/api/indicadores/${id}`, { method: "DELETE" });
+  carregarIndicadores();
+}
+
+// ======================== SALVAR ==========================
+form.addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  const unidadeSelecionada = JSON.parse(localStorage.getItem("unidadeSelecionada"));
+  const indicador = {
+    indicador: document.getElementById("indicador").value,
+    mes: document.getElementById("mes").value,
+    ano: document.getElementById("ano").value,
+    valor: document.getElementById("valor").value,
+    analise_critica: document.getElementById("analise_critica").value,
+    acao_corretiva: document.getElementById("acao_corretiva").value,
+    prazo: document.getElementById("prazo").value,
+    status: document.getElementById("status").value,
+    unidade: unidadeSelecionada ? unidadeSelecionada.nome : null,
+  };
+
+  const id = document.getElementById("id").value;
+  const url = editando ? `/api/indicadores/${id}` : "/api/indicadores";
+  const metodo = editando ? "PUT" : "POST";
+
+  await fetch(url, {
+    method: metodo,
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(indicador)
+  });
+
+  fecharFormulario();
+  carregarIndicadores();
+});
+
+// ======================== UNIDADES ==========================
+async function carregarUnidades() {
+  try {
+    const resp = await fetch(`/api/unidades_permitidas?usuario_id=${usuarioLogado.id}`);
+    const dados = await resp.json();
+
+    if (dados.sucesso) {
+      const select = document.getElementById('selectUnidade');
+      select.innerHTML = '<option value="">Selecione a Unidade</option>';
+      dados.unidades.forEach(u => {
+        u.nome.split(";").map(n => n.trim()).filter(n => n).forEach(nome => {
+          const opt = document.createElement("option");
+          opt.value = u.id;
+          opt.textContent = nome;
+          select.appendChild(opt);
+        });
+      });
+
+      const unidadeSalva = JSON.parse(localStorage.getItem('unidadeSelecionada'));
+      if (unidadeSalva) select.value = unidadeSalva.id;
+    }
+  } catch (err) { console.error("Erro ao carregar unidades:", err); }
+}
+
+document.getElementById('selectUnidade').addEventListener('change', () => {
+  const select = document.getElementById('selectUnidade');
+  const id = select.value;
+  const nome = select.options[select.selectedIndex].text;
+  if (id) localStorage.setItem('unidadeSelecionada', JSON.stringify({ id, nome }));
+  else localStorage.removeItem('unidadeSelecionada');
+});
+
+function exportarTabela() {
+  const unidadeSelecionada = JSON.parse(localStorage.getItem('unidadeSelecionada'));
+  const nomeUnidade = unidadeSelecionada ? unidadeSelecionada.nome.replace(/\s+/g, "_") : "Sem_Unidade";
+  const tabela = document.getElementById("tabelaIndicadores");
+  if (!tabela || tabela.rows.length <= 1) {
+    alert("Nenhum dado encontrado na tabela para exportar.");
+    return;
+  }
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.table_to_sheet(tabela);
+  XLSX.utils.book_append_sheet(wb, ws, "Indicadores");
+  XLSX.writeFile(wb, `Genesis_Lotus_Indicadores_${nomeUnidade}.xlsx`);
+}
+
+carregarIndicadores();
+carregarUnidades();
+</script>
+</body>
+</html>

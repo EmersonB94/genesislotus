@@ -35,7 +35,7 @@ def conectar():
 def index_page():
     return send_from_directory('.', 'index.html')
 
-@app.route('/genesislotus/esqueci_senha', methods=['POST'])
+@app.route('/esqueci_senha', methods=['POST'])
 def esqueci_senha():
     data = request.get_json()
     email = data.get("email")
@@ -126,7 +126,7 @@ def chamadoAdmin_page():
 def teste_page():
     return send_from_directory('.', 'layout.html')
 
-@app.route('/genesislotus/indicadores')
+@app.route('/indicadores')
 def page_indicador():
     return send_from_directory('.', 'indicadores.html')
 
@@ -1622,6 +1622,4 @@ def atualizar_cadindicador(id):
     return jsonify({"sucesso": True, "mensagem": "Indicador atualizado com sucesso!"})
 
 if __name__ == '__main__':
-
     app.run(debug=True)
-
