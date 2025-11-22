@@ -110,7 +110,7 @@ def login_user():
         cursor.close()
         conn.close()
 
-@app.route('/genesislotus/inicio')
+@app.route('/inicio')
 def inicio_page():
     return send_from_directory('.', 'inicio.html')
 
@@ -1622,4 +1622,5 @@ def atualizar_cadindicador(id):
     return jsonify({"sucesso": True, "mensagem": "Indicador atualizado com sucesso!"})
 
 if __name__ == '__main__':
+
     app.run(debug=True)
