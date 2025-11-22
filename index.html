@@ -107,10 +107,10 @@
       }
 
       //const resp = await fetch("http://localhost:5000/login", {
-      const baseURL = window.location.origin + "/genesislotus";
       
 
-      const resp = await fetch(`login`, {
+      const resp = await fetch(`/login`, {
+
 
       
 
@@ -160,8 +160,7 @@
         return;
       }
 
-      const baseURL = window.location.origin + "/genesislotus";
-      const resp = await fetch(`${baseURL}/esqueci_senha`, {
+      const resp = await fetch(`/esqueci_senha`, {
         method: "POST",
         headers: {"Content-Type":"application/json"},
         body: JSON.stringify({ email })
@@ -174,6 +173,7 @@
   </script>
 </body>
 </html>
+
 
 
 
