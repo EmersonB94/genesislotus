@@ -1,0 +1,287 @@
+/* ESTRUTURA ------------------------------------------------- */
+
+:root {
+  --MenuLateral: #dfdfdf;
+  --BordaLateral: #ffffff;
+  --CampoDados: #ffffff;
+  --Paleta1:#82ffff;
+  --Paleta2:#98eded;
+  --Paleta3:#7ae4e4;
+  --Paleta4:#95dddd;
+  --Paleta5:#36c6c6;
+  --Paleta6:#004766;
+  --principal-Escura: #36c6c6;
+  --secundaria-Clara: #82ffff;
+  --preto: #000000;
+  --sinzaEscuro: #656565;
+  --sinzaClaro: #bbbbbb;
+  --branco: #ffffff;
+  --fundo: #82ffff;
+}
+
+/*:root {
+  --principal-Escura: #b9b9b9;
+  --secundaria-Clara: #ffffff;
+  --preto: #000000;
+  --sinzaEscuro: #656565;
+  --sinzaClaro: #bbbbbb;
+  --branco: #ffffff;
+  --fundo: #f0f0f0;
+}*/
+
+h1 {
+  color: var(--preto);
+}
+
+h2 {
+  color: var(--preto);
+}
+
+h3 {
+  color: var(--preto);
+}
+
+h4 {
+  color: var(--preto);
+}
+
+.btn { 
+  background: linear-gradient(135deg, #1b4662, #2ba2ef); 
+  color: var(--branco); 
+  border: none; 
+  padding: 10px 18px; 
+  border-radius: 8px; 
+  cursor: pointer; 
+  font-weight: 600; 
+  transition: 0.3s; 
+}
+
+.btn:hover {
+  background-color: var(--sinzaEscuro);
+  color: #fff; 
+}
+
+.ativo {
+    background: var(--sinzaEscuro);
+    color: #fff; 
+}
+
+.inativo {
+    pointer-events: none; /* não permite clicar */
+    opacity: 0.5;         /* deixa meio transparente */
+    cursor: not-allowed;  /* muda o cursor para proibido */
+    background: rgba(143, 144, 135, 0.4);
+}
+
+button {
+  background-color: var(--principal-Escura);
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: var(--sinzaEscuro);
+}
+
+/* Layout principal */
+body {
+  display: flex; 
+  min-height: 100vh; 
+  background-color: var(--branco); 
+  color: #fff; 
+  font-family: 'Poppins', sans-serif; 
+}
+
+/* Layout Central */
+main { 
+  flex: 1; 
+  padding: 30px; 
+  background-color: var(--branco); 
+} 
+
+/*Menu lateral */ 
+aside { 
+  width: 250px; 
+  background-color: #dfdfdf; 
+  padding: 20px; 
+  display: flex; 
+  flex-direction: column; 
+  justify-content: space-between; 
+}
+
+/*Logo texto */
+.logo { 
+  text-align: center;
+  margin-bottom: 10px;
+  color: #000;
+}
+
+/*Logo imagem */
+.logo-img { 
+  width: 150px;       /* ajuste conforme necessário */
+  height: auto;
+  border-radius: 10px; /* opcional, deixa cantos arredondados */
+  }
+
+
+
+/*Grupo de botões laterais */ 
+nav a { 
+  display: block; 
+  color: var(--preto); 
+  text-decoration: none; 
+  padding: 12px 15px; 
+  border-radius: 8px; 
+  margin-bottom: 8px; 
+  transition: background 0.3s; 
+}
+nav a:hover  { /*Grupo de botões laterais */ 
+  background-color: var(--sinzaEscuro); 
+}
+nav a.active { /*Grupo de botões laterais */ 
+  background-color: #2ba2ef; /*linear-gradient(135deg, #1b4662, #2ba2ef); var(--secundaria-Clara);*/
+}
+/*---------------------------*/
+
+/*Tela superior direita */ 
+
+
+/* Cabeçalho */
+header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
+header h1 { font-size: 1.5rem; font-weight: 600; }
+/*---------------------------*/
+canvas { background-color:#0D187D; border-radius:10px; padding:20px; }
+
+/* CARDS ------------------------------------------------- */
+
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 20px; }
+.card { background-color: var(--Paleta6); padding: 10px; border-radius: 80px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+.card h2 { font-size: 2rem; margin: 10px 0; color: var(--branco);}  
+
+/* Login */
+.login-container {
+  width: 300px;
+  margin: 100px auto;
+  background: #fff;
+  padding: 30px;
+  border-radius: 10px;
+  box-shadow: 0 0 10px #ccc;
+  text-align: center;
+}
+
+.login-container input, .login-container button {
+  width: 100%;
+  margin: 5px 0;
+  padding: 10px;
+}
+
+
+
+.erro { color: red; }
+
+/* Dashboard */
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 220px;
+  background-color: #0E3E98;
+  color: white;
+  padding: 20px;
+}
+
+.sidebar h3 {
+  text-align: center;
+  font-weight: bold;
+  color: #fff;
+}
+
+.sidebar ul {
+  list-style: none;
+  padding: 0;
+}
+
+.sidebar li {
+  margin: 15px 0;
+  cursor: pointer;
+  padding: 10px;
+  border-radius: 5px;
+}
+.sidebar li:hover {
+  background-color: var(--principal-Escura);
+}
+
+
+
+.hidden { display: none; }
+
+/* TABELA */
+table {
+  width: 100%; 
+  margin-top: 20px; 
+  border-collapse: collapse; 
+  background: #fff; 
+  border-radius: 10px; 
+  overflow: hidden; 
+  color: #000; 
+}
+th, td { 
+  padding: 10px; 
+  text-align: left; 
+  border-bottom: 1px solid var(--Paleta6); 
+}
+th { 
+  background-color: var(--Paleta6); 
+  color: #fff; 
+}
+
+
+
+
+#btnNovoIndicador {
+  background-color: #0E3E98;
+  color: #fff;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+#btnNovoIndicador:hover {
+  background-color: #0D187D;
+}
+
+button.btn-editar,
+button.btn-excluir {
+  margin: 0 4px;
+  cursor: pointer;
+  border: none;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+/* Caixa de formulário padrão*/
+
+
+
+/* === Botão fechar === */
+.close-btn {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  background: none;
+  border: none;
+  font-size: 22px;
+  font-weight: bold;
+  color: #333;
+  cursor: pointer;
+  transition: 0.2s;
+}
+.close-btn:hover {
+  color: #e63946;
+  transform: scale(1.1);
+}
+
