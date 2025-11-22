@@ -1,0 +1,654 @@
+  <!DOCTYPE html>
+  <html lang="pt-br">
+  <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ficha Colaborador</title>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="/static/css/style.css">
+
+  <style>
+    .overlay { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.5); }
+    .form-popup { background:#fff; padding:20px; border-radius:8px; width:920px; max-height:90vh; overflow:auto; }
+    .form-popup input, .form-popup textarea, .form-popup select { width:100%; margin:6px 0 12px; padding:8px; box-sizing:border-box; }
+    .grupo-tipo { margin-bottom:20px; }
+    .small { font-size:0.85rem; color:#555; }
+  </style>
+  </head>
+  <body>
+    <aside>
+      <div>
+        <div class="logo">
+          <img src="/static/image/logogenesislotus2.jpg" alt="Genesis Lotus" class="logo-img">
+        </div>
+        <p>Bem-vindo, <span id="usuarioLogado"></span>!</p>
+        <nav>
+          <a href="inicio"><i class="fa-solid fa-chart-line"></i> Início</a>
+          <a href="indicadores"><i class="fa-solid fa-bullseye"></i> Indicadores</a>
+          <a href="meu_dp"><i class="fa-solid fa-users"></i> Meu DP</a>
+          <a href="meu_dp_cad_colaborador" class="active"><i class="fa-solid fa-chalkboard-teacher"></i> Cadastro de Colaboradores</a>
+        </nav>
+      </div>
+      <footer style="text-align:center; font-size:0.8rem; opacity:0.8;">© 2025 Genesis Lotus</footer>
+    </aside>
+
+    <main>
+      <header>
+        <h1>Cadastro de colaborador</h1>
+        <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+          <button class="btn" onclick="abrirFormulario()">Novo</button>
+          <button class="btn" onclick="exportarTabela()">Exportar</button>
+          <select id="selectUnidade" class="btn" style="padding: 9px 14px;">
+            <option value="">Selecione a Unidade</option>
+          </select>
+          <button class="btn" onclick="sair()">Sair</button>
+        </div>
+      </header>
+
+      <section>
+        <div class="filters">
+          <label>Mês:</label>
+          <select id="filtroMes" class="btn">
+            <option value="">Todos</option>
+            <option value="01">Janeiro</option>
+            <option value="02">Fevereiro</option>
+            <option value="03">Março</option>
+            <option value="04">Abril</option>
+            <option value="05">Maio</option>
+            <option value="06">Junho</option>
+            <option value="07">Julho</option>
+            <option value="08">Agosto</option>
+            <option value="09">Setembro</option>
+            <option value="10">Outubro</option>
+            <option value="11">Novembro</option>
+            <option value="12">Dezembro</option>
+          </select>
+
+          <label>Ano:</label>
+          <input type="number" class="btn" id="filtroAno" placeholder="Ano" style="width:100px">
+
+          <select id="filtroStatus" class="btn" style="padding:9px 12px;">
+            <option value="">Todos os Status</option>
+            <option value="Nova vaga">Em Experiência</option>
+            <option value="Substituição">Desligado antes do fim da Experiência (Contratante)</option>
+            <option value="Substituição">Desligado antes do fim da Experiência (Colaborador)</option>
+            <option value="Substituição">Desligado ao fim da Experiência (Contratante)</option>
+            <option value="Substituição">Desligado ao fim da Experiência (Colaborador)</option>
+          </select>
+
+          <button class="btn" onclick="carregarTabela()">Filtrar</button>
+        </div>
+
+        <div id="tabelaRequisicoes"></div>
+      </section>
+    </main>
+
+    <!-- Modal de cadastro -->
+    <div id="form-popup" class="overlay" style="display:none;">
+      <div class="form-popup">
+        <form id="formExperiencia" onsubmit="salvarRequisicao(event)">
+
+          <label class="logo">Ficha cadastral</label></p>
+
+            <div style="display:flex; gap:10px;">
+            
+                <div style="flex:1;">
+                    
+                    <label class="logo">Dados colaborador</label></p>
+                    <label class="small">Nome</label>
+                    <input type="text" id="nome" required>
+                    <label class="small">CPF</label>
+                    <input type="text" id="cpf" required>
+                    <label class="small">Contato</label>
+                    <input type="text" id="contato" required>
+                    <label class="small">E-mail Pessoal</label>
+                    <input type="email" id="emailp">
+                    
+                    <label class="small">Nascimento</label>
+                    <input type="date" id="nascimento" required>
+                    <select id="sexo" required>
+                      <option value="Masculino">Masculino</option>
+                      <option value="Feminino">Feminino</option>
+                      <option value="Não Informado">Não informado</option>
+                    </select>
+                    <label class="small">Filhos</label>
+                    <input type="text" id="filhos" required>
+                    <label class="small">Cidade</label>
+                    <input type="text" id="cidade" required>
+                    <label class="small">Estado</label>
+                    <input type="text" id="estado" required>
+
+                  <label class="logo">Escolaridade</label></p>
+                        <label class="small">Formação Escolar</label>
+                        <select id="formacao_escolar" required>
+                            <option value="Não alfabetizado">Não alfabetizado</option>
+                            <option value="Contratado">Ensino primário (Incompleto)</option>
+                            <option value="Contratado">Ensino primário</option>
+                            <option value="Contratado">Ensino Fundamental (Incompleto)</option>
+                            <option value="Contratado">Ensino Fundamental</option>
+                            <option value="Contratado">Ensino Superior (Incompleto)</option>
+                            <option value="Contratado">Ensino Superior</option>
+                            <option value="Contratado">Ensino Superior (Cursando)</option>
+                            <option value="Contratado">Ensino Superior (Incompleto)</option>
+                            <option value="Contratado">Ensino Superior</option>
+                        </select> 
+                        <label class="small">Formação superior</label>
+                        <input type="text" id="formacao_superior" required>
+
+                </div>
+
+                    <div style="flex:1;">
+                        
+                        <label class="logo">Empregado</label></p>
+                        <label class="small">Matricula</label>
+                        <input type="text" id="matricula" required>
+                        <label class="small">E-mail Corporativo</label>
+                        <input type="email" id="emailc" required>
+                        <label class="small">Cargo</label>
+                        <input type="text" id="cargo" required>
+                        <label class="small">Salário base</label>
+                        <input type="text" id="salariob" required>
+                        <label class="small">Jornada de trabalho / Carga horária semanal</label>
+                        <input type="text" id="ch" required>
+                        <label class="small">Admissão (data)</label>
+                        <input type="date" id="dt_admissao">
+                        <label class="small">Integração (data)</label>
+                        <input type="date" id="dt_integracao">
+                        
+                        <label class="small">PCD</label>
+                        <select id="pcd" required>
+                            <option value="Não alfabetizado">Não</option>
+                            <option value="Deficiência Intelectual">Deficiência Intelectual</option>
+                            <option value="Deficiência Física">Deficiência Física</option>
+                            <option value="Deficiência Auditiva">Deficiência Auditiva</option>
+                            <option value="Deficiência Visual">Deficiência Visual</option>
+                            <option value="Deficiência Múltipla">Deficiência Múltipla</option>
+                            <option value="Deficiência Psicossocial">Deficiência Psicossocial</option>
+                        </select> 
+                        <label class="small">Desligamento (data)</label>
+                        <input type="date" id="dt_demissao">
+                        <label class="small">Motivo de desligamento</label>
+                        <select id="motivo_desligamento">
+                            <option value="Acordo entre as partes">Acordo entre as partes</option>
+                            <option value="Dispensa sem justa causa">Dispensa SEM justa causa</option>
+                            <option value="Dispensa com justa causa">Dispensa COM justa causa</option>
+                            <option value="Pedido de Dispensa">Pedido de Dispensa</option>
+                            <option value="Término de contrato de experiência">Término de contrato de experiência</option>
+                            <option value="Encerramento antecipado de contrato (Empregador)">Encerramento antecipado de contrato (Empregador)</option>
+                            <option value="Encerramento antecipado de contrato (Empregado)">Encerramento antecipado de contrato (Empregado)</option>
+                        </select> 
+                        <label class="small">Status</label>
+                        <select id="status" required>
+                            <option value="1. Em Experiência">Em Experiência</option>
+                            <option value="2. Contratado">Contratado</option>
+                            <option value="3. Licença Maternidade">Licença Maternidade</option>
+                            <option value="4. Licença INSS">Licença INSS</option>
+                            <option value="5. Férias">Férias</option>
+                            <option value="6. Desligado">Desligado</option>
+                        </select> 
+                
+                    </div>
+            </div>
+          
+          <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:10px;">
+            <button type="submit" class="btn">Salvar</button>
+            <button type="button" class="btn" onclick="fecharFormulario()">Fechar</button>
+          </div>
+
+        </form>
+      </div>
+    </div>
+
+  <!-- Importação da biblioteca XLSX (necessária para exportar Excel) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+  <script>
+  const usuarioLogado = JSON.parse(localStorage.getItem("usuarioLogado")) || {};
+  document.getElementById("usuarioLogado").innerText = usuarioLogado?.nome || "";
+
+  // função auxiliar de formatação
+  // Substitua por esta versão robusta
+function formatarData(dataISO) {
+  if (!dataISO) return "";
+
+  // Se já for um objeto Date válido
+  if (dataISO instanceof Date) {
+    const d = dataISO;
+    const dia = String(d.getDate()).padStart(2, "0");
+    const mes = String(d.getMonth() + 1).padStart(2, "0");
+    const ano = d.getFullYear();
+    return `${dia}/${mes}/${ano}`;
+  }
+
+  // Se for número (timestamp ms)
+  if (typeof dataISO === "number") {
+    const d = new Date(dataISO);
+    const dia = String(d.getDate()).padStart(2, "0");
+    const mes = String(d.getMonth() + 1).padStart(2, "0");
+    const ano = d.getFullYear();
+    return `${dia}/${mes}/${ano}`;
+  }
+
+  // Se for string, buscar padrão yyyy-mm-dd (suporta também yyyy-mm-ddTHH:MM:SS ou yyyy-mm-dd HH:MM:SS)
+  if (typeof dataISO === "string") {
+    // procurar o primeiro trecho YYYY-MM-DD
+    const m = dataISO.match(/(\d{4})-(\d{2})-(\d{2})/);
+    if (m) {
+      const ano = m[1], mes = m[2], dia = m[3];
+      // evitar datas inválidas como 0000-00-00
+      if (ano === "0000" || mes === "00" || dia === "00") return "";
+      return `${dia}/${mes}/${ano}`;
+    }
+
+    // fallback: tentar criar Date apenas se for necessário (pode ainda ter timezone issues)
+    const tentativa = new Date(dataISO);
+    if (!isNaN(tentativa.getTime())) {
+      const d = tentativa;
+      const dia = String(d.getDate()).padStart(2, "0");
+      const mes = String(d.getMonth() + 1).padStart(2, "0");
+      const ano = d.getFullYear();
+      return `${dia}/${mes}/${ano}`;
+    }
+
+    return "";
+  }
+
+  return "";
+}
+
+
+  let editandoId = null;
+  const API = "/api/avaliacao_experiencia"; // base da API
+
+  function abrirFormulario(){
+    document.getElementById("form-popup").style.display = "flex";
+    document.getElementById("tituloForm").innerText = "Nova Requisição";
+    editandoId = null;
+    document.getElementById("formExperiencia").reset();
+  }
+
+  function fecharFormulario(){
+    document.getElementById("form-popup").style.display = "none";
+    editandoId = null;
+    document.getElementById("formExperiencia").reset();
+  }
+
+  function sair(){
+    localStorage.removeItem("usuarioLogado");
+    alert("Sessão encerrada.");
+  }
+
+  // === SALVAR (NOVO OU EDITAR) ===
+async function salvarRequisicao(event) {
+  event.preventDefault();
+
+  const unidadeSelecionada = JSON.parse(localStorage.getItem('unidadeSelecionada'));
+
+  const dados = {
+    empresa: unidadeSelecionada ? unidadeSelecionada.nome : null,
+    nome: document.getElementById("nome").value,
+    cargo: document.getElementById("cargo").value,
+    dt_admissao: document.getElementById("dt_admissao").value,
+    dt_integracao: document.getElementById("dt_integracao").value,
+    dt_avaliacao1: document.getElementById("dt_avaliacao1").value,
+    dt_avaliacao2: document.getElementById("dt_avaliacao2").value,
+    padrinho: document.getElementById("padrinho").value,
+    dt_padrinho: document.getElementById("dt_padrinho").value,
+    status: document.getElementById("status").value
+  };
+
+  try {
+    let resp;
+    let resultado;
+
+    if (editandoId) {
+      // 👉 Edição existente
+      resp = await fetch(`${API}/${editandoId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(dados)
+      });
+    } else {
+      // 👉 Novo cadastro
+      resp = await fetch(API, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(dados)
+      });
+    }
+
+    if (!resp.ok) {
+      const text = await resp.text();
+      alert(`❌ Erro HTTP ${resp.status}: ${text}`);
+      console.error("Resposta completa do servidor:", text);
+      return;
+    }
+
+    resultado = await resp.json();
+    console.log("Resposta JSON:", resultado);
+
+    if (resultado.sucesso) {
+      alert(editandoId ? "Registro atualizado com sucesso!" : "Registro cadastrado com sucesso!");
+      fecharFormulario();
+      carregarTabela();
+    } else {
+      alert("Erro: " + (resultado.mensagem || resultado.erro));
+    }
+
+  } catch (erro) {
+    alert(`⚠️ Erro inesperado: ${erro.message}`);
+    console.error("Erro detalhado:", erro);
+  }
+}
+
+
+  // === CARREGAR ===
+  async function carregarTabela() {
+    const unidadeSelecionada = JSON.parse(localStorage.getItem('unidadeSelecionada'));
+    if (!unidadeSelecionada) {
+      document.getElementById("tabelaRequisicoes").innerHTML = "<p>Selecione uma unidade.</p>";
+      return;
+    }
+
+    const mes = document.getElementById("filtroMes").value;
+    const ano = document.getElementById("filtroAno").value;
+    const status = document.getElementById("filtroStatus").value;
+
+    const params = new URLSearchParams({
+      unidade: unidadeSelecionada.nome,
+      mes,
+      ano,
+      status
+    });
+
+    const resp = await fetch(`${API}?${params.toString()}`);
+    const dados = await resp.json();
+
+    const registros = Array.isArray(dados) ? dados : dados.dados || [];
+
+    if (!registros.length) {
+      document.getElementById("tabelaRequisicoes").innerHTML = "<p>Nenhum registro encontrado.</p>";
+      return;
+    }
+
+    // Agrupar por status
+    const grupos = [...new Set(registros.map(t => t.status || 'Sem Status'))];
+
+    const container = document.getElementById("tabelaRequisicoes"); // ✅ CORREÇÃO AQUI
+    container.innerHTML = grupos.map(grp => {
+      const items = registros.filter(t => (t.status||'') === grp);
+      return `
+        <div class="grupo-tipo">
+          <h3>${grp} (${items.length})</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Data admissão</th>
+                <th>Data integração</th>
+                <th>Colaborador</th>
+                <th>Cargo</th>
+                <th>Avaliação 1</th>
+                <th>Avaliação 2</th>
+                <th>Padrinho</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${items.map(i => `
+                <tr>
+                  <td>${i.id}</td>
+                  <td>${formatarData(i.dt_admissao)}</td>
+                  <td>${formatarData(i.dt_integracao)}</td>
+                  <td>${i.nome || ''}</td>
+                  <td>${i.cargo || ''}</td>
+                  <td>${formatarData(i.dt_avaliacao1)}</td>
+                  <td>${formatarData(i.dt_avaliacao2)}</td>
+                  <td>${i.padrinho || ''}</td>
+                  <td>
+                    <button class="btn" onclick="editar(${i.id})">Editar</button>
+                    <button class="btn" onclick="excluir(${i.id})">Excluir</button>
+                    <button class="btn" onclick="PDF(${i.id})">PDF</button>
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+    }).join('');
+  }
+
+
+  // === EDITAR ===
+async function editar(id) {
+  try {
+    const resp = await fetch(`${API}/${id}`);
+    const resultado = await resp.json();
+
+    if (!resultado.sucesso) {
+      alert(resultado.mensagem || "Erro ao buscar registro.");
+      return;
+    }
+
+    const reg = resultado.dados; // ✅ Corrigido: era resultado.dado
+
+    if (!reg) {
+      alert("Registro não encontrado.");
+      return;
+    }
+
+    abrirFormulario();
+    editandoId = id;
+    document.getElementById("tituloForm").innerText = "Editar Avaliação";
+
+    // Popular campos
+    document.getElementById("nome").value = reg.nome || "";
+    document.getElementById("cargo").value = reg.cargo || "";
+    document.getElementById("dt_admissao").value = reg.dt_admissao || "";
+    document.getElementById("dt_integracao").value = reg.dt_integracao || "";
+    document.getElementById("dt_avaliacao1").value = reg.dt_avaliacao1 || "";
+    document.getElementById("dt_avaliacao2").value = reg.dt_avaliacao2 || "";
+    document.getElementById("padrinho").value = reg.padrinho || "";
+    document.getElementById("dt_padrinho").value = reg.dt_padrinho || "";
+    document.getElementById("status").value = reg.status || "Em Experiência";
+
+    // Alterar submit para atualizar
+    document.getElementById("formExperiencia").onsubmit = (e) => atualizar(e, id);
+  } catch (erro) {
+    console.error("Erro ao editar:", erro);
+    alert("Erro ao carregar dados para edição.");
+  }
+}
+
+  // === ATUALIZAR ===
+  async function atualizar(e, id) {
+  e.preventDefault();
+
+  const dados = {
+    nome: document.getElementById("nome").value,
+    cargo: document.getElementById("cargo").value,
+    dt_admissao: document.getElementById("dt_admissao").value,
+    dt_integracao: document.getElementById("dt_integracao").value,
+    dt_avaliacao1: document.getElementById("dt_avaliacao1").value,
+    dt_avaliacao2: document.getElementById("dt_avaliacao2").value,
+    padrinho: document.getElementById("padrinho").value,
+    dt_padrinho: document.getElementById("dt_padrinho").value,
+    status: document.getElementById("status").value
+  };
+
+  const resp = await fetch(`${API}/${id}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(dados)
+  });
+
+  const resultado = await resp.json();
+
+  if (resultado.sucesso) {
+    alert("Registro atualizado com sucesso!");
+    fecharFormulario();
+    carregarTabela();
+  } else {
+    alert("Erro ao atualizar: " + (resultado.erro || resultado.mensagem));
+  }
+}
+
+
+  // === EXCLUIR ===
+  async function excluir(id){
+    if(!confirm("Tem certeza que deseja excluir esta requisição?")) return;
+    const resp = await fetch(`${API}/${id}`, { method: "DELETE" });
+    const resultado = await resp.json();
+    alert(resultado.mensagem || "Resposta recebida.");
+    if(resultado.sucesso) carregarTabela();
+  }
+
+  // === EXPORTAR ===
+  function exportarTabela() {
+    const unidadeSelecionada = JSON.parse(localStorage.getItem('unidadeSelecionada'));
+    const nomeUnidade = unidadeSelecionada ? unidadeSelecionada.nome.replace(/\s+/g, "_") : "Sem_Unidade";
+
+    const tabelas = document.querySelectorAll("#tabelaRequisicoes table");
+    if (!tabelas.length) { alert("Nenhum dado encontrado para exportar."); return; }
+    const wb = XLSX.utils.book_new();
+
+    tabelas.forEach((tabela, index) => {
+      const titulo = tabela.closest(".grupo-tipo")?.querySelector("h3")?.textContent || `Tabela_${index + 1}`;
+      const ws = XLSX.utils.table_to_sheet(tabela);
+      XLSX.utils.book_append_sheet(wb, ws, titulo.substring(0,31));
+    });
+
+    const nomeArquivo = `Genesis_Lotus_avaliação_experiencia_${nomeUnidade}.xlsx`;
+    XLSX.writeFile(wb, nomeArquivo);
+  }
+
+  async function PDF(id) {
+  try {
+    const resp = await fetch(`${API}/${id}`);
+    const resultado = await resp.json();
+
+    if (!resultado.sucesso || !resultado.dados) {
+      alert("Erro ao gerar PDF: " + (resultado.mensagem || "Registro não encontrado."));
+      return;
+    }
+
+    const r = resultado.dados;
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+
+    // Cabeçalho
+    doc.addImage('/static/image/genesis1.png', 'JPEG', 10, 5, 30, 12);
+    doc.setFontSize(16);
+    doc.text("AVALIAÇÃO DE EXPERIÊNCIA", 105, 15, { align: "center" });
+
+    // Linha separadora
+    doc.line(10, 20, 200, 20);
+
+    doc.setFontSize(11);
+    let y = 30;
+    const espacamento = 8;
+
+    // Bloco 1 — Dados do colaborador
+    doc.setFont("helvetica", "bold");
+    doc.text("Dados do Colaborador", 10, y);
+    y += 6;
+    doc.setFont("helvetica", "normal");
+
+    doc.text(`Colaborador: ${r.nome || ""}`, 10, y); y += espacamento;
+    doc.text(`Cargo: ${r.cargo || ""}`, 10, y); y += espacamento;
+    doc.text(`Data de Admissão: ${r.dt_admissao ? formatarData(r.dt_admissao) : ""}`, 10, y); y += espacamento;
+    doc.text(`Data de Integração: ${r.dt_integracao ? formatarData(r.dt_integracao) : ""}`, 10, y); y += espacamento;
+
+    // Bloco 2 — Avaliações
+    y += 4;
+    doc.setFont("helvetica", "bold");
+    doc.text("Avaliações", 10, y);
+    y += 6;
+    doc.setFont("helvetica", "normal");
+
+    doc.text(`1ª Avaliação: ${r.dt_avaliacao1 ? formatarData(r.dt_avaliacao1) : ""}`, 10, y); y += espacamento;
+    doc.text(`2ª Avaliação: ${r.dt_avaliacao2 ? formatarData(r.dt_avaliacao2) : ""}`, 10, y); y += espacamento;
+    doc.text(`Padrinho: ${r.padrinho || ""}`, 10, y); y += espacamento;
+    doc.text(`Data de Apadrinhamento: ${r.dt_padrinho ? formatarData(r.dt_padrinho) : ""}`, 10, y); y += espacamento;
+
+    // Bloco 3 — Status
+    y += 4;
+    doc.setFont("helvetica", "bold");
+    doc.text("Status", 10, y);
+    y += 6;
+    doc.setFont("helvetica", "normal");
+
+    doc.text(`Situação Atual: ${r.status || ""}`, 10, y); y += espacamento;
+
+    // Bloco 4 — Rodapé
+    y = 280;
+    doc.setFontSize(9);
+    doc.text("© 2025 Genesis Lotus - Sistema de Avaliação de Experiência", 105, y, { align: "center" });
+
+    // Salvar PDF
+    const nomeArquivo = `Avaliacao_Experiencia_${r.nome?.replace(/\s+/g, "_") || id}.pdf`;
+    doc.save(nomeArquivo);
+
+  } catch (erro) {
+    alert("Erro ao gerar PDF: " + erro.message);
+    console.error(erro);
+  }
+}
+
+
+  // === Unidades permitidas (mantive seu endpoint antigo) ===
+  carregarTabela();
+  carregarUnidades();
+
+  async function carregarUnidades() {
+    try {
+      const resp = await fetch(`/api/unidades_permitidas?usuario_id=${usuarioLogado.id || ''}`);
+      const dados = await resp.json();
+      if (dados.sucesso) {
+        const select = document.getElementById('selectUnidade');
+        select.innerHTML = '<option value="">Selecione a Unidade</option>';
+        dados.unidades.forEach(u => {
+          const nomes = (u.nome || "").split(";").map(n => n.trim()).filter(Boolean);
+          nomes.forEach(nome => {
+            const opt = document.createElement("option");
+            opt.value = u.id;
+            opt.textContent = nome;
+            select.appendChild(opt);
+          });
+        });
+        const unidadeSalva = JSON.parse(localStorage.getItem('unidadeSelecionada'));
+        if (unidadeSalva) select.value = unidadeSalva.id;
+        else if (dados.unidades.length > 0) {
+          const u0 = dados.unidades[0];
+          select.value = u0.id;
+          localStorage.setItem('unidadeSelecionada', JSON.stringify(u0));
+        }
+      }
+    } catch (err) {
+      console.error("Erro ao carregar unidades:", err);
+    }
+  }
+
+  document.getElementById('selectUnidade').addEventListener('change', () => {
+    const select = document.getElementById('selectUnidade');
+    const id = select.value;
+    const nome = select.options[select.selectedIndex].text;
+    if (id) localStorage.setItem('unidadeSelecionada', JSON.stringify({ id, nome }));
+    else localStorage.removeItem('unidadeSelecionada');
+  });
+
+  document.addEventListener("DOMContentLoaded", () => {
+    // garantir que unidades carreguem no load
+    carregarUnidades();
+    carregarTabela();
+  });
+  </script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+  </body>
+  </html>

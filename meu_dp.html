@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Meu DP</title>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link rel="stylesheet" href="/static/css/style.css">
+
+<style>
+</style>
+
+</head>
+<body>
+<aside>
+  <div>
+    <div class="logo">
+    <img src="/static/image/logogenesislotus2.jpg" alt="Genesis Lotus" class="logo-img">
+    </div>
+    <p>Bem-vindo, <span id="usuarioLogado"></span></p>
+    <nav>
+      <a href="inicio"><i class="fa-solid fa-chart-line"></i> Início</a>
+      <a href="indicadores"><i class="fa-solid fa-bullseye"></i> Indicadores</a>
+      <a href="meu_dp" class="active"><i class="fa-solid fa-users"></i> Meu DP</a>
+      <a href="meu_dp_cad_colaborador"><i class="fa-solid fa-chalkboard-teacher"></i> Cadastro de Colaboradores</a>
+    </nav>
+  </div>
+  <footer style="text-align:center; font-size:0.8rem; opacity:0.8;">© 2025 Genesis Lotus</footer>
+</aside>
+
+<main>
+  <header>
+    <h1>Meu DP</h1>
+    <button class="btn" onclick="sair()">Sair</button>
+  </header>
+
+  <div class="cards">
+    <div class="card">
+      <p>Funcionários</p>
+      <h2 id="totalUsuarios">0</h2>
+    </div>
+    <div class="card">
+      <p>Ativos</p>
+      <h2 id="totalIndicadores">0</h2>
+    </div>
+    <div class="card">
+      <p>Afastados</p>
+      <h2 id="totalClientes">0</h2>
+    </div>
+    <div class="card">
+      <p>Férias</p>
+      <h2 id="totalAcoesTreinamentos">0</h2>
+    </div>
+    <div class="card">
+      <p>PCD Ativo/Afastado</p>
+      <h2 id="totalRequisicoes">0</h2>
+    </div>
+    <div class="card">
+      <p>Em experiência</p>
+      <h2 id="totalAvaliacoes">0</h2>
+    </div>
+  </div>
+
+</main>
+
+<script>
+
+const usuarioLogado = JSON.parse(localStorage.getItem("usuarioLogado"));
+document.getElementById("usuarioLogado").innerText = usuarioLogado?.nome || "";
+
+function sair() {
+  localStorage.removeItem('usuarioLogado');
+  window.location.href = 'index.html';
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  const usuarios = JSON.parse(localStorage.getItem('usuarios') || '[]');
+  const indicadores = JSON.parse(localStorage.getItem('indicadores') || '[]');
+  const empresas = JSON.parse(localStorage.getItem('empresas') || '[]');
+  const acoesTreinamentos = JSON.parse(localStorage.getItem('acoesTreinamentos') || '[]');
+  const requisicoes = JSON.parse(localStorage.getItem('requisicoesPessoal') || '[]');
+  const avaliacoes = JSON.parse(localStorage.getItem('avaliacoes') || '[]');
+
+  // Totais
+  document.getElementById('totalUsuarios').textContent = usuarios.length;
+  document.getElementById('totalIndicadores').textContent = indicadores.length;
+  document.getElementById('totalClientes').textContent = empresas.filter(e => e.status === "Ativo").length;
+  document.getElementById('totalAcoesTreinamentos').textContent = acoesTreinamentos.length;
+  document.getElementById('totalRequisicoes').textContent = requisicoes.length;
+  document.getElementById('totalAvaliacoes').textContent = avaliacoes.length;
+
+  
+  });
+;
+</script>
+</body>
+</html>

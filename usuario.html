@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Usuários - Genesis Lotus</title>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="/static/css/style.css">
+  
+  <style>
+    .inactive { color:#ff4b4b; font-weight:bold; }
+
+    /* === AJUSTE: Estilo do modal padronizado === */
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.4);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      backdrop-filter: blur(4px);
+      animation: fadeIn 0.3s ease;
+    }
+
+    .modal {
+      background: #fff;
+      border-radius: 10px;
+      padding: 25px;
+      width: 420px;
+      max-height: 90vh;
+      overflow-y: auto;
+      position: relative;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+      animation: scaleIn 0.3s ease;
+    }
+
+    .modal h3 {
+      margin-bottom: 15px;
+      text-align: center;
+    }
+
+    .modal input, 
+    .modal select {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 10px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+
+    .modal .btn {
+      width: 100%;
+      margin-top: 5px;
+    }
+
+    .close-btn {
+      position: absolute;
+      top: 10px;
+      right: 15px;
+      background: none;
+      border: none;
+      font-size: 20px;
+      cursor: pointer;
+      color: #555;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes scaleIn {
+      from { transform: scale(0.9); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+  <aside>
+    <div>
+      <div class="logo">
+      <img src="/static/image/LogoGenesis-Lotus2.png" alt="Genesis Lotus" class="logo-img">
+    </div>
+    <h4>Olá, <span id="usuarioLogado"></span></p></h4   >      <nav>
+        <a href="inicio"><i class="fa-solid fa-chart-line"></i> Início</a>
+        <a href="usuario" class="active"><i class="fa-solid fa-users"></i> Usuários</a>
+        <a href="empresa"><i class="fa-solid fa-building"></i> Empresas</a>
+        <a href="chamados_admin"><i class="fa-solid fa-headset"></i></i> Chamados</a>
+        <a href="ficha_indicadores"><i class="fa-solid fa-building"></i> Ficha Indicadores</a>
+      </nav>
+    </div>
+    <footer style="text-align:center; font-size:0.8rem; opacity:0.8;">© 2025 Genesis Lotus</footer>
+  </aside>
+
+  <main>
+    <header>
+      <h1><i class="fa-solid fa-users"></i> Usuários</h1>
+      <button class="btn" onclick="abrirForm()"><i class="fa-solid fa-plus"></i> Adicionar</button>
+      <button class="btn" onclick="sair()">Sair</button>
+    </header>
+
+    <section>
+      <div id="areaTabela"></div>
+    </section>
+  </main>
+
+  <!-- Contêiner dinâmico para o modal -->
+  <div id="overlayContainer"></div>
+
+  <script>
+    const usuarioLogado = JSON.parse(localStorage.getItem("usuarioLogado"));
+    document.getElementById("usuarioLogado").innerText = usuarioLogado?.nome || "";
+
+    const areaTabela = document.getElementById("areaTabela");
+    const overlayContainer = document.getElementById("overlayContainer");
+
+    // === Função auxiliar de formatação de data ===
+    function formatarData(dataISO) {
+      if (!dataISO) return "";
+      const data = new Date(dataISO);
+      const dia = String(data.getDate()).padStart(2, "0");
+      const mes = String(data.getMonth() + 1).padStart(2, "0");
+      const ano = data.getFullYear();
+      return `${dia}/${mes}/${ano}`;
+    } 
+
+    function sair(){
+      localStorage.removeItem("usuarioLogado");
+      window.location.href="/";
+    }
+
+    async function carregarUsuarios(){
+      try {
+        const resp = await fetch("/usuarios");
+        const data = await resp.json();
+        if(!resp.ok) throw new Error(data.mensagem || "Erro ao buscar usuários.");
+        renderTabela(data.usuarios);
+      } catch(e){
+        console.error(e);
+        areaTabela.innerHTML = "<p style='color:red;'>Erro ao carregar usuários.</p>";
+      }
+    }
+
+    /* === AJUSTE: Modal padrão de abrirForm === */
+    function abrirForm(usuario=null){
+      overlayContainer.innerHTML = `
+        <div class="overlay" onclick="clicarForaModal(event)">
+          <div class="modal">
+            <button class="close-btn" onclick="fecharForm()">×</button>
+            <h3>${usuario ? "Editar Usuário" : "Novo Usuário"}</h3>
+
+            <form onsubmit="salvarUsuario(event, ${usuario ? usuario.id : null})">
+              <input type="text" id="nomeUsuario" value="${usuario?usuario.nome:''}" placeholder="Nome completo" required>
+              <input type="email" id="emailUsuario" value="${usuario?usuario.email:''}" placeholder="E-mail" required>
+              <input type="text" id="contatoUsuario" value="${usuario?usuario.contato:''}" placeholder="Contato">
+              <input type="password" id="senhaUsuario" value="${usuario?usuario.senha:''}" placeholder="Senha" required>
+              <input type="text" id="setorUsuario" value="${usuario?usuario.setor:''}" placeholder="Setor / Departamento">
+              <input type="text" id="cargoUsuario" value="${usuario?usuario.cargo:''}" placeholder="Cargo">
+
+              <select id="nivelUsuario">
+                <option value="Leitor" ${usuario&&usuario.nivel_usuario==="Leitor"?"selected":""}>Leitor</option>
+                <option value="Inserir/Editar" ${usuario&&usuario.nivel_usuario==="Editar"?"selected":""}>Inserir/Editar</option>
+                <option value="Inserir/Editar/Excluir" ${usuario&&usuario.nivel_usuario==="Inserir"?"selected":""}>Inserir/Editar/Excluir</option>
+                <option value="Administrador" ${usuario&&usuario.nivel_usuario==="Administrador"?"selected":""}>Administrador</option>
+              </select>
+
+              <select id="empresa" multiple required size="5" style="height:auto;">
+                <option value="">Selecione uma ou mais empresas...</option>
+              </select>
+
+              <p style="font-size:0.8rem; color:#555; margin-top:5px;">
+                Segure <b>Ctrl</b> (Windows) ou <b>Cmd</b> (Mac) para selecionar várias.
+              </p>
+
+              <select id="statusUsuario">
+                <option value="Ativo" ${usuario&&usuario.status==="Ativo"?"selected":""}>Ativo</option>
+                <option value="Inativo" ${usuario&&usuario.status==="Inativo"?"selected":""}>Inativo</option>
+                <option value="Suspenso" ${usuario&&usuario.status==="Suspenso"?"selected":""}>Suspenso</option>
+              </select>
+
+              <button type="submit" class="btn" style="margin-top:10px;"> 
+                <i class="fa-solid fa-floppy-disk"></i> Salvar
+              </button>
+              <button type="button" class="btn" style="margin-top:10px;" onclick="fecharForm()">Cancelar</button>
+            </form>
+          </div>
+        </div>
+      `;
+
+      carregarEmpresas(usuario);
+    }
+
+    /* === Fecha o modal ao clicar fora === */
+    function clicarForaModal(event){
+      if (event.target.classList.contains("overlay")) fecharForm();
+    }
+
+    /* === Fecha modal === */
+    function fecharForm(){
+      overlayContainer.innerHTML = "";
+    }
+
+    /* === Salvar Usuário === */
+    async function salvarUsuario(event, idEditar=null){
+      event.preventDefault();
+      const payload = {
+        nome: document.getElementById("nomeUsuario").value.trim(),
+        email: document.getElementById("emailUsuario").value.trim(),
+        contato: document.getElementById("contatoUsuario").value.trim(),
+        senha: document.getElementById("senhaUsuario").value.trim(),
+        setor: document.getElementById("setorUsuario").value.trim(),
+        cargo: document.getElementById("cargoUsuario").value.trim(),
+        empresa: Array.from(document.getElementById("empresa").selectedOptions).map(opt => opt.value).join(";"),
+        nivel_usuario: document.getElementById("nivelUsuario").value,
+        status: document.getElementById("statusUsuario").value
+      };
+
+      try {
+        let resp;
+        if(idEditar){
+          resp = await fetch(`/usuario/${idEditar}`, {
+            method:"PUT",
+            headers:{"Content-Type":"application/json"},
+            body: JSON.stringify(payload)
+          });
+        } else {
+          resp = await fetch("/cadastrar", {
+            method:"POST",
+            headers:{"Content-Type":"application/json"},
+            body: JSON.stringify(payload)
+          });
+        }
+
+        const data = await resp.json();
+        if(resp.ok && data.sucesso){
+          alert(data.mensagem);
+          fecharForm();
+          carregarUsuarios();
+        } else {
+          alert(data.mensagem || "Erro ao salvar usuário.");
+        }
+      } catch(e){
+        console.error(e);
+        alert("Erro de conexão com o servidor.");
+      }
+    }
+
+    /* === Renderizar tabela === */
+    function renderTabela(usuarios){
+      areaTabela.innerHTML = `
+        <table>
+          <thead>
+            <tr>
+              <th>Nome</th><th>E-mail</th><th>Contato</th><th>Setor</th><th>Nível</th><th>Empresa</th><th>Acesso</th><th>Status</th><th>Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${usuarios.map(u=>`
+              <tr>
+                <td>${u.nome}</td>
+                <td>${u.email}</td>
+                <td>${u.contato || ''}</td>
+                <td>${u.setor || ''}</td>
+                <td>${u.nivel_usuario || ''}</td>
+                <td>${u.empresa || ''}</td>
+                <td>${formatarData(u.dtacesso)}</td>
+                <td class="${u.status==="Inativo"?"inactive":""}">${u.status || ''}</td>
+                <td>
+                  <button class="btn" onclick='abrirForm(${JSON.stringify(u)})'>
+                    <i class="fa-solid fa-pen-to-square"></i> Editar
+                  </button>
+                </td>
+              </tr>
+            `).join("")}
+          </tbody>
+        </table>
+      `;
+    }
+
+    carregarUsuarios();
+
+    /* === Carregar empresas === */
+    async function carregarEmpresas(usuario=null) {
+      try {
+        const response = await fetch('/empresas');
+        const data = await response.json();
+
+        if (data.empresas && Array.isArray(data.empresas)) {
+          const select = document.getElementById('empresa');
+          select.innerHTML = '<option value="">Selecione a empresa...</option>';
+          data.empresas.forEach(emp => {
+            const option = document.createElement('option');
+            option.value = emp.nome_fantasia;
+            option.textContent = emp.nome_fantasia;
+            select.appendChild(option);
+          });
+
+          if (usuario && usuario.empresa) {
+            const empresasUsuario = usuario.empresa.split(";").map(e => e.trim());
+            for (let opt of select.options) {
+              if (empresasUsuario.includes(opt.value)) opt.selected = true;
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Erro ao carregar empresas:', error);
+      }
+    }
+  </script>
+</body>
+</html>

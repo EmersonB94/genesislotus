@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Abertura de Chamado - Genesis Lotus</title>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="/static/css/style.css">
+
+  <style>
+    /* === Estilo do modal padrão === */
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.4);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      backdrop-filter: blur(4px);
+      animation: fadeIn 0.3s ease;
+    }
+
+    .modal {
+      background: #fff;
+      border-radius: 10px;
+      padding: 25px;
+      width: 420px;
+      max-height: 90vh;
+      overflow-y: auto;
+      position: relative;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+      animation: scaleIn 0.3s ease;
+    }
+
+    .modal h3 {
+      margin-bottom: 15px;
+      text-align: center;
+    }
+
+    .modal input, 
+    .modal select, 
+    .modal textarea {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 10px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      resize: none;
+    }
+
+    .modal .btn {
+      width: 100%;
+      margin-top: 5px;
+    }
+
+    .close-btn {
+      position: absolute;
+      top: 10px;
+      right: 15px;
+      background: none;
+      border: none;
+      font-size: 20px;
+      cursor: pointer;
+      color: #555;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes scaleIn {
+      from { transform: scale(0.9); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+  <aside>
+    <div>
+      <div class="logo">
+      <img src="/static/image/LogoGenesis-Lotus2.png" alt="Genesis Lotus" class="logo-img">
+      </div>
+      <h4>Olá, <span id="usuarioLogado"></span></p></h4   >
+      <nav>
+        <a href="inicio" class="active"><i class="fa-solid fa-house"></i> Início</a>
+      </nav>
+    </div>
+    <footer style="text-align:center; font-size:0.8rem; opacity:0.8;">
+    <div class="logo">
+      <img src="/static/image/Genesis1.png" alt="Genesis Lotus" class="logo-img">
+    </div>
+    <h4>© 2025 Genesis Lotus</h4>
+  </footer>
+  </aside>
+
+  <main>
+    <header>
+      <h1><i class="fa-solid fa-headset"></i> Abertura de Chamados</h1>
+      <button class="btn" onclick="abrirForm()"><i class="fa-solid fa-plus"></i> Novo Chamado</button>
+      <button class="btn" onclick="sair()"><i class="fa-solid fa-right-from-bracket"></i> Sair</button>
+    </header>
+
+    <section>
+      <div id="areaTabela"></div>
+    </section>
+  </main>
+
+  <!-- Container dinâmico para modal -->
+  <div id="overlayContainer"></div>
+
+  <script>
+    const usuarioLogado = JSON.parse(localStorage.getItem("usuarioLogado"));
+    document.getElementById("usuarioLogado").innerText = usuarioLogado?.nome || "";
+
+    // === Função auxiliar de formatação de data ===
+    function formatarData(dataISO) {
+      if (!dataISO) return "";
+      const data = new Date(dataISO);
+      const dia = String(data.getDate()).padStart(2, "0");
+      const mes = String(data.getMonth() + 1).padStart(2, "0");
+      const ano = data.getFullYear();
+      return `${dia}/${mes}/${ano}`;
+    } 
+
+    const areaTabela = document.getElementById("areaTabela");
+    const overlayContainer = document.getElementById("overlayContainer");
+
+    function sair(){
+      localStorage.removeItem("usuarioLogado");
+      window.location.href="/";
+    }
+
+    /* === Abrir Modal === */
+    function abrirForm(){
+      overlayContainer.innerHTML = `
+        <div class="overlay" onclick="clicarForaModal(event)">
+          <div class="modal">
+            <button class="close-btn" onclick="fecharForm()">×</button>
+            <h3>Novo Chamado</h3>
+
+            <form onsubmit="salvarChamado(event)">
+              <textarea id="descricao" placeholder="Descrição do chamado" required rows="3"></textarea>
+
+              <select id="modulo" required>
+                <option value="">Selecione o módulo</option>
+                <option value="RH">RH</option>
+                <option value="Administrador">Administrador</option>
+                <option value="SST">SST</option>
+                <option value="DP">DP</option>
+              </select>
+
+              <input type="text" id="motivo" placeholder="Motivo" required>
+
+              <textarea id="observacoes" placeholder="Observações adicionais" rows="3"></textarea>
+
+              <select id="prioridade" required>
+                <option value="">Selecione a prioridade</option>
+                <option value="Baixa">Baixa</option>
+                <option value="Média">Média</option>
+                <option value="Alta">Alta</option>
+              </select>
+
+              <input type="text" id="setor" placeholder="Setor" required>
+
+              <!-- Usuário logado vem automático -->
+              <input type="text" id="usuario" value="${usuarioLogado?.nome || ''}" readonly>
+
+              <!-- Status fixo: Em aberto -->
+              <input type="text" id="status" value="Em aberto" readonly>
+
+              <button type="submit" class="btn"><i class="fa-solid fa-floppy-disk"></i> Salvar Chamado</button>
+              <button type="button" class="btn" onclick="fecharForm()">Cancelar</button>
+            </form>
+          </div>
+        </div>
+      `;
+    }
+
+    function clicarForaModal(event){
+      if (event.target.classList.contains("overlay")) fecharForm();
+    }
+
+    function fecharForm(){
+      overlayContainer.innerHTML = "";
+    }
+
+    /* === Salvar Chamado === */
+    async function salvarChamado(event){
+      event.preventDefault();
+
+      const payload = {
+        descricao: document.getElementById("descricao").value.trim(),
+        modulo: document.getElementById("modulo").value,
+        motivo: document.getElementById("motivo").value.trim(),
+        observacoes: document.getElementById("observacoes").value.trim(),
+        prioridade: document.getElementById("prioridade").value,
+        setor: document.getElementById("setor").value.trim(),
+        usuario: usuarioLogado?.nome || "Desconhecido",
+        status: "Em aberto"
+      };
+
+      try {
+        const resp = await fetch("/chamados", {
+          method: "POST",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify(payload)
+        });
+
+        const data = await resp.json();
+        alert(data.mensagem || "Chamado registrado com sucesso!");
+        fecharForm();
+        carregarChamados();
+      } catch (e) {
+        console.error(e);
+        alert("Erro ao salvar o chamado.");
+      }
+    }
+
+    /* === Listar chamados do usuário logado === */
+    async function carregarChamados(){
+      try {
+        const resp = await fetch(`/chamados?usuario=${encodeURIComponent(usuarioLogado?.nome || '')}`);
+        const data = await resp.json();
+
+        if (resp.ok && data.sucesso) renderTabela(data.chamados);
+        else areaTabela.innerHTML = "<p>Nenhum chamado encontrado.</p>";
+      } catch (e){
+        console.error(e);
+        areaTabela.innerHTML = "<p style='color:red;'>Erro ao carregar chamados.</p>";
+      }
+    }
+
+    function renderTabela(chamados){
+      areaTabela.innerHTML = `
+        <table>
+          <thead>
+            <tr>
+              <th>Descrição</th>
+              <th>Módulo</th>
+              <th>Motivo</th>
+              <th>Prioridade</th>
+              <th>Setor</th>
+              <th>Solicitação</th>
+              <th>Conclusão</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${chamados.map(c => `
+              <tr>
+                <td>${c.descricao}</td>
+                <td>${c.modulo}</td>
+                <td>${c.motivo}</td>
+                <td>${c.prioridade}</td>
+                <td>${c.setor}</td>
+                <td>${formatarData(c.dtregistro)}</td>
+                <td>${formatarData(c.dtconclusao)}</td>
+                <td>${c.status}</td>
+              </tr>
+            `).join("")}
+          </tbody>
+        </table>
+      `;
+    }
+
+    carregarChamados();
+  </script>
+</body>
+</html>

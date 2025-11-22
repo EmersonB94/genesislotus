@@ -114,11 +114,11 @@ def login_user():
 def inicio_page():
     return send_from_directory('.', 'inicio.html')
 
-@app.route('/genesislotus/chamado')
+@app.route('/chamado')
 def chamado_page():
     return send_from_directory('.', 'chamados.html')
 
-@app.route('/genesislotus/chamados_admin')
+@app.route('/chamados_admin')
 def chamadoAdmin_page():
     return send_from_directory('.', 'chamados_admin.html')
 
@@ -130,35 +130,35 @@ def teste_page():
 def page_indicador():
     return send_from_directory('.', 'indicadores.html')
 
-@app.route('/genesislotus/ficha_indicadores')
+@app.route('/ficha_indicadores')
 def page_indicadorcad():
     return send_from_directory('.', 'indicadores_cad.html')
 
-@app.route('/genesislotus/meu_rh')
+@app.route('/meu_rh')
 def page_meurh():
     return send_from_directory('.', 'meu_rh.html')
 
-@app.route('/genesislotus/meu_rh_acoes_treinamentos')
+@app.route('/meu_rh_acoes_treinamentos')
 def page_acoestreinamentos():
     return send_from_directory('.', 'meu_rh_acoes_treinamentos.html')
 
-@app.route('/genesislotus/meu_rh_avaliacao_experiencia')
+@app.route('/meu_rh_avaliacao_experiencia')
 def page_avaliacaoexperiencia():
     return send_from_directory('.', 'meu_rh_avaliacao_experiencia.html')
 
-@app.route('/genesislotus/meu_rh_requisicao_pessoal')
+@app.route('/meu_rh_requisicao_pessoal')
 def page_requisicaopessoal():
     return send_from_directory('.', 'meu_rh_requisicao_pessoal.html')
 
-@app.route('/genesislotus/meu_rh_entrevista_desligamento')
+@app.route('/meu_rh_entrevista_desligamento')
 def page_entrevistadesligamento():
     return send_from_directory('.', 'meu_rh_entrevista_desligamento.html')
 
-@app.route('/genesislotus/meu_dp')
+@app.route('/meu_dp')
 def page_meudp():
     return send_from_directory('.', 'meu_dp.html')
 
-@app.route('/genesislotus/meu_dp_cad_colaborador')
+@app.route('/meu_dp_cad_colaborador')
 def page_cadastrocolaborador():
     return send_from_directory('.', 'meu_dp_cad_colaborador.html')
 
@@ -170,11 +170,11 @@ def page_meusst():
 def page_admin():
     return send_from_directory('.', 'admin.html')
 
-@app.route('/genesislotus/usuario')
+@app.route('/usuario')
 def page_usuario():
     return send_from_directory('.', 'usuario.html')
 
-@app.route('/genesislotus/empresa')
+@app.route('/empresa')
 def page_empresa():
     return send_from_directory('.', 'empresa.html')
 

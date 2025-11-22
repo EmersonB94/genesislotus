@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cadastro de Indicadores - Genesis Lotus</title>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="/static/css/style.css">
+
+  <style>
+    .filtros {
+      margin-bottom: 15px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+    .filtros input, .filtros select {
+      padding: 6px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+    .filtros button {
+      padding: 6px 12px;
+    }
+    table th, table td { text-align: left; }
+
+    /* ==================== MODAL FLUTUANTE ==================== */
+    .overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      animation: fadeIn .2s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; } 
+      to { opacity: 1; }
+    }
+
+    .modal {
+      background: #fff;
+      padding: 25px;
+      width: 450px;
+      max-width: 95%;
+      border-radius: 10px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.2);
+      position: relative;
+      animation: slideDown .25s ease;
+    }
+
+    @keyframes slideDown {
+      from { transform: translateY(-30px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    .modal h3 {
+      margin: 0 0 15px 0;
+      font-size: 1.3rem;
+      font-weight: bold;
+    }
+
+    .modal form {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .modal input,
+    .modal textarea,
+    .modal select {
+      padding: 8px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      font-size: 1rem;
+    }
+
+    /* Botão fechar */
+    .close-btn {
+      position: absolute;
+      right: 12px;
+      top: 12px;
+      background: #ff4d4d;
+      color: #fff;
+      border: none;
+      border-radius: 50%;
+      width: 28px;
+      height: 28px;
+      cursor: pointer;
+      font-size: 18px;
+      line-height: 28px;
+      text-align: center;
+      transition: 0.2s;
+    }
+    .close-btn:hover {
+      background: #e60000;
+    }
+
+    /* Botão degrade */
+    .btn {
+      background: linear-gradient(135deg, #1b4662, #2ba2ef);
+      color: white;
+      border: none;
+      padding: 10px 18px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: 0.3s;
+    }
+    .btn:hover {
+      filter: brightness(1.15);
+    }
+  </style>
+</head>
+
+<body>
+  <aside>
+    <div>
+      <div class="logo">
+        <img src="/static/image/LogoGenesis-Lotus2.png" alt="Genesis Lotus" class="logo-img">
+      </div>
+      <h4>Olá, <span id="usuarioLogado"></span></p></h4   >
+      <nav>
+        <a href="inicio"><i class="fa-solid fa-chart-line"></i> Início</a>
+        <a href="usuario"><i class="fa-solid fa-users"></i> Usuários</a>
+        <a href="empresa"><i class="fa-solid fa-building"></i> Empresas</a>
+        <a href="chamados_admin"><i class="fa-solid fa-headset"></i> Chamados</a>
+        <a href="ficha_indicadores" class="active"><i class="fa-solid fa-database"></i> Indicadores</a>
+      </nav>
+    </div>
+    <footer style="text-align:center; font-size:0.8rem; opacity:0.8;">© 2025 Genesis Lotus</footer>
+  </aside>
+
+  <main>
+    <header>
+      <h1><i class="fa-solid fa-database"></i> Cadastro de Indicadores</h1>
+      <button class="btn" onclick="abrirForm()"><i class="fa-solid fa-plus"></i> Novo Indicador</button>
+      <button class="btn" onclick="sair()"><i class="fa-solid fa-right-from-bracket"></i> Sair</button>
+    </header>
+
+    <section>
+      <div class="filtros">
+        <input type="text" id="filtroNome" placeholder="Nome do indicador">
+        <select id="filtroSetor">
+          <option value="">Setor</option>
+          <option>RH</option><option>DP</option><option>SST</option><option>Administrativo</option>
+        </select>
+        <select id="filtroTipo">
+          <option value="">Tipo</option>
+          <option>Operacional</option>
+          <option>Tático</option>
+          <option>Estratégico</option>
+        </select>
+        <select id="filtroStatus">
+          <option value="">Status</option>
+          <option>Ativo</option>
+          <option>Suspenso</option>
+          <option>Inativo</option>
+        </select>
+        <button onclick="filtrarIndicadores()"><i class="fa-solid fa-filter"></i> Filtrar</button>
+      </div>
+
+      <div id="areaTabela"></div>
+    </section>
+  </main>
+
+  <div id="overlayContainer"></div>
+
+  <script>
+    const usuarioLogado = JSON.parse(localStorage.getItem("usuarioLogado"));
+    document.getElementById("usuarioLogado").innerText = usuarioLogado?.nome || "";
+
+    const areaTabela = document.getElementById("areaTabela");
+    const overlayContainer = document.getElementById("overlayContainer");
+
+    function sair() {
+      localStorage.removeItem("usuarioLogado");
+      window.location.href = "/";
+    }
+
+    function formatarData(dataISO) {
+      if (!dataISO) return "";
+      return new Date(dataISO).toLocaleDateString("pt-BR");
+    }
+
+    // === MODAL ===
+    function abrirForm(ind = null) {
+      const edicao = !!ind;
+
+      overlayContainer.innerHTML = `
+        <div class="overlay" onclick="clicarForaModal(event)">
+          <div class="modal">
+            <button class="close-btn" onclick="fecharForm()">×</button>
+            <h3>${edicao ? "Editar Indicador" : "Novo Indicador"}</h3>
+
+            <form onsubmit="${edicao ? `atualizarIndicador(event, ${ind.id})` : "salvarIndicador(event)"}">
+              <input id="nome" value="${ind?.nome || ""}" placeholder="Nome do indicador" required>
+
+              <textarea id="definicao" rows="3" placeholder="Definição">${ind?.definicao || ""}</textarea>
+
+              <textarea id="formula" rows="2" placeholder="Fórmula">${ind?.formula || ""}</textarea>
+
+              <input id="fonte" value="${ind?.fonte || ""}" placeholder="Fonte dos dados">
+
+              <input id="meta" value="${ind?.meta || ""}" placeholder="Meta">
+
+              <input id="setor" value="${ind?.setor || ""}" placeholder="Setor">
+
+              <select id="unidademedida">
+                <option value="">Unidade de Medida</option>
+                <option ${ind?.unidademedida==="Número"?"selected":""}>Número</option>
+                <option ${ind?.unidademedida==="Porcentagem"?"selected":""}>Porcentagem</option>
+                <option ${ind?.unidademedida==="Hora"?"selected":""}>Hora</option>
+                <option ${ind?.unidademedida==="Moeda"?"selected":""}>Moeda</option>
+              </select>
+
+              <select id="tipo">
+                <option value="">Tipo</option>
+                <option ${ind?.tipo==="Operacional"?"selected":""}>Operacional</option>
+                <option ${ind?.tipo==="Tático"?"selected":""}>Tático</option>
+                <option ${ind?.tipo==="Estratégico"?"selected":""}>Estratégico</option>
+              </select>
+
+              <select id="status">
+                <option value="">Status</option>
+                <option ${ind?.status==="Ativo"?"selected":""}>Ativo</option>
+                <option ${ind?.status==="Suspenso"?"selected":""}>Suspenso</option>
+                <option ${ind?.status==="Inativo"?"selected":""}>Inativo</option>
+              </select>
+
+              <button type="submit" class="btn">${edicao ? "Salvar Alterações" : "Salvar"}</button>
+            </form>
+          </div>
+        </div>`;
+    }
+
+    function clicarForaModal(e) {
+      if (e.target.classList.contains("overlay")) fecharForm();
+    }
+    function fecharForm() { overlayContainer.innerHTML = ""; }
+
+    function getFormData() {
+      return {
+        nome: document.getElementById("nome").value,
+        definicao: document.getElementById("definicao").value,
+        formula: document.getElementById("formula").value,
+        fonte: document.getElementById("fonte").value,
+        meta: document.getElementById("meta").value,
+        setor: document.getElementById("setor").value,
+        unidademedida: document.getElementById("unidademedida").value,
+        tipo: document.getElementById("tipo").value,
+        status: document.getElementById("status").value
+      };
+    }
+
+    // === CRUD ===
+    async function salvarIndicador(event) {
+      event.preventDefault();
+      const payload = getFormData();
+
+      const resp = await fetch("/cadindicadores", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      const data = await resp.json();
+      alert(data.mensagem);
+      fecharForm();
+      carregarIndicadores();
+    }
+
+    async function atualizarIndicador(event, id) {
+      event.preventDefault();
+      const payload = getFormData();
+
+      const resp = await fetch(`/cadindicadores/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      const data = await resp.json();
+      alert(data.mensagem);
+      fecharForm();
+      carregarIndicadores();
+    }
+
+    async function carregarIndicadores() {
+      const resp = await fetch(`/cadindicadores`);
+      const data = await resp.json();
+
+      if (resp.ok && data.sucesso) renderTabela(data.indicadores);
+      else areaTabela.innerHTML = "<p>Nenhum indicador encontrado.</p>";
+    }
+
+    function renderTabela(ind) {
+      areaTabela.innerHTML = `
+        <table>
+          <thead>
+            <tr>
+              <th>Nome</th><th>Meta</th><th>Unidade</th><th>Tipo</th>
+              <th>Setor</th><th>Status</th><th>Criado em</th><th>Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${ind.map(i => `
+              <tr>
+                <td>${i.nome}</td>
+                <td>${i.meta}</td>
+                <td>${i.unidademedida}</td>
+                <td>${i.tipo}</td>
+                <td>${i.setor}</td>
+                <td>${i.status}</td>
+                <td>${formatarData(i.dtregistro)}</td>
+                <td>
+                  <button onclick='abrirForm(${JSON.stringify(i)})'>
+                    <i class="fa-solid fa-pen"></i>
+                  </button>
+                </td>
+              </tr>
+            `).join("")}
+          </tbody>
+        </table>`;
+    }
+
+    // === FILTRO ===
+    async function filtrarIndicadores() {
+      const params = new URLSearchParams({
+        nome: document.getElementById("filtroNome").value,
+        setor: document.getElementById("filtroSetor").value,
+        tipo: document.getElementById("filtroTipo").value,
+        status: document.getElementById("filtroStatus").value
+      });
+
+      const resp = await fetch(`/cadindicadores/filtros?${params}`);
+      const data = await resp.json();
+
+      if (resp.ok && data.sucesso) renderTabela(data.indicadores);
+      else alert("Nenhum indicador encontrado.");
+    }
+
+    carregarIndicadores();
+  </script>
+</body>
+</html>

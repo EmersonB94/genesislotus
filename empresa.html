@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cadastro Empresa</title>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="/static/css/style.css">
+
+  <style>
+    /* === ESTILO DO MODAL PADRÃO (substitui o antigo form-popup) === */
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.4);
+      display: none; /* inicialmente escondido */
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      backdrop-filter: blur(4px);
+      animation: fadeIn 0.3s ease;
+    }
+
+    .modal {
+      background: #fff;
+      border-radius: 10px;
+      padding: 25px;
+      width: 400px;
+      position: relative;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+      animation: scaleIn 0.3s ease;
+    }
+
+    .modal h3 {
+      margin-bottom: 15px;
+      text-align: center;
+    }
+
+    .modal input {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 10px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+
+    .modal .btn {
+      width: 100%;
+      margin-top: 5px;
+    }
+
+    .close-btn {
+      position: absolute;
+      top: 10px;
+      right: 15px;
+      background: none;
+      border: none;
+      font-size: 20px;
+      cursor: pointer;
+      color: #555;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes scaleIn {
+      from { transform: scale(0.9); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+  </style>
+</head>
+
+<body>
+  <aside>
+    <div>
+      <div class="logo">
+        <img src="/static/image/LogoGenesis-Lotus2.png" alt="Genesis Lotus" class="logo-img">
+      </div>
+      <h4>Olá, <span id="usuarioLogado"></span></p></h4   >
+      <nav>
+        <a href="inicio"><i class="fa-solid fa-chart-line"></i> Início</a>
+        <a href="usuario"><i class="fa-solid fa-users"></i> Usuários</a>
+        <a href="empresa" class="active"><i class="fa-solid fa-building"></i> Empresas</a>
+        <a href="chamados_admin"><i class="fa-solid fa-headset"></i></i> Chamados</a>
+        <a href="ficha_indicadores"><i class="fa-solid fa-building"></i> Ficha Indicadores</a>
+      </nav>
+    </div>
+    <footer style="text-align:center; font-size:0.8rem; opacity:0.8;">
+    <div class="logo">
+      <img src="/static/image/Genesis1.png" alt="Genesis Lotus" class="logo-img">
+    </div>
+    <h4>© 2025 Genesis Lotus</h4>
+  </footer>
+  </aside>
+
+  <main>
+    <header>
+      <h1><i class="fa-solid fa-building"></i> Empresas</h1>
+      <button class="btn" onclick="abrirForm()">Nova Empresa</button>
+      <button class="btn" onclick="sair()">Sair</button>
+    </header>
+
+    <section>
+      <div id="areaTabela"></div>
+    </section>
+  </main>
+
+  <!-- === MODAL PADRÃO (corrigido) === -->
+  <div class="overlay" id="overlay">
+    <div class="modal" id="formEmpresa">
+      <button class="close-btn" onclick="fecharForm()">×</button>
+      <form id="empresaForm" onsubmit="salvarEmpresa(event)">
+        <input type="hidden" id="empresaId">
+        <h3 id="tituloForm">Nova Empresa</h3>
+
+        <input type="text" id="nome_fantasia" placeholder="Nome Fantasia" required>
+        <input type="text" id="cnpj" placeholder="CNPJ" required>
+        <input type="text" id="endereco" placeholder="Endereço" required>
+        <input type="text" id="telefone" placeholder="Telefone" required>
+        <input type="text" id="responsavel" placeholder="Responsável" required>
+
+        <button type="submit" class="btn">Salvar</button>
+        <button type="button" class="btn" onclick="fecharForm()">Cancelar</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const areaTabela = document.getElementById("areaTabela");
+    const overlay = document.getElementById("overlay");
+    const formPopup = document.getElementById("formEmpresa");
+    const usuarioLogado = JSON.parse(localStorage.getItem("usuarioLogado"));
+
+    document.getElementById("usuarioLogado").innerText = usuarioLogado?.nome || "";
+
+    /* === FUNÇÃO ABRIR FORM (ajustada para usar modal) === */
+    function abrirForm(empresa = null) {
+      document.getElementById("empresaForm").reset();
+      document.getElementById("empresaId").value = empresa ? empresa.id : "";
+      document.getElementById("tituloForm").innerText = empresa ? "Editar Empresa" : "Nova Empresa";
+
+      if (empresa) {
+        document.getElementById("nome_fantasia").value = empresa.nome_fantasia;
+        document.getElementById("cnpj").value = empresa.cnpj;
+        document.getElementById("endereco").value = empresa.endereco;
+        document.getElementById("telefone").value = empresa.telefone;
+        document.getElementById("responsavel").value = empresa.responsavel;
+      }
+
+      // Mostra o overlay e modal
+      overlay.style.display = "flex"; // agora o overlay é um flex container
+    }
+
+    /* === FUNÇÃO FECHAR FORM (ajustada) === */
+    function fecharForm() {
+      overlay.style.display = "none";
+    }
+
+    // Fecha o modal ao clicar fora da área dele
+    overlay.addEventListener("click", (e) => {
+      if (e.target === overlay) fecharForm();
+    });
+
+    /* === CARREGAR EMPRESAS === */
+    async function carregarEmpresas() {
+      const resp = await fetch("/empresas");
+      const data = await resp.json();
+
+      if (data.sucesso) renderTabela(data.empresas);
+      else alert("Erro ao carregar empresas: " + data.mensagem);
+    }
+
+    /* === SALVAR EMPRESA === */
+    async function salvarEmpresa(event) {
+      event.preventDefault();
+      const id = document.getElementById("empresaId").value;
+      const empresa = {
+        nome_fantasia: document.getElementById("nome_fantasia").value,
+        cnpj: document.getElementById("cnpj").value,
+        endereco: document.getElementById("endereco").value,
+        telefone: document.getElementById("telefone").value,
+        responsavel: document.getElementById("responsavel").value,
+        usuario: usuarioLogado?.nome || "admin"
+      };
+
+      const metodo = id ? "PUT" : "POST";
+      const url = id ? `/empresa/${id}` : "/empresa";
+
+      const resp = await fetch(url, {
+        method: metodo,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(empresa)
+      });
+
+      const data = await resp.json();
+      alert(data.mensagem);
+      if (data.sucesso) {
+        fecharForm();
+        carregarEmpresas();
+      }
+    }
+
+    /* === RENDERIZAR TABELA === */
+    function renderTabela(empresas) {
+      areaTabela.innerHTML = `
+        <table border="1" cellpadding="6" cellspacing="0">
+          <thead>
+            <tr>
+              <th>Nome Fantasia</th>
+              <th>CNPJ</th>
+              <th>Endereço</th>
+              <th>Telefone</th>
+              <th>Responsável</th>
+              <th>Usuário</th>
+              <th>Data/Hora Cadastro</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${empresas.map(e => `
+              <tr>
+                <td>${e.nome_fantasia}</td>
+                <td>${e.cnpj}</td>
+                <td>${e.endereco}</td>
+                <td>${e.telefone}</td>
+                <td>${e.responsavel}</td>
+                <td>${e.usuario || ''}</td>
+                <td>${e.data_hora_cadastro ? new Date(e.data_hora_cadastro).toLocaleString() : ''}</td>
+                <td>
+                  <button class="btn-edit" onclick='abrirForm(${JSON.stringify(e)})'>Editar</button>
+                </td>
+              </tr>
+            `).join("")}
+          </tbody>
+        </table>
+      `;
+    }
+
+    /* === SAIR === */
+    function sair() {
+      localStorage.removeItem("usuarioLogado");
+      window.location.href = "/";
+    }
+
+    carregarEmpresas();
+  </script>
+</body>
+</html>
