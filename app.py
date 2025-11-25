@@ -100,8 +100,18 @@ def login_user():
 
         # Remove senha antes de enviar ao frontend
         usuario.pop('senha', None)
+        # Converter valores de permissões para booleanos (S/N → True/False)
+        usuario["perm_rh"] = (usuario.get("modrh") == "S")
+        usuario["perm_dp"] = (usuario.get("moddp") == "S")
+        usuario["perm_sst"] = (usuario.get("modsst") == "S")
+        usuario["perm_adm"] = (usuario.get("modadm") == "S")
+        usuario["perm_rh_full"] = (usuario.get("modrh_req_full") == "S")
 
-        return jsonify({"sucesso": True, "mensagem": "Login realizado com sucesso.", "usuario": usuario})
+        return jsonify({
+        "sucesso": True,
+        "mensagem": "Login realizado com sucesso.",
+        "usuario": usuario
+        })
 
     except Exception as e:
         print("Erro no login:", e)
@@ -136,6 +146,22 @@ def page_indicadorcad():
 
 @app.route('/meu_rh')
 def page_meurh():
+    email = request.args.get("email")
+
+    if not email:
+        return "Usuário não informado", 401
+
+    conn = conectar()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT modrh FROM cad_usuario WHERE email=%s", (email,))
+    usuario = cursor.fetchone()
+
+    if not usuario:
+        return "Usuário inválido", 404
+
+    if usuario["modrh"] != "S":
+        return "Acesso negado a este módulo, entre em contato com os administradores caso precise de acesso", 403
+
     return send_from_directory('.', 'meu_rh.html')
 
 @app.route('/meu_rh_acoes_treinamentos')
@@ -147,8 +173,12 @@ def page_avaliacaoexperiencia():
     return send_from_directory('.', 'meu_rh_avaliacao_experiencia.html')
 
 @app.route('/meu_rh_requisicao_pessoal')
-def page_requisicaopessoal():
+def page_requisicaopessoal():    
     return send_from_directory('.', 'meu_rh_requisicao_pessoal.html')
+
+@app.route('/meu_rh_processo_seletivo')
+def page_processoseletivo():    
+    return send_from_directory('.', 'meu_rh_processo_seletivo.html')
 
 @app.route('/meu_rh_entrevista_desligamento')
 def page_entrevistadesligamento():
@@ -156,6 +186,22 @@ def page_entrevistadesligamento():
 
 @app.route('/meu_dp')
 def page_meudp():
+    email = request.args.get("email")
+
+    if not email:
+        return "Usuário não informado", 401
+
+    conn = conectar()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT moddp FROM cad_usuario WHERE email=%s", (email,))
+    usuario = cursor.fetchone()
+
+    if not usuario:
+        return "Usuário inválido", 404
+
+    if usuario["moddp"] != "S":
+        return "Acesso negado a este módulo, entre em contato com os administradores caso precise de acesso", 403
+    
     return send_from_directory('.', 'meu_dp.html')
 
 @app.route('/meu_dp_cad_colaborador')
@@ -164,19 +210,69 @@ def page_cadastrocolaborador():
 
 @app.route('/meu_sst')
 def page_meusst():
+    email = request.args.get("email")
+
+    if not email:
+        return "Usuário não informado", 401
+
+    conn = conectar()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT modsst FROM cad_usuario WHERE email=%s", (email,))
+    usuario = cursor.fetchone()
+
+    if not usuario:
+        return "Usuário inválido", 404
+
+    if usuario["modsst"] != "S":
+        return "Acesso negado a este módulo, entre em contato com os administradores caso precise de acesso", 403
+    
     return send_from_directory('.', 'meusst.html')
 
 @app.route('/admin')
 def page_admin():
+    email = request.args.get("email")
+
+    if not email:
+        return "Usuário não informado", 401
+
+    conn = conectar()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT modadm FROM cad_usuario WHERE email=%s", (email,))
+    usuario = cursor.fetchone()
+
+    if not usuario:
+        return "Usuário inválido", 404
+
+    if usuario["modadm"] != "S":
+        return "Acesso negado a este módulo, entre em contato com os administradores caso precise de acesso", 403
+    
     return send_from_directory('.', 'admin.html')
 
 @app.route('/usuario')
 def page_usuario():
+    email = request.args.get("email")
+
+    if not email:
+        return "Usuário não informado", 401
+
+    conn = conectar()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT modadm FROM cad_usuario WHERE email=%s", (email,))
+    usuario = cursor.fetchone()
+
+    if not usuario:
+        return "Usuário inválido", 404
+
+    if usuario["modadm"] != "S":
+        return "Acesso negado a este módulo, entre em contato com os administradores caso precise de acesso", 403
+
     return send_from_directory('.', 'usuario.html')
 
 @app.route('/empresa')
 def page_empresa():
     return send_from_directory('.', 'empresa.html')
+
+
 
 # === CADASTRO ===
 @app.route('/cadastrar', methods=['POST'])
@@ -186,18 +282,17 @@ def cadastrar_usuario():
     cursor = conn.cursor()
 
     try:
-        # Verifica se o email já existe
         cursor.execute("SELECT * FROM cad_usuario WHERE email=%s", (data['email'],))
         if cursor.fetchone():
-            cursor.close()
-            conn.close()
             return jsonify({"sucesso": False, "mensagem": "E-mail já cadastrado."}), 400
 
-        # Insere novo usuário
         sql = """
-        INSERT INTO cad_usuario (nome, email, contato, senha, setor, cargo, nivel_usuario, empresa, status, cadastro)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, NOW())
+            INSERT INTO cad_usuario 
+            (nome, email, contato, senha, setor, cargo, nivel_usuario, empresa, status, cadastro, 
+             modrh, moddp, modsst, modadm)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, NOW(), %s, %s, %s, %s)
         """
+
         cursor.execute(sql, (
             data['nome'],
             data['email'],
@@ -205,19 +300,21 @@ def cadastrar_usuario():
             data['senha'],
             data.get('setor', ''),
             data.get('cargo', ''),
+            data.get('nivel_usuario', ''),
             data.get('empresa', ''),
-            data.get('nivel_usuario', '')
+            data.get('status', 'Ativo'),
+            data.get('modrh', 'N'),
+            data.get('moddp', 'N'),
+            data.get('modsst', 'N'),
+            data.get('modadm', 'N')
         ))
 
         conn.commit()
-        cursor.close()
-        conn.close()
-
-        # return jsonify({"sucesso": True, "mensagem": "Usuário cadastrado com sucesso!"})
+        return jsonify({"sucesso": True, "mensagem": "Usuário cadastrado com sucesso!"})
 
     except Exception as e:
-        print("🚨 ERRO AO CADASTRAR USUÁRIO:", e)  # aparece no terminal Flask
-        return jsonify({"sucesso": False, "mensagem": f"Erro no servidor: {str(e)}"}), 500
+        print("🚨 ERRO AO CADASTRAR USUÁRIO:", e)
+        return jsonify({"sucesso": False, "mensagem": f"Erro: {str(e)}"}), 500
 
     finally:
         cursor.close()
@@ -233,10 +330,12 @@ def editar_usuario(id):
     try:
         sql = """
         UPDATE cad_usuario
-        SET nome=%s, email=%s, senha=%s, contato=%s, setor=%s, cargo=%s, 
-            nivel_usuario=%s, empresa=%s, status=%s, atualizacao=NOW()
+        SET nome=%s, email=%s, senha=%s, contato=%s, setor=%s, cargo=%s,
+            nivel_usuario=%s, empresa=%s, status=%s, atualizacao=NOW(),
+            modrh=%s, moddp=%s, modsst=%s, modadm=%s
         WHERE id=%s
         """
+
         cursor.execute(sql, (
             data['nome'],
             data['email'],
@@ -247,17 +346,25 @@ def editar_usuario(id):
             data.get('nivel_usuario', ''),
             data.get('empresa', ''),
             data.get('status', ''),
+
+            data.get('modrh', 'N'),
+            data.get('moddp', 'N'),
+            data.get('modsst', 'N'),
+            data.get('modadm', 'N'),
+
             id
         ))
+
         conn.commit()
-        cursor.close()
-        conn.close()
         return jsonify({"sucesso": True, "mensagem": "Usuário atualizado com sucesso!"})
 
     except Exception as e:
         print("🚨 ERRO AO EDITAR USUÁRIO:", e)
-        return jsonify({"sucesso": False, "mensagem": f"Erro no servidor: {str(e)}"}), 500
+        return jsonify({"sucesso": False, "mensagem": f"Erro: {str(e)}"}), 500
 
+    finally:
+        cursor.close()
+        conn.close()
 
 # === LISTAR TODOS OS USUÁRIOS ===
 @app.route('/usuarios', methods=['GET'])
@@ -533,7 +640,6 @@ def obter_avaliacao_experiencia(id):
         if conn:
             conn.close()
 
-
 @app.route('/api/avaliacao_experiencia', methods=['POST'])
 def salvar_avaliacao_experiencia():
     try:
@@ -570,7 +676,6 @@ def salvar_avaliacao_experiencia():
     finally:
         cursor.close()
         conn.close()
-
 
 @app.route('/api/avaliacao_experiencia/<int:id>', methods=['PUT'])
 def editar_avaliacao_experiencia(id):
@@ -623,7 +728,6 @@ def editar_avaliacao_experiencia(id):
     finally:
         cursor.close()
         conn.close()
-
 
 @app.route('/api/avaliacao_experiencia/<int:id>', methods=['DELETE'])
 def excluir_avaliacao_experiencia(id):
@@ -731,7 +835,6 @@ def obter_entrevista_desligamento(id):
         if conn:
             conn.close()
 
-
 @app.route('/api/entrevista_desligamento', methods=['POST'])
 def salvar_entrevista_desligamento():
     try:
@@ -769,7 +872,6 @@ def salvar_entrevista_desligamento():
     finally:
         cursor.close()
         conn.close()
-
 
 @app.route('/api/entrevista_desligamento/<int:id>', methods=['PUT'])
 def editar_entrevista_desligamento(id):
@@ -824,7 +926,6 @@ def excluir_entrevista_desligamento(id):
         print("🚨 ERRO AO EXCLUIR ENTREVISTA DE DESLIGAMENTO:", e)
         return jsonify({"sucesso": False, "mensagem": str(e)}), 500
 
-
 # === EMPRESAS ===
 
 @app.route('/empresas', methods=['GET'])
@@ -840,7 +941,6 @@ def listar_empresas():
     except Exception as e:
         print("🚨 ERRO AO LISTAR EMPRESAS:", e)
         return jsonify({"sucesso": False, "mensagem": str(e)}), 500
-
 
 @app.route('/empresa', methods=['POST'])
 def cadastrar_empresa():
@@ -868,7 +968,6 @@ def cadastrar_empresa():
         print("🚨 ERRO AO CADASTRAR EMPRESA:", e)
         return jsonify({"sucesso": False, "mensagem": str(e)}), 500
 
-
 @app.route('/empresa/<int:id>', methods=['PUT'])
 def editar_empresa(id):
     try:
@@ -895,7 +994,7 @@ def editar_empresa(id):
     except Exception as e:
         print("🚨 ERRO AO EDITAR EMPRESA:", e)
         return jsonify({"sucesso": False, "mensagem": str(e)}), 500
-    
+
 # === INDICADORES ===
 
 @app.route('/api/indicadores', methods=['GET'])
@@ -1328,6 +1427,241 @@ def excluir_requisicao(id):
         try: cursor.close(); conn.close()
         except: pass
 
+# === CRIAR PROCESSO SELETIVO ===
+@app.route('/api/processo_seletivo', methods=['POST'])
+def criar_processo_seletivo():
+    dados = request.get_json() or {}
+
+    numero_requisicao = dados.get('numero_requisicao')
+    nome = dados.get('nome')
+    if not numero_requisicao or not nome:
+        return jsonify({"sucesso": False, "mensagem": "Campos obrigatórios faltando: numero_requisicao e nome."}), 400
+
+    try:
+        conn = conectar()
+        cursor = conn.cursor()
+
+        sql = """
+        INSERT INTO rg_processo_seletivo (
+          numero_requisicao, nome, cargo,
+          contato, email, empresa,
+          data, fase, formacao, sintese, conclusao,
+          modo, status, usuario, dtregistro, dtatualizacao
+        ) VALUES (
+          %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW(), NOW()
+        )
+        """
+
+        # use valor do campo data se enviado (YYYY-MM-DD), senão agora
+        data_field = dados.get('data')
+        if data_field:
+            # aceitar YYYY-MM-DD ou YYYY-MM-DD HH:MM:SS
+            try:
+                # tenta normalizar para DATETIME string
+                _ = datetime.fromisoformat(data_field)
+                data_val = data_field
+            except Exception:
+                # se só vier YYYY-MM-DD
+                try:
+                    data_val = datetime.strptime(data_field, "%Y-%m-%d").strftime("%Y-%m-%d %H:%M:%S")
+                except Exception:
+                    data_val = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        else:
+            data_val = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+        params = (
+            numero_requisicao,
+            nome,
+            dados.get('cargo', ''),
+            dados.get('contato', ''),
+            dados.get('email', ''),
+            dados.get('empresa', ''),
+            data_val,
+            dados.get('fase') or 1,
+            dados.get('formacao') or 'Não Informado',
+            dados.get('sintese') or 'Não Informado',
+            dados.get('conclusao') or 'Não Informado',
+            dados.get('modo') or '',
+            dados.get('status') or 'Em processo',
+            dados.get('usuario') or (dados.get('usuario_id') or '')
+        )
+
+        cursor.execute(sql, params)
+        conn.commit()
+        inserted_id = cursor.lastrowid
+
+        return jsonify({"sucesso": True, "mensagem": "PS criada com sucesso.", "id": inserted_id})
+
+    except mysql.connector.IntegrityError as ie:
+        return jsonify({"sucesso": False, "mensagem": f"Erro de integridade: {str(ie)}"}), 400
+    except Exception as e:
+        print("ERRO criar_processo_seletivo:", e)
+        return jsonify({"sucesso": False, "mensagem": f"Erro criar: {str(e)}"}), 500
+    finally:
+        try:
+            cursor.close()
+            conn.close()
+        except:
+            pass
+
+
+# === LISTAR PROCESSOS (com filtros: unidade/empresa, mes, ano, status) ===
+@app.route('/api/processo_seletivo', methods=['GET'])
+def listar_processos_seletivo():
+    empresa = request.args.get('unidade') or request.args.get('empresa')
+    mes = request.args.get('mes')  # "01".."12"
+    ano = request.args.get('ano')  # "2025"
+    status = request.args.get('status')
+
+    try:
+        conn = conectar()
+        cursor = conn.cursor(dictionary=True)
+
+        base_sql = "SELECT * FROM rg_processo_seletivo WHERE 1=1"
+        params = []
+
+        if empresa:
+            base_sql += " AND empresa = %s"
+            params.append(empresa)
+
+        if ano:
+            # filtra por ano (analisando campo data/dtregistro)
+            base_sql += " AND YEAR(data) = %s"
+            params.append(ano)
+
+        if mes:
+            base_sql += " AND MONTH(data) = %s"
+            params.append(int(mes))
+
+        if status:
+            base_sql += " AND status = %s"
+            params.append(status)
+
+        base_sql += " ORDER BY data DESC, dtregistro DESC LIMIT 1000"  # limite para segurança
+
+        cursor.execute(base_sql, tuple(params))
+        rows = cursor.fetchall()
+
+        return jsonify({"sucesso": True, "dados": rows})
+
+    except Exception as e:
+        print("ERRO listar_processos_seletivo:", e)
+        return jsonify({"sucesso": False, "mensagem": str(e)}), 500
+    finally:
+        try: cursor.close(); conn.close()
+        except: pass
+
+
+# === BUSCAR POR ID ===
+@app.route('/api/processo_seletivo/<int:id>', methods=['GET'])
+def buscar_processo_por_id(id):
+    try:
+        conn = conectar()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("SELECT * FROM rg_processo_seletivo WHERE id=%s", (id,))
+        row = cursor.fetchone()
+        if not row:
+            return jsonify({"sucesso": False, "mensagem": "Registro não encontrado."}), 404
+        return jsonify({"sucesso": True, "dado": row})
+    except Exception as e:
+        print("ERRO buscar_processo_por_id:", e)
+        return jsonify({"sucesso": False, "mensagem": str(e)}), 500
+    finally:
+        try: cursor.close(); conn.close()
+        except: pass
+
+
+# === ATUALIZAR ===
+@app.route('/api/processo_seletivo/<int:id>', methods=['PUT'])
+def atualizar_processo(id):
+    dados = request.get_json() or {}
+
+    try:
+        conn = conectar()
+        cursor = conn.cursor()
+
+        sql = """
+        UPDATE rg_processo_seletivo
+        SET numero_requisicao=%s, nome=%s, cargo=%s,
+            contato=%s, email=%s, empresa=%s,
+            data=%s, fase=%s, formacao=%s, sintese=%s, conclusao=%s,
+            modo=%s, status=%s, usuario=%s, dtatualizacao=NOW()
+        WHERE id=%s
+        """
+
+        data_field = dados.get('data')
+        if data_field:
+            try:
+                _ = datetime.fromisoformat(data_field)
+                data_val = data_field
+            except:
+                try:
+                    data_val = datetime.strptime(data_field, "%Y-%m-%d").strftime("%Y-%m-%d %H:%M:%S")
+                except:
+                    data_val = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        else:
+            data_val = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+        params = (
+            dados.get('numero_requisicao'),
+            dados.get('nome'),
+            dados.get('cargo', ''),
+            dados.get('contato', ''),
+            dados.get('email', ''),
+            dados.get('empresa', ''),
+            data_val,
+            dados.get('fase') or 1,
+            dados.get('formacao') or '',
+            dados.get('sintese') or '',
+            dados.get('conclusao') or '',
+            dados.get('modo') or '',
+            dados.get('status') or '',
+            dados.get('usuario') or '',
+            id
+        )
+
+        cursor.execute(sql, params)
+        conn.commit()
+
+        return jsonify({"sucesso": True, "mensagem": "Registro atualizado com sucesso."})
+
+    except Exception as e:
+        print("ERRO atualizar_processo:", e)
+        return jsonify({"sucesso": False, "mensagem": str(e)}), 500
+    finally:
+        try: cursor.close(); conn.close()
+        except: pass
+
+@app.route("/api/buscar_requisicao")
+def buscar_requisicao():
+    numero = request.args.get("numero")
+
+    if not numero:
+        return jsonify({"sucesso": False, "mensagem": "Número inválido."})
+
+    try:
+        conn = mysql.connect()
+        cursor = conn.cursor(dictionary=True)
+
+        cursor.execute("""
+            FROM rg_requisicao_pessoal
+            WHERE UPPER(numero_requisicao) = UPPER(%s)
+            LIMIT 1
+        """, (numero,))
+        
+        dado = cursor.fetchone()
+
+        cursor.close()
+        conn.close()
+
+        if not dado:
+            return jsonify({"sucesso": False, "mensagem": "Requisição não encontrada."})
+
+        return jsonify({"sucesso": True, "dado": dado})
+
+    except Exception as e:
+        return jsonify({"sucesso": False, "mensagem": str(e)})
+
 # === UNIDADES PERMITIDAS (exemplo) ===
 @app.route('/api/unidades_permitidas', methods=['GET'])
 def unidades_permitidasRP():
@@ -1392,7 +1726,6 @@ def criar_chamado():
     finally:
         cursor.close()
         conn.close()
-
 
 # === Rota para listar chamados do usuário logado ===
 @app.route("/chamados", methods=["GET"])

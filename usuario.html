@@ -107,7 +107,78 @@
   </main>
 
   <!-- Contêiner dinâmico para o modal -->
-  <div id="overlayContainer"></div>
+  <!-- Modal fixo no HTML -->
+  <div id="overlayContainer" class="overlay" style="display:none;" onclick="clicarForaModal(event)">
+  <div class="modal">
+    <button class="close-btn" onclick="fecharForm()">×</button>
+    <h3 id="tituloForm">Novo Usuário</h3>
+
+    <form id="formUsuario" onsubmit="salvarUsuario(event)">
+
+      <label class="logo">Nome completo</label>
+      <input type="text" id="nomeUsuario" placeholder="Digite o nome completo" required>
+
+      <label class="logo">E-mail</label>
+      <input type="email" id="emailUsuario" placeholder="Digite o e-mail" required>
+
+      <label class="logo">Contato</label>
+      <input type="text" id="contatoUsuario" placeholder="Telefone ou WhatsApp">
+
+      <label class="logo">Senha</label>
+      <input type="password" id="senhaUsuario" placeholder="Defina uma senha" required>
+
+      <label class="logo">Setor / Departamento</label>
+      <input type="text" id="setorUsuario" placeholder="Setor do colaborador">
+
+      <label class="logo">Cargo</label>
+      <input type="text" id="cargoUsuario" placeholder="Cargo do colaborador">
+
+      <label class="logo">Nível de acesso</label>
+      <select id="nivelUsuario">
+        <option value="Leitor">Leitor</option>
+        <option value="Inserir/Editar">Inserir/Editar</option>
+        <option value="Inserir/Editar/Excluir">Inserir/Editar/Excluir</option>
+        <option value="Administrador">Administrador</option>
+      </select>
+
+      <label class="logo">Empresas permitidas</label>
+      <select id="empresa" multiple required size="5" style="height:auto;">
+        <option value="">Selecione uma ou mais empresas...</option>
+      </select>
+
+      <p style="font-size:0.8rem; color:#555; margin-top:5px;">
+        Segure <b>Ctrl</b> (Windows) ou <b>Cmd</b> (Mac) para selecionar várias.
+      </p>
+
+      <label class="logo">Permissões</label>
+
+      <fieldset>
+        <label class="logo">RH<input type="checkbox" id="modRH" class="logo"></label>
+        <label class="logo">DP<input type="checkbox" id="modDP" class="logo"></label>
+        <label class="logo">SST <input type="checkbox" id="modSST" class="logo"></label>
+        <label class="logo">ADM<input type="checkbox" id="modAdm" class="logo"></label>
+      </fieldset>
+      </p>
+
+      <label class="logo">Status</label>
+      <select id="statusUsuario">
+        <option value="Ativo">Ativo</option>
+        <option value="Inativo">Inativo</option>
+        <option value="Suspenso">Suspenso</option>
+      </select>
+
+      <button type="submit" class="btn" style="margin-top:10px;">
+        <i class="fa-solid fa-floppy-disk"></i> Salvar
+      </button>
+
+      <button type="button" class="btn" style="margin-top:10px;" onclick="fecharForm()">Cancelar</button>
+    
+    
+    </form>
+  </div>
+</div>
+
+
 
   <script>
     const usuarioLogado = JSON.parse(localStorage.getItem("usuarioLogado"));
@@ -143,68 +214,50 @@
       }
     }
 
-    /* === AJUSTE: Modal padrão de abrirForm === */
-    function abrirForm(usuario=null){
-      overlayContainer.innerHTML = `
-        <div class="overlay" onclick="clicarForaModal(event)">
-          <div class="modal">
-            <button class="close-btn" onclick="fecharForm()">×</button>
-            <h3>${usuario ? "Editar Usuário" : "Novo Usuário"}</h3>
+    let idEditando = null;
 
-            <form onsubmit="salvarUsuario(event, ${usuario ? usuario.id : null})">
-              <input type="text" id="nomeUsuario" value="${usuario?usuario.nome:''}" placeholder="Nome completo" required>
-              <input type="email" id="emailUsuario" value="${usuario?usuario.email:''}" placeholder="E-mail" required>
-              <input type="text" id="contatoUsuario" value="${usuario?usuario.contato:''}" placeholder="Contato">
-              <input type="password" id="senhaUsuario" value="${usuario?usuario.senha:''}" placeholder="Senha" required>
-              <input type="text" id="setorUsuario" value="${usuario?usuario.setor:''}" placeholder="Setor / Departamento">
-              <input type="text" id="cargoUsuario" value="${usuario?usuario.cargo:''}" placeholder="Cargo">
+    function abrirForm(usuario = null){
+      idEditando = usuario ? usuario.id : null;
 
-              <select id="nivelUsuario">
-                <option value="Leitor" ${usuario&&usuario.nivel_usuario==="Leitor"?"selected":""}>Leitor</option>
-                <option value="Inserir/Editar" ${usuario&&usuario.nivel_usuario==="Editar"?"selected":""}>Inserir/Editar</option>
-                <option value="Inserir/Editar/Excluir" ${usuario&&usuario.nivel_usuario==="Inserir"?"selected":""}>Inserir/Editar/Excluir</option>
-                <option value="Administrador" ${usuario&&usuario.nivel_usuario==="Administrador"?"selected":""}>Administrador</option>
-              </select>
+      document.getElementById("overlayContainer").style.display = "flex";
+      document.getElementById("tituloForm").innerText = usuario ? "Editar Usuário" : "Novo Usuário";
 
-              <select id="empresa" multiple required size="5" style="height:auto;">
-                <option value="">Selecione uma ou mais empresas...</option>
-              </select>
-
-              <p style="font-size:0.8rem; color:#555; margin-top:5px;">
-                Segure <b>Ctrl</b> (Windows) ou <b>Cmd</b> (Mac) para selecionar várias.
-              </p>
-
-              <select id="statusUsuario">
-                <option value="Ativo" ${usuario&&usuario.status==="Ativo"?"selected":""}>Ativo</option>
-                <option value="Inativo" ${usuario&&usuario.status==="Inativo"?"selected":""}>Inativo</option>
-                <option value="Suspenso" ${usuario&&usuario.status==="Suspenso"?"selected":""}>Suspenso</option>
-              </select>
-
-              <button type="submit" class="btn" style="margin-top:10px;"> 
-                <i class="fa-solid fa-floppy-disk"></i> Salvar
-              </button>
-              <button type="button" class="btn" style="margin-top:10px;" onclick="fecharForm()">Cancelar</button>
-            </form>
-          </div>
-        </div>
-      `;
+      document.getElementById("nomeUsuario").value = usuario ? usuario.nome : "";
+      document.getElementById("emailUsuario").value = usuario ? usuario.email : "";
+      document.getElementById("contatoUsuario").value = usuario ? usuario.contato : "";
+      document.getElementById("senhaUsuario").value = usuario ? usuario.senha : "";
+      document.getElementById("setorUsuario").value = usuario ? usuario.setor : "";
+      document.getElementById("cargoUsuario").value = usuario ? usuario.cargo : "";
+      document.getElementById("nivelUsuario").value = usuario ? usuario.nivel_usuario : "Leitor";
+      document.getElementById("statusUsuario").value = usuario ? usuario.status : "Ativo";
+      
+      document.getElementById("modRH").checked = usuario && usuario.modrh === "S";
+      document.getElementById("modDP").checked = usuario && usuario.moddp === "S";
+      document.getElementById("modSST").checked = usuario && usuario.modsst === "S";
+      document.getElementById("modAdm").checked = usuario && usuario.modadm === "S";
 
       carregarEmpresas(usuario);
     }
 
+
     /* === Fecha o modal ao clicar fora === */
     function clicarForaModal(event){
-      if (event.target.classList.contains("overlay")) fecharForm();
+      if(event.target.id === "overlayContainer"){
+        fecharForm();
+      }
     }
+
 
     /* === Fecha modal === */
     function fecharForm(){
-      overlayContainer.innerHTML = "";
+      document.getElementById("overlayContainer").style.display = "none";
     }
 
+
     /* === Salvar Usuário === */
-    async function salvarUsuario(event, idEditar=null){
+    async function salvarUsuario(event){
       event.preventDefault();
+      const idEditar = idEditando;
       const payload = {
         nome: document.getElementById("nomeUsuario").value.trim(),
         email: document.getElementById("emailUsuario").value.trim(),
@@ -214,7 +267,11 @@
         cargo: document.getElementById("cargoUsuario").value.trim(),
         empresa: Array.from(document.getElementById("empresa").selectedOptions).map(opt => opt.value).join(";"),
         nivel_usuario: document.getElementById("nivelUsuario").value,
-        status: document.getElementById("statusUsuario").value
+        status: document.getElementById("statusUsuario").value,
+        modrh: document.getElementById("modRH").checked ? "S" : "N",
+        moddp: document.getElementById("modDP").checked ? "S" : "N",
+        modsst: document.getElementById("modSST").checked ? "S" : "N",
+        modAdm: document.getElementById("modAdm").checked ? "S" : "N"
       };
 
       try {
@@ -253,7 +310,15 @@
         <table>
           <thead>
             <tr>
-              <th>Nome</th><th>E-mail</th><th>Contato</th><th>Setor</th><th>Nível</th><th>Empresa</th><th>Acesso</th><th>Status</th><th>Ações</th>
+              <th>Nome</th>
+              <th>E-mail</th>
+              <th>Contato</th>
+              <th>Setor</th>
+              <th>Nível</th>
+              <th>Empresa</th>
+              <th>Acesso</th>
+              <th>Status</th>
+              <th>Ações</th>
             </tr>
           </thead>
           <tbody>

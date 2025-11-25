@@ -3,7 +3,7 @@
   <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Requisições de Pessoal</title>
+  <title>Processo Seletivo</title>
 
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <link rel="stylesheet" href="/static/css/style.css">
@@ -111,7 +111,8 @@
           <a href="meu_rh"><i class="fa-solid fa-puzzle-piece"></i> Meu RH</a>
           <a href="meu_rh_acoes_treinamentos"><i class="fa-solid fa-chalkboard-teacher"></i> Ações e Treinamentos</a>
           <a href="meu_rh_avaliacao_experiencia"><i class="fa-solid fa-book-open"></i> Avaliação de Experiência</a>
-          <a href="meu_rh_requisicao_pessoal" class="active"><i class="fa-solid fa-chalkboard-teacher"></i> Requisições de Pessoal</a>
+          <a href="meu_rh_requisicao_pessoal"><i class="fa-solid fa-chalkboard-teacher"></i> Requisições de Pessoal</a>
+          <a href="meu_rh_processo_seletivo" class="active"><i class="fa-solid fa-chalkboard-teacher"></i> Processo Seletivo</a>
           <a href="meu_rh_entrevista_desligamento"><i class="fa-solid fa-chalkboard-teacher"></i> Entrevista de Desligamento</a>
         </nav>
       </div>
@@ -125,9 +126,9 @@
 
     <main>
       <header>
-        <h1>Requisições de Pessoal</h1>
+        <h1>Processo Seletivo</h1>
         <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
-          <button class="btn" onclick="abrirFormulario()">Nova Requisição</button>
+          <button class="btn" onclick="abrirFormulario()">Novo Registro</button>
           <button class="btn" onclick="exportarTabela()">Exportar</button>
           <select id="selectUnidade" class="btn" style="padding: 9px 14px;">
             <option value="">Selecione a Unidade</option>
@@ -178,122 +179,75 @@
     <div id="form-popup" class="overlay" style="display:none;">
       <div class="form-popup">
         <form id="formRequisicao" onsubmit="salvarRequisicao(event)">
-          <h2 id="tituloForm">Nova Requisição</h2>
+          <h2 id="tituloForm">Seleção</h2>
 
             
             <div style="flex:1;">
-              <label class="logo">Dados da vaga</label></p>
-              <label class="logo">Tipo de Requisição</label>
-              <select id="tipo_requisicao" required>
-                <option value="Nova vaga">Nova vaga</option>
-                <option value="Substituição">Substituição</option>
-                <option value="Temporário">Temporário</option>
-                <option value="Estágio">Estágio</option>
-                <option value="Terceirizado">Terceirizado</option>
+
+              <div style="position: relative; width: 100%;">
+                <input 
+                    type="text" 
+                    id="numero_requisicao" 
+                    name="numero_requisicao" 
+                    placeholder="Número da Requisição"
+                    style="padding-right: 35px; width: 100%;"
+                >
+
+                <i class="fa fa-search"
+                onclick="buscarRequisicaoManualmente()"
+                style="
+                        position: absolute;
+                        right: 10px;
+                        top: 50%;
+                        transform: translateY(-50%);
+                        cursor: pointer;
+                        color: #0E3E98;
+                ">
+                </i>
+                </div>
+
+
+              <label class="logo">Candidato</label>
+              <input type="text" id="nome" required>
+
+              <label class="logo">Cargo</label>
+              <input type="text" id="cargo">
+
+              <label class="logo">Contato</label>
+              <input type="text" id="contato">
+
+              <label class="logo">E-mail</label>
+              <input type="text" id="email">
+
+              <label class="logo">Data entrevista</label>
+              <input type="date" id="data">
+
+              <label class="logo">Fase (Entrevista)</label>
+              <input type="number" id="fase" value="5" min="1">
+
+              <label class="logo">Formação Acadêmica</label>
+              <input type="text" id="formacao">
+
+              <label class="logo">Síntese da Entrevista Comportamental </label>
+              <input type="text" id="sintese">
+
+              <label class="logo">Conclusão </label>
+              <input type="text" id="conclusao">
+
+              <select id="modo" required>
+                <option value="Onlide">Onlide</option>
+                <option value="Presencial">Presencial</option>
               </select>
 
-              <label class="logo">Título do Cargo</label>
-              <input type="text" id="titulo_cargo" required>
-
-              <label class="logo">Área / Setor</label>
-              <input type="text" id="area_setor">
-
-              <label class="logo">Quantidade</label>
-              <input type="number" id="quantidade" value="1" min="1">
-
+              <select id="status" required>
+                <option value="Em processo">Em processo</option>
+                <option value="Quadro de reserva">Quadro de reserva</option>
+                <option value="Desclassificado">Desclassificado</option>
+                <option value="Desistência">Desistência</option>
+                <option value="Contratado">Contratado</option>
+              </select>
               
-
-              <label class="logo">Faixa salarial</label>
-              <input type="text" id="faixa_salarial">
-
-              <label class="logo">Tipo de contrato</label>
-              <select id="tipo_contrato">
-                <option value="CLT">CLT</option>
-                <option value="PJ">PJ</option>
-                <option value="Estágio">Estágio</option>
-                <option value="Temporário">Temporário</option>
-              </select>
-              
-              <label class="logo">Motivo</label>
-              <input type="text" id="motivo">
-              <label class="logo">Formação exigida</label>
-              <input type="text" id="formacao_exigida">
-
-              <label class="logo">Experiência mínima</label>
-              <input type="text" id="experiencia_minima">
-
-              <label class="logo">Competências técnicas</label>
-              <textarea id="competencias_tecnicas" rows="2"></textarea>
-
-              <label class="logo">Competências comportamentais</label>
-              <textarea id="competencias_comportamentais" rows="2"></textarea>
-
-              
-
-              <label class="logo">Observações</label>
-              <textarea id="observacoes" rows="2"></textarea>
-
-          
-        
-              <label class="logo">Dados do solicitante</label></p>
-              <label class="logo">Solicitante - Nome</label>
-              <input type="text" id="solicitante_nome" required>
-
-              <label class="logo">Solicitante - Cargo</label>
-              <input type="text" id="solicitante_cargo">
-
-              <label class="logo">Departamento</label>
-              <input type="text" id="departamento">
-
-              <label class="logo">Colaborador Substituído (se houver)</label>
-              <input type="text" id="colaborador_substituido">
-
-              <label class="logo">Responsável RH</label>
-              <input type="text" id="responsavel_rh">
             </div>
-
-
-
-            <div style="flex:1;">
-
-              <label class="logo">Urgência</label>
-              <select id="urgencia">
-                <option value="Baixa">Baixa</option>
-                <option value="Média" selected>Média</option>
-                <option value="Alta">Alta</option>
-              </select>
-
-            </div>
-
-            <div style="flex:1;">
-
-              <label class="logo">Prazo desejado (data)</label>
-              <input type="date" id="prazo_desejado">
-
-            </div>
-
-            <div style="flex:1;">
-
-              <label class="logo">Contratação (data)</label>
-              <input type="date" id="data_contratacao">
-
-            </div>
-
-            <div style="flex:1;">
-
-            <label class="logo">Status</label>
-              <select id="status">
-                <option value="Pendente">Pendente</option>
-                <option value="Em análise">Em análise</option>
-                <option value="Aprovada">Aprovada</option>
-                <option value="Rejeitada">Rejeitada</option>
-                <option value="Concluída">Concluída</option>
-              </select>
-
-
-          </div>
-          
-          
 
           <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:10px;">
             <button type="submit" class="btn">Salvar</button>
@@ -326,11 +280,11 @@
   } 
 
   let editandoId = null;
-  const API = "/api/requisicoes_pessoal"; // base da API
+  const API = "/api/processo_seletivo"; // base da API
 
   function abrirFormulario(){
     document.getElementById("form-popup").style.display = "flex";
-    document.getElementById("tituloForm").innerText = "Nova Requisição";
+    document.getElementById("tituloForm").innerText = "Seleção";
     editandoId = null;
     document.getElementById("formRequisicao").reset();
   }
@@ -346,78 +300,83 @@
     alert("Sessão encerrada.");
   }
 
-  // === SALVAR (NOVO) ===
-  async function salvarRequisicao(event){
-    event.preventDefault();
-    const unidadeSelecionada = JSON.parse(localStorage.getItem('unidadeSelecionada'));
+  // === SALVAR OU ATUALIZAR ===
+async function salvarRequisicao(event){
+  event.preventDefault();
 
-    const dados = {
-      numero_requisicao: null, // backend gera se necessário
-      data_solicitacao: new Date().toISOString().slice(0,19).replace('T',' '),
+  const unidadeSelecionada = JSON.parse(localStorage.getItem('unidadeSelecionada')) || {};
+  const usuarioLogado = JSON.parse(localStorage.getItem("usuarioLogado")) || {};
 
-      solicitante_nome: document.getElementById("solicitante_nome").value,
-      solicitante_cargo: document.getElementById("solicitante_cargo").value,
-      departamento: document.getElementById("departamento").value,
+  const dados = {
+    numero_requisicao: numero_requisicao.value.trim(),
+    nome: nome.value.trim(),
+    cargo: cargo.value.trim(),
+    contato: contato.value.trim(),
+    email: email.value.trim(),
+    data: data.value || new Date().toISOString().slice(0,10),
+    fase: fase.value || 1,
+    formacao: formacao.value.trim(),
+    sintese: sintese.value.trim(),
+    conclusao: conclusao.value.trim(),
+    modo: modo.value,
+    status: status.value,
+    empresa: unidadeSelecionada.nome || '',
+    usuario: usuarioLogado.nome || usuarioLogado.id || ''
+  };
 
-      tipo_requisicao: document.getElementById("tipo_requisicao").value,
-      titulo_cargo: document.getElementById("titulo_cargo").value,
-      area_setor: document.getElementById("area_setor").value,
-      empresa: unidadeSelecionada ? unidadeSelecionada.nome : null,
-      quantidade: parseInt(document.getElementById("quantidade").value || 1, 10),
-      motivo: document.getElementById("motivo").value,
-      colaborador_substituido: document.getElementById("colaborador_substituido").value,
-      urgencia: document.getElementById("urgencia").value,
-      prazo_desejado: document.getElementById("prazo_desejado").value || null,
-      data_contratacao: document.getElementById("data_contratacao").value || null,
+  const url = editandoId ? `${API}/${editandoId}` : API;
+  const method = editandoId ? "PUT" : "POST";
 
-      faixa_salarial: document.getElementById("faixa_salarial").value,
-      tipo_contrato: document.getElementById("tipo_contrato").value,
+  const resp = await fetch(url, {
+    method: method,
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(dados)
+  });
 
-      formacao_exigida: document.getElementById("formacao_exigida").value,
-      experiencia_minima: document.getElementById("experiencia_minima").value,
-      competencias_tecnicas: document.getElementById("competencias_tecnicas").value,
-      competencias_comportamentais: document.getElementById("competencias_comportamentais").value,
+  const resultado = await resp.json();
+  alert(resultado.mensagem || "Operação concluída.");
 
-      responsavel_rh: document.getElementById("responsavel_rh").value,
-      observacoes: document.getElementById("observacoes").value,
+  if (resultado.sucesso) {
+    fecharFormulario();
+    carregarTabela();
+  }
+}
 
-      status: document.getElementById("status").value
-    };
+// === EDITAR ===
+async function editar(id){
+  const resp = await fetch(`${API}/${id}`);
+  const resultado = await resp.json();
 
-    try {
-    const resp = await fetch(API, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(dados)
-    });
-
-    if (!resp.ok) {
-      const text = await resp.text();
-      alert(`❌ Erro HTTP ${resp.status}: ${text}`);
-      console.error("Resposta completa do servidor:", text);
-      return;
-    }
-
-    const resultado = await resp.json();
-    console.log("Resposta JSON:", resultado);
-    alert(resultado.mensagem || "Resposta recebida.");
-
-    if (resultado.sucesso) {
-      fecharFormulario();
-      carregarTabela();
-    }
-
-  } catch (erro) {
-    alert(`⚠️ Erro inesperado: ${erro.message}`);
-    console.error("Erro detalhado:", erro);
+  if(!resultado.sucesso){
+    alert(resultado.mensagem || "Erro ao carregar registro.");
+    return;
   }
 
+  const r = resultado.dado;
 
-    if(resultado.sucesso){
-      fecharFormulario();
-      carregarTabela();
-    }
-  }
+  abrirFormulario();
+  editandoId = id;
+  tituloForm.innerText = "Editar Seleção";
+
+  numero_requisicao.value = r.numero_requisicao || "";
+  nome.value = r.nome || "";
+  cargo.value = r.cargo || "";
+  contato.value = r.contato || "";
+  email.value = r.email || "";
+  data.value = r.data ? r.data.split("T")[0] : "";
+  fase.value = r.fase || "1";
+  formacao.value = r.formacao || "";
+  sintese.value = r.sintese || "";
+  conclusao.value = r.conclusao || "";
+  modo.value = r.modo || "Presencial";
+  status.value = r.status || "Em processo";
+}
+
+// === ATUALIZAR REGISTRO ===
+async function atualizar(event, id){
+  event.preventDefault();
+  await salvarRequisicao(event);  
+}
 
   // === CARREGAR ===
   async function carregarTabela() {
@@ -470,10 +429,7 @@
                 <th>Data Solicitação</th>
                 <th>Solicitante</th>
                 <th>Cargo</th>
-                <th>Tipo</th>
-                <th>Qtd</th>
-                <th>Urgência</th>
-                <th>Prazo</th>
+                <th>Fase</th>
                 <th>Contratação</th>
                 <th>Ações</th>
               </tr>
@@ -483,14 +439,11 @@
                 <tr>
                   <td>${i.id}</td>
                   <td>${i.numero_requisicao || '-'}</td>
-                  <td>${formatarData(i.data_solicitacao)}</td>
-                  <td>${i.solicitante_nome || ''}</td>
-                  <td>${i.titulo_cargo || ''}</td>
-                  <td>${i.tipo_requisicao || ''}</td>
-                  <td>${i.quantidade || ''}</td>
-                  <td>${i.urgencia || ''}</td>
-                  <td>${formatarData(i.prazo_desejado)}</td>
-                  <td>${formatarData(i.data_contratacao)}</td>
+                  <td>${formatarData(i.data)}</td>
+                  <td>${i.nome || ''}</td>
+                  <td>${i.cargo || ''}</td>
+                  <td>${i.fase || ''}</td>
+                  <td>${i.status || ''}</td>
                   
                   <td>
                     <button class="btn" onclick="editar(${i.id})">Editar</button>
@@ -506,48 +459,7 @@
     }).join('');
   }
 
-  // === EDITAR ===
-  async function editar(id){
-    const resp = await fetch(`${API}/${id}`);
-    const resultado = await resp.json();
-    if(!resultado.sucesso) { alert(resultado.mensagem || "Erro"); return; }
-    const reg = resultado.dado;
-    if(!reg) return;
-
-    abrirFormulario();
-    editandoId = id;
-    document.getElementById("tituloForm").innerText = "Editar Requisição";
-
-    // popular campos
-    document.getElementById("tipo_requisicao").value = reg.tipo_requisicao || "Nova vaga";
-    document.getElementById("titulo_cargo").value = reg.titulo_cargo || "";
-    document.getElementById("area_setor").value = reg.area_setor || "";
-    document.getElementById("quantidade").value = reg.quantidade || 1;
-    document.getElementById("urgencia").value = reg.urgencia || "Média";
-    document.getElementById("prazo_desejado").value = reg.prazo_desejado ? reg.prazo_desejado.split('T')[0] : "";
-    document.getElementById("data_contratacao").value = reg.data_contratacao ? reg.data_contratacao.split('T')[0] : "";
-
-    document.getElementById("solicitante_nome").value = reg.solicitante_nome || "";
-    document.getElementById("solicitante_cargo").value = reg.solicitante_cargo || "";
-    document.getElementById("departamento").value = reg.departamento || "";
-    document.getElementById("colaborador_substituido").value = reg.colaborador_substituido || "";
-
-    document.getElementById("faixa_salarial").value = reg.faixa_salarial || "";
-    document.getElementById("tipo_contrato").value = reg.tipo_contrato || "CLT";
-
-    document.getElementById("motivo").value = reg.motivo || "";
-    document.getElementById("formacao_exigida").value = reg.formacao_exigida || "";
-    document.getElementById("experiencia_minima").value = reg.experiencia_minima || "";
-    document.getElementById("competencias_tecnicas").value = reg.competencias_tecnicas || "";
-    document.getElementById("competencias_comportamentais").value = reg.competencias_comportamentais || "";
-    document.getElementById("responsavel_rh").value = reg.responsavel_rh || "";
-    document.getElementById("observacoes").value = reg.observacoes || "";
-    document.getElementById("status").value = reg.status || "";
-
-    // alterar submit para atualizar
-    document.getElementById("formRequisicao").onsubmit = (e) => atualizar(e, id);
-  }
-
+  
   // === ATUALIZAR ===
   async function atualizar(event, id){
     event.preventDefault();
@@ -762,6 +674,53 @@
     if (id) localStorage.setItem('unidadeSelecionada', JSON.stringify({ id, nome }));
     else localStorage.removeItem('unidadeSelecionada');
   });
+
+  // BUSCAR REQUISIÇÃO NO BANCO //
+  document.getElementById("numero_requisicao").addEventListener("change", async function () {
+    const numeroReq = this.value.trim();
+    const unidadeSelecionada = JSON.parse(localStorage.getItem('unidadeSelecionada')) || {};
+
+    if (!numeroReq || !unidadeSelecionada.nome) return;
+
+    try {
+        const resp = await fetch(`/api/buscar_requisicao?numero=${numeroReq}&empresa=${unidadeSelecionada.nome}`);
+        const dados = await resp.json();
+
+        if (dados.sucesso && dados.dado) {
+            document.getElementById("cargo").value = dados.dado.titulo_cargo || "";
+        } else {
+            alert("Requisição não encontrada para esta empresa.");
+        }
+    } catch (e) {
+        console.error("Erro ao buscar requisição:", e);
+        alert("Erro ao consultar requisição.");
+    }
+});
+
+async function buscarRequisicaoManualmente() {
+    const numeroReq = document.getElementById("numero_requisicao").value.trim();
+
+    if (!numeroReq) {
+        alert("Digite o número da requisição.");
+        return;
+    }
+
+    try {
+        const resp = await fetch(`/api/buscar_requisicao?numero=${numeroReq}`);
+        const dados = await resp.json();
+
+        if (dados.sucesso && dados.dado) {
+            document.getElementById("cargo").value = dados.dado.titulo_cargo || "";
+        } else {
+            alert("Requisição não encontrada para esta empresa.");
+        }
+    } catch (e) {
+        console.error("Erro ao buscar requisição:", e);
+        alert("Erro ao consultar requisição.");
+    }
+}
+
+
 
   document.addEventListener("DOMContentLoaded", () => {
     // garantir que unidades carreguem no load

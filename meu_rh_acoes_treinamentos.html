@@ -209,6 +209,19 @@ let editandoId = null;
 
 const API = "http://localhost:5000/acoes_treinamentos";
 
+// função auxiliar de formatação
+  function formatarData(dataISO) {
+    if (!dataISO) return "";
+    const data = new Date(dataISO);
+    const dia = String(data.getDate()).padStart(2, "0");
+    const mes = String(data.getMonth() + 1).padStart(2, "0");
+    const ano = data.getFullYear();
+    const hora = String(data.getHours()).padStart(2, "0");
+    const minuto = String(data.getMinutes()).padStart(2, "0");
+    const segundo = String(data.getSeconds()).padStart(2, "0");
+    return `${dia}/${mes}/${ano}`; // ${hora}:${minuto}:${segundo}`;
+  } 
+
 function abrirFormulario(){
   document.getElementById("form-popup").style.display = "flex";
   editandoId = null;
@@ -319,7 +332,7 @@ async function carregarTabela() {
               <tr>
                 <td>${i.tema}</td>
                 <td>${i.realizado}</td>
-                <td>${i.data_realizacao}</td>
+                <td>${formatarData(i.data_realizacao)}</td>
                 <td>${i.local}</td>
                 <td>${i.tipo_acao}</td>
                 <td>${i.duracao}</td>
@@ -330,7 +343,6 @@ async function carregarTabela() {
                 <td>${i.participantes}</td>
                 <td>
                   <button class="btn" onclick="editar(${i.id})">Editar</button>
-                  <button class="btn" onclick="excluir(${i.id})">Excluir</button>
                 </td>
               </tr>
             `).join('')}

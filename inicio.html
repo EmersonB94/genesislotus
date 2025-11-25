@@ -102,11 +102,11 @@
     <h4>Olá, <span id="usuarioLogado"></span></p></h4   >
     <nav>
       <a href="inicio" class="active"><i class="fa-solid fa-chart-line"></i> Início</a>
-      <a href="indicadores"><i class="fa-solid fa-bullseye"></i> Indicadores</a>
-      <a href="meu_rh"><i class="fa-solid fa-puzzle-piece"></i> Meu RH</a>
-      <a href="meu_dp"><i class="fa-solid fa-users"></i> Meu DP</a>
-      <a href="meu_sst"><i class="fa-solid fa-shield-heart"></i> Meu SST</a> 
-      <a href="usuario"><i class="fa-solid fa-gear"></i> Administrador</a>
+      <a id="btnRH" onclick="abrirIndicadores()"><i class="fa-solid fa-bullseye"></i> Indicadores</a>
+      <a id="btnRH" onclick="abrirMeuRH()"><i class="fa-solid fa-puzzle-piece"></i> Meu RH</a>
+      <a id="btnDP" onclick="abrirMeuDP()"><i class="fa-solid fa-users"></i> Meu DP</a>
+      <a id="btnSST" onclick="abrirMeuSST()"><i class="fa-solid fa-shield-heart"></i> Meu SST</a> 
+      <a id="btnADM" onclick="abrirMeuADM()"><i class="fa-solid fa-gear"></i> Administrador</a>
       
       <p><button id="" class="inativo">Atualizações</button></p>
     </nav>
@@ -165,6 +165,36 @@
 <script>
 const usuarioLogado = JSON.parse(localStorage.getItem("usuarioLogado"));
 document.getElementById("usuarioLogado").innerText = usuarioLogado?.nome || "";
+// Bloquear/mostrar botões conforme permissão
+document.getElementById("btnRH").style.display = usuarioLogado.perm_rh ? "block" : "none";
+document.getElementById("btnDP").style.display = usuarioLogado.perm_dp ? "block" : "none";
+document.getElementById("btnSST").style.display = usuarioLogado.perm_sst ? "block" : "none";
+document.getElementById("btnADM").style.display = usuarioLogado.perm_adm ? "block" : "none";
+
+function abrirIndicadores() {
+    const u = JSON.parse(localStorage.getItem("usuarioLogado"));
+    window.location.href = `/indicadores?usuario=${encodeURIComponent(u.email)}`;
+}
+
+function abrirMeuRH() {
+    const u = JSON.parse(localStorage.getItem("usuarioLogado"));
+    window.location.href = `/meu_rh?email=${encodeURIComponent(u.email)}`;
+}
+
+function abrirMeuDP() {
+    const u = JSON.parse(localStorage.getItem("usuarioLogado"));
+    window.location.href = `/meu_dp?email=${encodeURIComponent(u.email)}`;
+}
+
+function abrirMeuSST() {
+    const u = JSON.parse(localStorage.getItem("usuarioLogado"));
+    window.location.href = `/meu_sst?email=${encodeURIComponent(u.email)}`;
+}
+
+function abrirMeuADM() {
+    const u = JSON.parse(localStorage.getItem("usuarioLogado"));
+    window.location.href = `/usuario?email=${encodeURIComponent(u.email)}`;
+}
 
 function sair() {
   localStorage.removeItem('usuarioLogado');
@@ -303,6 +333,7 @@ window.onclick = function(event) {
 document.addEventListener("DOMContentLoaded", () => {
   carregarUnidades();
 });
+
 </script>
 
 <!-- 🔹 Estrutura corrigida para modal flutuante -->

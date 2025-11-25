@@ -9,11 +9,93 @@
   <link rel="stylesheet" href="/static/css/style.css">
 
   <style>
-    .overlay { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.5); }
-    .form-popup { background:#fff; padding:20px; border-radius:8px; width:920px; max-height:90vh; overflow:auto; }
-    .form-popup input, .form-popup textarea, .form-popup select { width:100%; margin:6px 0 12px; padding:8px; box-sizing:border-box; }
-    .grupo-tipo { margin-bottom:20px; }
-    .small { font-size:0.85rem; color:#555; }
+    /* Fundo escurecido ao abrir o formulário */
+    .overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.6);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+    }
+
+    /* Container do formulário */
+    .form-popup {
+      background-color: #fff;
+      padding: 25px 30px;
+      border-radius: 15px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+      width: 500px;
+      max-height: 90vh;
+      overflow-y: auto;
+      animation: fadeIn 0.3s ease-in-out;
+    }
+
+    /* Título */
+    .form-popup h2 {
+      text-align: center;
+      color: #0D187D;
+      margin-bottom: 20px;
+      font-size: 1.5rem;
+    }
+
+    /* Campos do formulário */
+    .form-popup input,
+    .form-popup textarea,
+    .form-popup select {
+      width: 100%;
+      padding: 10px 12px;
+      margin: 8px 0;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      transition: 0.2s;
+    }
+
+    /* Foco no campo */
+    .form-popup input:focus,
+    .form-popup textarea:focus,
+    .form-popup select:focus {
+      border-color: #0D187D;
+      outline: none;
+      box-shadow: 0 0 5px rgba(13,24,125,0.3);
+    }
+
+    /* Botões do formulário */
+    .form-popup .btn {
+      width: 48%;
+      margin: 10px 1%;
+      padding: 10px;
+      border: none;
+      border-radius: 8px;
+      background-color: #0D187D;
+      color: #fff;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    .form-popup .btn:hover {
+      background-color: #0E3E98;
+    }
+
+    /* Animação de entrada suave */
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    @keyframes slideUp {
+      from { transform: translateY(30px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    small {
+      color: black;
+    }
   </style>
   </head>
   <body>
@@ -104,15 +186,15 @@
             
               <div style="flex:1;">
                 <label class="logo">Dados colaborador</label></p>
-                <label class="small">Colaborador</label>
+                <label class="logo">Colaborador</label>
                 <input type="text" id="nome" required>
-                <label class="small">Cargo</label>
+                <label class="logo">Cargo</label>
                 <input type="text" id="cargo" required>
-                <label class="small">Admissão (data)</label>
+                <label class="logo">Admissão (data)</label>
                 <input type="date" id="dt_admissao">
-                <label class="small">Desligamento (data)</label>
+                <label class="logo">Desligamento (data)</label>
                 <input type="date" id="dt_demissao">
-                <label class="small">Tipo de desligamento</label>
+                <label class="logo">Tipo de desligamento</label>
                 <select id="tipo_desligamento" required>
                   <option value="Acordo entre as partes">Acordo entre as partes</option>
                   <option value="Dispensa sem justa causa">Dispensa SEM justa causa</option>
@@ -130,25 +212,25 @@
           <div style="display:flex; gap:10px;">
               <div style="flex:1;">
                 <label class="logo">Avaliação</label></p>
-                <label class="small">Optou por responder a pesquisa?</label></p>
+                <label class="logo">Optou por responder a pesquisa?</label></p>
                 <select id="r_optou_responder" required>
                   <option value="Sim">Sim</option>
                   <option value="Não">Não</option>
                 </select> 
-                <label class="small">Voltaria a trabalhar na instituição?</label></p>
+                <label class="logo">Voltaria a trabalhar na instituição?</label></p>
                 <select id="r_voltaria_trabalhar" required>
                   <option value="Sim">Sim</option>
                   <option value="Não">Não</option>
                   <option value="Possui dúvidas">Posssui dúvidas</option>
                   <option value="Não se aplica">Não se aplica</option>
                 </select>
-                <label class="small">Gostava de exercer suas atividades?</label></p>
+                <label class="logo">Gostava de exercer suas atividades?</label></p>
                 <select id="r_gostaria_exercer_atividades" required>
                   <option value="Sim">Sim</option>
                   <option value="Não">Não</option>
                   <option value="Não se aplica">Não se aplica</option>
                 </select>
-                <label class="small">Há na instituição, algum cargo que gostaria de ter exercido?</label></p>
+                <label class="logo">Há na instituição, algum cargo que gostaria de ter exercido?</label></p>
                 <select id="r_cargo_gostaria_exercer" required>
                   <option value="Sim">Sim</option>
                   <option value="Não">Não</option>
@@ -156,7 +238,7 @@
                 </select>
 
 
-                <label class="small">Avaliador</label>
+                <label class="logo">Avaliador</label>
                 <input type="text" id="avaliador" required>
               </div>
 
@@ -328,7 +410,6 @@
                   <td>${i.tipo_desligamento || ''}</td>                  
                   <td>
                     <button class="btn" onclick="editar(${i.id})">Editar</button>
-                    <button class="btn" onclick="excluir(${i.id})">Excluir</button>
                     <button class="btn" onclick="PDF(${i.id})">PDF</button>
                   </td>
                 </tr>
