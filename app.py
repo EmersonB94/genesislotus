@@ -926,6 +926,257 @@ def excluir_entrevista_desligamento(id):
         print("🚨 ERRO AO EXCLUIR ENTREVISTA DE DESLIGAMENTO:", e)
         return jsonify({"sucesso": False, "mensagem": str(e)}), 500
 
+# === CADASTRAR DE FUNCIONÁRIOS === #
+
+
+@app.route('/api/funcionario', methods=['POST'])
+def salvar_funcionario():
+    try:
+        data = request.get_json()
+        conn = conectar()
+        cursor = conn.cursor()
+
+        sql = """
+            INSERT INTO rg_funcionario (
+                empresa, nome, cpf, contato, emailpessoal, dtnascimento, sexo,
+                filhos, cidade, estado, formacao_escolar, formacao_superior,
+                matricula, emailprofissional, cargo, salariobase, ch, dtadmissao,
+                dtintegracao, dtdemissao, pcd, motivo_desligamento, status,
+                dtcadastro, dtatualizacao, usuario
+            ) VALUES (
+                %s, %s, %s, %s, %s, %s, %s,
+                %s, %s, %s, %s, %s,
+                %s, %s, %s, %s, %s, %s,
+                %s, %s, %s, %s, %s,
+                NOW(), NOW(), %s
+            )
+            """
+
+        valores = (
+            data.get('empresa', ''),
+            data.get('nome', ''),
+            data.get('cpf', ''),
+            data.get('contato', ''),
+            data.get('emailpessoal', ''),
+            data.get('dtnascimento', ''),
+            data.get('sexo', ''),
+            data.get('filhos', 0),
+            data.get('cidade', ''),
+            data.get('estado', ''),
+            data.get('formacao_escolar', ''),
+            data.get('formacao_superior', ''),
+            data.get('matricula', ''),
+            data.get('emailprofissional', ''),
+            data.get('cargo', ''),
+            data.get('salariobase', 0),
+            data.get('ch', ''),
+            data.get('dtadmissao', ''),
+            data.get('dtintegracao', ''),
+            data.get('dtdemissao', ''),
+            data.get('pcd', ''),
+            data.get('motivo_desligamento', ''),
+            data.get('status', ''),
+            data.get('usuario', '')
+        )
+
+
+        cursor.execute(sql, valores)
+        conn.commit()
+        return jsonify({"sucesso": True, "mensagem": "Colaborador salvo com sucesso!"})
+    except Exception as e:
+        print("🚨 ERRO AO SALVAR FUNCIONÁRIO:", e)
+        return jsonify({"sucesso": False, "mensagem": str(e)}), 500
+    finally:
+        cursor.close()
+        conn.close()
+
+@app.route('/api/funcionario/<int:id>', methods=['PUT'])
+def editar_funcionario(id):
+    try:
+        data = request.get_json()
+        conn = conectar()
+        cursor = conn.cursor()
+
+        # ✅ Usando NULL (None) ao invés de strings vazias para campos opcionais
+        sql = """
+            UPDATE rg_funcionario SET
+                empresa=%s,
+                nome=%s,
+                cpf=%s,
+                contato=%s,
+                emailpessoal=%s,
+                dtnascimento=%s,
+                sexo=%s,
+                filhos=%s,
+                cidade=%s,
+                estado=%s,
+                formacao_escolar=%s,
+                formacao_superior=%s,
+                matricula=%s,
+                emailprofissional=%s,
+                cargo=%s,
+                salariobase=%s,
+                ch=%s,
+                dtadmissao=%s,
+                dtintegracao=%s,
+                dtdemissao=%s,
+                pcd=%s,
+                motivo_desligamento=%s,
+                status=%s,
+                usuario=%s,
+                dtatualizacao=NOW()
+            WHERE id=%s
+            """
+
+
+        # ✅ Usando `.get()` com fallback para None, não ''
+        valores = (
+            data.get('empresa') or None,
+            data.get('nome') or None,
+            data.get('cpf') or None,
+            data.get('contato') or None,
+            data.get('emailpessoal') or None,
+            data.get('dtnascimento') or None,
+            data.get('sexo') or None,
+            data.get('filhos') or None,
+            data.get('cidade') or None,
+            data.get('estado') or None,
+            data.get('formacao_escolar') or None,
+            data.get('formacao_superior') or None,
+            data.get('matricula') or None,
+            data.get('emailprofissional') or None,
+            data.get('cargo') or None,
+            data.get('salariobase') or None,
+            data.get('ch') or None,
+            data.get('dtadmissao') or None,
+            data.get('dtintegracao') or None,
+            data.get('dtdemissao') or None,
+            data.get('pcd') or None,
+            data.get('motivo_desligamento') or None,
+            data.get('status') or None,
+            data.get('usuario') or None,
+            id
+        )
+
+
+        cursor.execute(sql, valores)
+        conn.commit()
+
+        return jsonify({"sucesso": True, "mensagem": "Colaborador atualizado com sucesso!"})
+
+    except Exception as e:
+        print("🚨 ERRO AO EDITAR FUNCIONÁRIO:", e)
+        return jsonify({"sucesso": False, "mensagem": str(e)}), 500
+
+    finally:
+        cursor.close()
+        conn.close()
+
+@app.route('/api/funcionario', methods=['GET'])
+def listar_funcionario():
+    try:
+        conn = conectar()
+        cursor = conn.cursor(dictionary=True)
+
+        cursor.execute("""
+            SELECT
+                id,
+                empresa,
+                nome,
+                cpf,
+                sexo,
+                cargo,
+                dtadmissao,
+                dtdemissao,
+                pcd,
+                motivo_desligamento,
+                status
+            FROM rg_funcionario
+            ORDER BY id DESC
+        """)
+
+        resultados = cursor.fetchall()
+
+        return jsonify({
+            "sucesso": True,
+            "dados": resultados
+        })
+
+    except Exception as e:
+        # Captura e retorna erro
+        return jsonify({
+            "sucesso": False,
+            "erro": str(e)
+        }), 500
+
+    finally:
+        # Fecha conexão, se existir
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
+
+@app.route('/api/funcionario/<int:id>', methods=['GET'])
+def obter_funcionario(id):
+    try:
+        conn = conectar()
+        cursor = conn.cursor(dictionary=True)
+
+        cursor.execute("""
+            SELECT 
+                id,
+                empresa,
+                nome,
+                cpf,
+                sexo,
+                cargo,
+                contato,
+                emailpessoal,
+                DATE_FORMAT(dtnascimento, '%Y-%m-%d') AS dtnascimento,
+                filhos,
+                cidade,
+                estado,
+                formacao_escolar,
+                formacao_superior,
+                matricula,
+                emailprofissional,
+                salariobase,
+                ch,
+                DATE_FORMAT(dtadmissao, '%Y-%m-%d') AS dtadmissao,
+                DATE_FORMAT(dtintegracao, '%Y-%m-%d') AS dtintegracao,
+                DATE_FORMAT(dtdemissao, '%Y-%m-%d') AS dtdemissao,
+                pcd,
+                motivo_desligamento,
+                status
+            FROM rg_funcionario
+            WHERE id = %s
+        """, (id,))
+
+        resultado = cursor.fetchone()
+
+        if not resultado:
+            return jsonify({
+                "sucesso": False,
+                "erro": "Registro não encontrado."
+            }), 404
+
+        return jsonify({
+            "sucesso": True,
+            "dados": resultado
+        })
+
+    except Exception as e:
+        print("❌ Erro ao obter funcionario:", e)
+        return jsonify({
+            "sucesso": False,
+            "erro": str(e)
+        }), 500
+
+    finally:
+        cursor.close()
+        conn.close()
+
+
 # === EMPRESAS ===
 
 @app.route('/empresas', methods=['GET'])
@@ -1615,7 +1866,7 @@ def atualizar_processo(id):
             dados.get('sintese') or '',
             dados.get('conclusao') or '',
             dados.get('modo') or '',
-            dados.get('status') or '',
+            dados.get('status'),
             dados.get('usuario') or '',
             id
         )
@@ -1623,7 +1874,7 @@ def atualizar_processo(id):
         cursor.execute(sql, params)
         conn.commit()
 
-        return jsonify({"sucesso": True, "mensagem": "Registro atualizado com sucesso."})
+        return jsonify({"sucesso": True, "mensagem": "Processo atualizado com sucesso."})
 
     except Exception as e:
         print("ERRO atualizar_processo:", e)
@@ -1640,15 +1891,17 @@ def buscar_requisicao():
         return jsonify({"sucesso": False, "mensagem": "Número inválido."})
 
     try:
+        # usa o "mysql" já configurado no seu app
         conn = mysql.connect()
         cursor = conn.cursor(dictionary=True)
 
         cursor.execute("""
+            SELECT *
             FROM rg_requisicao_pessoal
             WHERE UPPER(numero_requisicao) = UPPER(%s)
             LIMIT 1
         """, (numero,))
-        
+
         dado = cursor.fetchone()
 
         cursor.close()
@@ -1661,6 +1914,7 @@ def buscar_requisicao():
 
     except Exception as e:
         return jsonify({"sucesso": False, "mensagem": str(e)})
+
 
 # === UNIDADES PERMITIDAS (exemplo) ===
 @app.route('/api/unidades_permitidas', methods=['GET'])

@@ -235,16 +235,16 @@
               <input type="text" id="conclusao">
 
               <select id="modo" required>
-                <option value="Onlide">Onlide</option>
+                <option value="Online">Online</option>
                 <option value="Presencial">Presencial</option>
               </select>
 
               <select id="status" required>
-                <option value="Em processo">Em processo</option>
-                <option value="Quadro de reserva">Quadro de reserva</option>
-                <option value="Desclassificado">Desclassificado</option>
-                <option value="Desistência">Desistência</option>
-                <option value="Contratado">Contratado</option>
+                <option value="1. Em processo">Em processo</option>
+                <option value="3. Quadro de reserva">Quadro de reserva</option>
+                <option value="4. Desclassificado">Desclassificado</option>
+                <option value="5. Desistência">Desistência</option>
+                <option value="2. Contratado">Contratado</option>
               </select>
               
             </div>
@@ -307,22 +307,23 @@ async function salvarRequisicao(event){
   const unidadeSelecionada = JSON.parse(localStorage.getItem('unidadeSelecionada')) || {};
   const usuarioLogado = JSON.parse(localStorage.getItem("usuarioLogado")) || {};
 
-  const dados = {
-    numero_requisicao: numero_requisicao.value.trim(),
-    nome: nome.value.trim(),
-    cargo: cargo.value.trim(),
-    contato: contato.value.trim(),
-    email: email.value.trim(),
-    data: data.value || new Date().toISOString().slice(0,10),
-    fase: fase.value || 1,
-    formacao: formacao.value.trim(),
-    sintese: sintese.value.trim(),
-    conclusao: conclusao.value.trim(),
-    modo: modo.value,
-    status: status.value,
-    empresa: unidadeSelecionada.nome || '',
-    usuario: usuarioLogado.nome || usuarioLogado.id || ''
-  };
+    const dados = {
+        numero_requisicao: document.getElementById("numero_requisicao").value.trim(),
+        nome: document.getElementById("nome").value.trim(),
+        cargo: document.getElementById("cargo").value.trim(),
+        contato: document.getElementById("contato").value.trim(),
+        email: document.getElementById("email").value.trim(),
+        data: document.getElementById("data").value || new Date().toISOString().slice(0,10),
+        fase: document.getElementById("fase").value || 1,
+        formacao: document.getElementById("formacao").value.trim(),
+        sintese: document.getElementById("sintese").value.trim(),
+        conclusao: document.getElementById("conclusao").value.trim(),
+        modo: document.getElementById("modo").value,
+        status: document.getElementById("status").value,
+        empresa: unidadeSelecionada.nome || '',
+        usuario: usuarioLogado.nome || usuarioLogado.id || ''
+    };
+
 
   const url = editandoId ? `${API}/${editandoId}` : API;
   const method = editandoId ? "PUT" : "POST";
@@ -425,12 +426,11 @@ async function atualizar(event, id){
             <thead>
               <tr>
                 <th>#</th>
-                <th>Nº Req</th>
+                <th>Nº Requisição</th>
                 <th>Data Solicitação</th>
                 <th>Solicitante</th>
                 <th>Cargo</th>
                 <th>Fase</th>
-                <th>Contratação</th>
                 <th>Ações</th>
               </tr>
             </thead>
@@ -443,7 +443,6 @@ async function atualizar(event, id){
                   <td>${i.nome || ''}</td>
                   <td>${i.cargo || ''}</td>
                   <td>${i.fase || ''}</td>
-                  <td>${i.status || ''}</td>
                   
                   <td>
                     <button class="btn" onclick="editar(${i.id})">Editar</button>
@@ -457,57 +456,6 @@ async function atualizar(event, id){
         </div>
       `;
     }).join('');
-  }
-
-  
-  // === ATUALIZAR ===
-  async function atualizar(event, id){
-    event.preventDefault();
-    const unidadeSelecionada = JSON.parse(localStorage.getItem('unidadeSelecionada'));
-
-    const dados = {
-      solicitante_nome: document.getElementById("solicitante_nome").value,
-      solicitante_cargo: document.getElementById("solicitante_cargo").value,
-      departamento: document.getElementById("departamento").value,
-
-      tipo_requisicao: document.getElementById("tipo_requisicao").value,
-      titulo_cargo: document.getElementById("titulo_cargo").value,
-      area_setor: document.getElementById("area_setor").value,
-      empresa: unidadeSelecionada ? unidadeSelecionada.nome : null,
-      quantidade: parseInt(document.getElementById("quantidade").value || 1, 10),
-      motivo: document.getElementById("motivo").value,
-      colaborador_substituido: document.getElementById("colaborador_substituido").value,
-      urgencia: document.getElementById("urgencia").value,
-      prazo_desejado: document.getElementById("prazo_desejado").value || null,
-      data_contratacao: document.getElementById("data_contratacao").value || null,
-
-      faixa_salarial: document.getElementById("faixa_salarial").value,
-      tipo_contrato: document.getElementById("tipo_contrato").value,
-
-      formacao_exigida: document.getElementById("formacao_exigida").value,
-      experiencia_minima: document.getElementById("experiencia_minima").value,
-      competencias_tecnicas: document.getElementById("competencias_tecnicas").value,
-      competencias_comportamentais: document.getElementById("competencias_comportamentais").value,
-
-      responsavel_rh: document.getElementById("responsavel_rh").value,
-      observacoes: document.getElementById("observacoes").value,
-
-      status: document.getElementById("status").value
-    };
-
-    const resp = await fetch(`${API}/${id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(dados)
-    });
-    const resultado = await resp.json();
-    alert(resultado.mensagem || "Atualizado.");
-    if(resultado.sucesso){
-      fecharFormulario();
-      carregarTabela();
-      // reset onsubmit para criar depois
-      document.getElementById("formRequisicao").onsubmit = salvarRequisicao;
-    }
   }
 
   // === EXCLUIR ===
@@ -554,64 +502,38 @@ async function atualizar(event, id){
 
       // Cabeçalho
       doc.setFontSize(16);
-      doc.text("REQUISIÇÃO DE PESSOAL", 105, 15, { align: "center" });
+      doc.text("AVALIAÇÃO DE CANDIDATO", 105, 15, { align: "center" });
 
       doc.addImage('/static/image/genesis1.png', 'JPEG', 10, 5, 30, 12);
 
       doc.setFontSize(10);
       doc.text(`Número: ${r.numero_requisicao || '-'}`, 14, 25);
-      doc.text(`Data Solicitação: ${formatarData(r.data_solicitacao)}`, 140, 25);
+      doc.text(`Data Entrevista: ${formatarData(r.data)}`, 85   , 25);
+      doc.text(`Status: ${r.status || '-'}`, 150, 25);
 
       // Linha separadora
       doc.line(10, 28, 200, 28);
 
       // Seção 1 — Dados da vaga
       doc.setFontSize(12);
-      doc.text("Dados da Vaga", 14, 36);
+      doc.text("Detalhes", 14, 36);
       doc.setFontSize(10);
       let y = 42;
       const espacamento = 6;
 
       const dadosVaga = [
-        ["Tipo de Requisição", r.tipo_requisicao],
-        ["Título do Cargo", r.titulo_cargo],
-        ["Área / Setor", r.area_setor],
-        ["Quantidade", r.quantidade],
-        ["Faixa Salarial", r.faixa_salarial],
-        ["Tipo de Contrato", r.tipo_contrato],
-        ["Motivo", r.motivo],
-        ["Formação Exigida", r.formacao_exigida],
-        ["Experiência Mínima", r.experiencia_minima],
-        ["Competências Técnicas", r.competencias_tecnicas],
-        ["Competências Comportamentais", r.competencias_comportamentais],
-        ["Observações", r.observacoes]
+        ["Modo de entrevista", r.modo],
+        ["Cargo", r.cargo],
+        ["Candidato", r.nome],
+        ["Contato", r.contato],
+        ["E-mail", r.email],
+        ["Formação acadêmica", r.formacao],
+        ["",],
+        ["Sintese", r.sintese],
+        ["Conclusão", r.conclusao]
       ];
 
       dadosVaga.forEach(([label, valor]) => {
-        doc.text(`${label}: ${valor || ''}`, 14, y);
-        y += espacamento;
-      });
-
-      // Nova seção — Dados do Solicitante
-      y += 4;
-      doc.setFontSize(12);
-      doc.text("Dados do Solicitante", 14, y);
-      y += 6;
-      doc.setFontSize(10);
-
-      const dadosSolicitante = [
-        ["Nome", r.solicitante_nome],
-        ["Cargo", r.solicitante_cargo],
-        ["Departamento", r.departamento],
-        ["Colaborador Substituído", r.colaborador_substituido],
-        ["Responsável RH", r.responsavel_rh],
-        ["Urgência", r.urgencia],
-        ["Prazo Desejado", formatarData(r.prazo_desejado)],
-        ["Data Contratação", formatarData(r.data_contratacao)],
-        ["Status", r.status]
-      ];
-
-      dadosSolicitante.forEach(([label, valor]) => {
         doc.text(`${label}: ${valor || ''}`, 14, y);
         y += espacamento;
         if (y > 270) { // quebra de página se estiver cheio
@@ -622,10 +544,10 @@ async function atualizar(event, id){
 
       // Rodapé
       doc.setFontSize(9);
-      doc.text("© 2025 Genesis Lotus - Sistema de Requisições de Pessoal", 105, 290, { align: "center" });
+      doc.text("© 2025 Genesis Lotus", 105, 290, { align: "center" });
 
       // Salvar PDF
-      const nomeArquivo = `Requisicao_Pessoal_${r.id}.pdf`;
+      const nomeArquivo = `Processo_Seletivo_${r.nome}.pdf`;
       doc.save(nomeArquivo);
 
     } catch (erro) {
@@ -675,27 +597,7 @@ async function atualizar(event, id){
     else localStorage.removeItem('unidadeSelecionada');
   });
 
-  // BUSCAR REQUISIÇÃO NO BANCO //
-  document.getElementById("numero_requisicao").addEventListener("change", async function () {
-    const numeroReq = this.value.trim();
-    const unidadeSelecionada = JSON.parse(localStorage.getItem('unidadeSelecionada')) || {};
-
-    if (!numeroReq || !unidadeSelecionada.nome) return;
-
-    try {
-        const resp = await fetch(`/api/buscar_requisicao?numero=${numeroReq}&empresa=${unidadeSelecionada.nome}`);
-        const dados = await resp.json();
-
-        if (dados.sucesso && dados.dado) {
-            document.getElementById("cargo").value = dados.dado.titulo_cargo || "";
-        } else {
-            alert("Requisição não encontrada para esta empresa.");
-        }
-    } catch (e) {
-        console.error("Erro ao buscar requisição:", e);
-        alert("Erro ao consultar requisição.");
-    }
-});
+  
 
 async function buscarRequisicaoManualmente() {
     const numeroReq = document.getElementById("numero_requisicao").value.trim();
