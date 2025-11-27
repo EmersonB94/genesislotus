@@ -415,15 +415,16 @@ def atualizar_perfil():
     
 # === AÇÕES / TREINAMENTOS ===
 
-@app.route('/acoes_treinamentos', methods=['GET'])
+@app.route('/api/acoes_treinamentos', methods=['GET'])
 def listar_treinamentos():
+
+    unidade = request.args.get('unidade')
+    mes = request.args.get('mes')
+    ano = request.args.get('ano')
+
     try:
         conn = conectar()
         cursor = conn.cursor(dictionary=True)
-
-        unidade = request.args.get('unidade')
-        mes = request.args.get('mes')
-        ano = request.args.get('ano')
 
         query = "SELECT * FROM acoestreinamentos WHERE 1=1"
         params = []
@@ -451,7 +452,6 @@ def listar_treinamentos():
     except Exception as e:
         print("🚨 ERRO AO LISTAR TREINAMENTOS:", e)
         return jsonify({"sucesso": False, "mensagem": str(e)}), 500
-
 
 
 @app.route('/acoes_treinamentos', methods=['POST'])
@@ -551,25 +551,56 @@ def excluir_treinamento(id):
 
 @app.route('/api/avaliacao_experiencia', methods=['GET'])
 def listar_avaliacao_experiencia():
+    unidade = request.args.get('unidade')  # Nome da unidade vinda do JS
+    mes = request.args.get('mes')          # "01".. "12"
+    ano = request.args.get('ano')          # "2025"
+    status = request.args.get('status')    # "Aprovado", "Reprovado", etc.
+
     try:
         conn = conectar()
         cursor = conn.cursor(dictionary=True)
 
-        cursor.execute("""
-            SELECT 
-                id,
-                empresa,
-                nome,
-                cargo,
-                dt_admissao,
-                dt_integracao,
-                dt_avaliacao1,
-                dt_avaliacao2,
-                padrinho,
-                status
+        # Base
+        query = """
+            SELECT *
             FROM rg_avaliacao_experiencia
-            ORDER BY id DESC
-        """)
+            WHERE 1=1
+        """
+        params = []
+
+        # === FILTRO POR UNIDADE (empresa) ===
+        if unidade:
+            query += " AND TRIM(LOWER(empresa)) = TRIM(LOWER(%s))"
+            params.append(unidade)
+
+        # === FILTRO POR STATUS ===
+        if status:
+            query += " AND status = %s"
+            params.append(status)
+
+        # === FILTRAR POR ANO E MÊS (base: dt_admissao) ===
+        if ano:
+            if mes:
+                # ano + mês
+                query += """
+                    AND DATE_FORMAT(dt_admissao, '%%Y') = %s
+                    AND DATE_FORMAT(dt_admissao, '%%m') = %s
+                """
+                params.extend([ano, mes])
+            else:
+                # apenas ano
+                query += " AND DATE_FORMAT(dt_admissao, '%%Y') = %s"
+                params.append(ano)
+
+        elif mes:
+            # apenas mês, independente do ano
+            query += " AND DATE_FORMAT(dt_admissao, '%%m') = %s"
+            params.append(mes)
+
+        # Ordenação final
+        query += " ORDER BY id DESC"
+
+        cursor.execute(query, tuple(params))
         resultados = cursor.fetchall()
 
         return jsonify({
@@ -578,18 +609,18 @@ def listar_avaliacao_experiencia():
         })
 
     except Exception as e:
-        # Captura e retorna erro
         return jsonify({
             "sucesso": False,
             "erro": str(e)
         }), 500
 
     finally:
-        # Fecha conexão, se existir
-        if cursor:
+        try:
             cursor.close()
-        if conn:
             conn.close()
+        except:
+            pass
+
 
 @app.route('/api/avaliacao_experiencia/<int:id>', methods=['GET'])
 def obter_avaliacao_experiencia(id):

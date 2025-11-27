@@ -130,7 +130,7 @@
         <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
           <button class="btn" onclick="abrirFormulario()">Novo Registro</button>
           <button class="btn" onclick="exportarTabela()">Exportar</button>
-          <select id="selectUnidade" class="btn" style="padding: 9px 14px;">
+          <select id="selectUnidade" class="btn" style="padding: 9px 14px;" onchange="carregarTabela()">
             <option value="">Selecione a Unidade</option>
           </select>
           <button class="btn" onclick="sair()">Sair</button>
@@ -161,11 +161,11 @@
 
           <select id="filtroStatus" class="btn" style="padding:9px 12px;">
             <option value="">Todos os Status</option>
-            <option value="Pendente">Pendente</option>
-            <option value="Em análise">Em análise</option>
-            <option value="Aprovada">Aprovada</option>
-            <option value="Rejeitada">Rejeitada</option>
-            <option value="Concluída">Concluída</option>
+            <option value="1. Em processo">Em processo</option>
+            <option value="3. Quadro de reserva">Quadro de reserva</option>
+            <option value="4. Desclassificado">Desclassificado</option>
+            <option value="5. Desistência">Desistência</option>
+            <option value="2. Contratado">Contratado</option>
           </select>
 
           <button class="btn" onclick="carregarTabela()">Filtrar</button>
@@ -427,7 +427,7 @@ async function atualizar(event, id){
               <tr>
                 <th>#</th>
                 <th>Nº Requisição</th>
-                <th>Data Solicitação</th>
+                <th>Entrevista</th>
                 <th>Solicitante</th>
                 <th>Cargo</th>
                 <th>Fase</th>
@@ -446,7 +446,6 @@ async function atualizar(event, id){
                   
                   <td>
                     <button class="btn" onclick="editar(${i.id})">Editar</button>
-                    
                     <button class="btn" onclick="PDF(${i.id})">PDF</button>
                   </td>
                 </tr>
@@ -487,74 +486,89 @@ async function atualizar(event, id){
   }
 
   async function PDF(id) {
-    try {
-      const resp = await fetch(`${API}/${id}`);
-      const resultado = await resp.json();
+  try {
+    const resp = await fetch(`${API}/${id}`);
+    const resultado = await resp.json();
 
-      if (!resultado.sucesso || !resultado.dado) {
-        alert("Erro ao gerar PDF: " + (resultado.mensagem || "Registro não encontrado."));
-        return;
-      }
+    if (!resultado.sucesso || !resultado.dado) {
+      alert("Erro ao gerar PDF: " + (resultado.mensagem || "Registro não encontrado."));
+      return;
+    }
 
-      const r = resultado.dado;
-      const { jsPDF } = window.jspdf;
-      const doc = new jsPDF();
+    const r = resultado.dado;
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
 
-      // Cabeçalho
-      doc.setFontSize(16);
-      doc.text("AVALIAÇÃO DE CANDIDATO", 105, 15, { align: "center" });
+    // Cabeçalho
+    doc.setFontSize(16);
+    doc.text("AVALIAÇÃO DE CANDIDATO", 105, 15, { align: "center" });
 
-      doc.addImage('/static/image/genesis1.png', 'JPEG', 10, 5, 30, 12);
+    doc.addImage('/static/image/genesis1.png', 'JPEG', 10, 5, 30, 12);
 
-      doc.setFontSize(10);
-      doc.text(`Número: ${r.numero_requisicao || '-'}`, 14, 25);
-      doc.text(`Data Entrevista: ${formatarData(r.data)}`, 85   , 25);
-      doc.text(`Status: ${r.status || '-'}`, 150, 25);
+    doc.setFontSize(10);
+    doc.text(`Número: ${r.numero_requisicao || '-'}`, 14, 25);
+    doc.text(`Data Entrevista: ${formatarData(r.data)}`, 85, 25);
+    doc.text(`Status: ${r.status || '-'}`, 150, 25);
 
-      // Linha separadora
-      doc.line(10, 28, 200, 28);
+    doc.line(10, 28, 200, 28);
 
-      // Seção 1 — Dados da vaga
-      doc.setFontSize(12);
-      doc.text("Detalhes", 14, 36);
-      doc.setFontSize(10);
-      let y = 42;
-      const espacamento = 6;
+    // Seção
+    doc.setFontSize(12);
+    doc.text("Detalhes", 14, 36);
+    doc.setFontSize(10);
 
-      const dadosVaga = [
-        ["Modo de entrevista", r.modo],
-        ["Cargo", r.cargo],
-        ["Candidato", r.nome],
-        ["Contato", r.contato],
-        ["E-mail", r.email],
-        ["Formação acadêmica", r.formacao],
-        ["",],
-        ["Sintese", r.sintese],
-        ["Conclusão", r.conclusao]
-      ];
+    let y = 42;
+    const espacamento = 6;
+    const larguraMax = 180; // margem esquerda e direita controladas
 
-      dadosVaga.forEach(([label, valor]) => {
-        doc.text(`${label}: ${valor || ''}`, 14, y);
+    const dadosVaga = [
+      ["Empresa", r.empresa],
+      ["Modo de entrevista", r.modo],
+      ["Cargo", r.cargo],
+      ["Candidato", r.nome],
+      ["Contato", r.contato],
+      ["E-mail", r.email],
+      ["Formação acadêmica", r.formacao],
+      [""],
+      ["Sintese", r.sintese],
+      [""],
+      ["Conclusão", r.conclusao]
+    ];
+
+    dadosVaga.forEach(([label, valor]) => {
+
+      valor = valor || "";
+
+      // GERA A QUEBRA AUTOMÁTICA
+      const linhas = doc.splitTextToSize(`${label}: ${valor}`, larguraMax);
+
+      linhas.forEach(linha => {
+        doc.text(linha, 14, y);
         y += espacamento;
-        if (y > 270) { // quebra de página se estiver cheio
+
+        // Se chegar perto do final da página, cria nova página
+        if (y > 270) {
           doc.addPage();
           y = 20;
         }
       });
 
-      // Rodapé
-      doc.setFontSize(9);
-      doc.text("© 2025 Genesis Lotus", 105, 290, { align: "center" });
+      // espaço extra entre campos
+      y += 2;
+    });
 
-      // Salvar PDF
-      const nomeArquivo = `Processo_Seletivo_${r.nome}.pdf`;
-      doc.save(nomeArquivo);
+    // Rodapé
+    doc.setFontSize(9);
+    doc.text("© 2025 Genesis Lotus", 105, 290, { align: "center" });
 
-    } catch (erro) {
-      alert("Erro ao gerar PDF: " + erro.message);
-      console.error(erro);
-    }
+    const nomeArquivo = `Processo_Seletivo_${r.nome}.pdf`;
+    doc.save(nomeArquivo);
+
+  } catch (erro) {
+    alert("Erro ao gerar PDF: " + erro.message);
+    console.error(erro);
   }
+}
 
   // === Unidades permitidas (mantive seu endpoint antigo) ===
   carregarTabela();

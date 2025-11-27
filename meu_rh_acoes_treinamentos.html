@@ -129,8 +129,8 @@
       <div>
         <button class="btn" onclick="abrirFormulario()">Novo Registro</button>
         <button class="btn" onclick="exportarTabela()">Exportar</button>
-        <select id="selectUnidade" class="btn" style="padding: 9px 14px;">
-          <option value="">Selecione a Unidade</option>
+        <select id="selectUnidade" class="btn" style="padding: 9px 14px;" onchange="carregarTabela()">
+          <!-- <option value="">Selecione a Unidade</option> -->
         </select>
         <button class="btn" onclick="sair()">Sair</button>
       </div>
@@ -208,7 +208,7 @@ document.getElementById("usuarioLogado").innerText = usuarioLogado?.nome || "";
 
 let editandoId = null;
 
-const API = "http://localhost:5000/acoes_treinamentos";
+const API = "/acoes_treinamentos";
 
 // função auxiliar de formatação
   function formatarData(dataISO) {
@@ -282,7 +282,7 @@ async function salvarTreinamento(event){
 async function carregarTabela() {
   const unidadeSelecionada = JSON.parse(localStorage.getItem('unidadeSelecionada'));
   if (!unidadeSelecionada) {
-    document.getElementById("tabelaTreinamentos").innerHTML = "<p>Selecione uma unidade.</p>";
+    document.getElementById("tabelaTreinamentos").innerHTML = "<h3>Selecione uma unidade.</h3>";
     return;
   }
 
@@ -296,7 +296,7 @@ async function carregarTabela() {
     ano
   });
 
-  const resp = await fetch(`/acoes_treinamentos?${params.toString()}`);
+  const resp = await fetch(`/api/acoes_treinamentos?${params.toString()}`);
   const dados = await resp.json();
 
   if (!dados.sucesso) {
@@ -308,7 +308,7 @@ async function carregarTabela() {
   const container = document.getElementById("tabelaTreinamentos");
 
   if (!registros.length) {
-    container.innerHTML = "<p>Nenhum registro encontrado para os filtros selecionados.</p>";
+    container.innerHTML = "<h3>Nenhum registro encontrado para os filtros selecionados.</h3>";
     return;
   }
 

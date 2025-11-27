@@ -9,20 +9,99 @@
   <link rel="stylesheet" href="/static/css/style.css">
 
   <style>
-    .overlay { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.5); }
-    .form-popup { background:#fff; padding:20px; border-radius:8px; width:920px; max-height:90vh; overflow:auto; }
-    .form-popup input, .form-popup textarea, .form-popup select { width:100%; margin:6px 0 12px; padding:8px; box-sizing:border-box; }
-    .grupo-tipo { margin-bottom:20px; }
-    .small { font-size:0.85rem; color:#555; }
+    /* Fundo escurecido ao abrir o formulário */
+    .overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.6);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+    }
+
+    /* Container do formulário */
+    .form-popup {
+      background-color: #fff;
+      padding: 25px 30px;
+      border-radius: 15px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+      width: 500px;
+      max-height: 90vh;
+      overflow-y: auto;
+      animation: fadeIn 0.3s ease-in-out;
+    }
+
+    /* Título */
+    .form-popup h2 {
+      text-align: center;
+      color: #0D187D;
+      margin-bottom: 20px;
+      font-size: 1.5rem;
+    }
+
+    /* Campos do formulário */
+    .form-popup input,
+    .form-popup textarea,
+    .form-popup select {
+      width: 100%;
+      padding: 10px 12px;
+      margin: 8px 0;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      transition: 0.2s;
+    }
+
+    /* Foco no campo */
+    .form-popup input:focus,
+    .form-popup textarea:focus,
+    .form-popup select:focus {
+      border-color: #0D187D;
+      outline: none;
+      box-shadow: 0 0 5px rgba(13,24,125,0.3);
+    }
+
+    /* Botões do formulário */
+    .form-popup .btn {
+      width: 48%;
+      margin: 10px 1%;
+      padding: 10px;
+      border: none;
+      border-radius: 8px;
+      background-color: #0D187D;
+      color: #fff;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    .form-popup .btn:hover {
+      background-color: #0E3E98;
+    }
+
+    /* Animação de entrada suave */
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    @keyframes slideUp {
+      from { transform: translateY(30px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
   </style>
   </head>
   <body>
     <aside>
       <div>
         <div class="logo">
-          <img src="/static/image/logogenesislotus2.jpg" alt="Genesis Lotus" class="logo-img">
+          <img src="/static/image/LogoGenesis-Lotus2.png" alt="Genesis Lotus" class="logo-img">
         </div>
-        <p>Bem-vindo, <span id="usuarioLogado"></span>!</p>
+        <h4>Olá, <span id="usuarioLogado"></span></p></h4   >
         <nav>
           <a href="inicio"><i class="fa-solid fa-chart-line"></i> Início</a>
           <a href="indicadores"><i class="fa-solid fa-bullseye"></i> Indicadores</a>
@@ -89,38 +168,37 @@
       <div class="form-popup">
         <form id="formExperiencia" onsubmit="salvarRequisicao(event)">
 
+          <h2 id="tituloForm">Nova Ficha</h2>
           <label class="logo">Ficha cadastral</label></p>
 
-            <div style="display:flex; gap:10px;">
-            
-                <div style="flex:1;">
+            <fieldset>
                     
-                    <label class="logo">Dados colaborador</label></p>
-                    <label class="small">Nome</label>
+              <label class="logo">Dados colaborador</label></p>
+                    <label class="logo">Nome</label>
                     <input type="text" id="nome" required>
-                    <label class="small">CPF</label>
+                    <label class="logo">CPF</label>
                     <input type="text" id="cpf" required>
-                    <label class="small">Contato</label>
+                    <label class="logo">Contato</label>
                     <input type="text" id="contato" required>
-                    <label class="small">E-mail Pessoal</label>
-                    <input type="email" id="emailp">
+                    <label class="logo">E-mail Pessoal</label>
+                    <input type="email" id="emailpessoal">
                     
-                    <label class="small">Nascimento</label>
-                    <input type="date" id="nascimento" required>
+                    <label class="logo">Nascimento</label>
+                    <input type="date" id="dtnascimento" required>
                     <select id="sexo" required>
                       <option value="Masculino">Masculino</option>
                       <option value="Feminino">Feminino</option>
                       <option value="Não Informado">Não informado</option>
                     </select>
-                    <label class="small">Filhos</label>
+                    <label class="logo">Filhos</label>
                     <input type="text" id="filhos" required>
-                    <label class="small">Cidade</label>
+                    <label class="logo">Cidade</label>
                     <input type="text" id="cidade" required>
-                    <label class="small">Estado</label>
+                    <label class="logo">Estado</label>
                     <input type="text" id="estado" required>
 
                   <label class="logo">Escolaridade</label></p>
-                        <label class="small">Formação Escolar</label>
+                        <label class="logo">Formação Escolar</label>
                         <select id="formacao_escolar" required>
                             <option value="Não alfabetizado">Não alfabetizado</option>
                             <option value="Contratado">Ensino primário (Incompleto)</option>
@@ -133,32 +211,34 @@
                             <option value="Contratado">Ensino Superior (Incompleto)</option>
                             <option value="Contratado">Ensino Superior</option>
                         </select> 
-                        <label class="small">Formação superior</label>
-                        <input type="text" id="formacao_superior" required>
+                        <label class="logo">Formação superior</label>
+                        <input type="text" id="formacao_superior">
 
-                </div>
+            </fieldset>
+
+            <fieldset>
 
                     <div style="flex:1;">
                         
                         <label class="logo">Empregado</label></p>
-                        <label class="small">Matricula</label>
-                        <input type="text" id="matricula" required>
-                        <label class="small">E-mail Corporativo</label>
-                        <input type="email" id="emailc" required>
-                        <label class="small">Cargo</label>
+                        <label class="logo">Matricula</label>
+                        <input type="text" id="matricula">
+                        <label class="logo">E-mail Corporativo</label>
+                        <input type="email" id="emailprofissional">
+                        <label class="logo">Cargo</label>
                         <input type="text" id="cargo" required>
-                        <label class="small">Salário base</label>
-                        <input type="text" id="salariob" required>
-                        <label class="small">Jornada de trabalho / Carga horária semanal</label>
+                        <label class="logo">Salário base</label>
+                        <input type="text" id="salariobase">
+                        <label class="logo">Jornada de trabalho / Carga horária semanal</label>
                         <input type="text" id="ch" required>
-                        <label class="small">Admissão (data)</label>
-                        <input type="date" id="dt_admissao">
-                        <label class="small">Integração (data)</label>
-                        <input type="date" id="dt_integracao">
+                        <label class="logo">Admissão (data)</label>
+                        <input type="date" id="dtadmissao" required>
+                        <label class="logo">Integração (data)</label>
+                        <input type="date" id="dtintegracao">
                         
-                        <label class="small">PCD</label>
+                        <label class="logo">PCD</label>
                         <select id="pcd" required>
-                            <option value="Não alfabetizado">Não</option>
+                            <option value="Não se aplica">Não</option>
                             <option value="Deficiência Intelectual">Deficiência Intelectual</option>
                             <option value="Deficiência Física">Deficiência Física</option>
                             <option value="Deficiência Auditiva">Deficiência Auditiva</option>
@@ -166,9 +246,9 @@
                             <option value="Deficiência Múltipla">Deficiência Múltipla</option>
                             <option value="Deficiência Psicossocial">Deficiência Psicossocial</option>
                         </select> 
-                        <label class="small">Desligamento (data)</label>
-                        <input type="date" id="dt_demissao">
-                        <label class="small">Motivo de desligamento</label>
+                        <label class="logo">Desligamento (data)</label>
+                        <input type="date" id="dtdemissao">
+                        <label class="logo">Motivo de desligamento</label>
                         <select id="motivo_desligamento">
                             <option value="Acordo entre as partes">Acordo entre as partes</option>
                             <option value="Dispensa sem justa causa">Dispensa SEM justa causa</option>
@@ -178,7 +258,7 @@
                             <option value="Encerramento antecipado de contrato (Empregador)">Encerramento antecipado de contrato (Empregador)</option>
                             <option value="Encerramento antecipado de contrato (Empregado)">Encerramento antecipado de contrato (Empregado)</option>
                         </select> 
-                        <label class="small">Status</label>
+                        <label class="logo">Status</label>
                         <select id="status" required>
                             <option value="1. Em Experiência">Em Experiência</option>
                             <option value="2. Contratado">Contratado</option>
@@ -189,7 +269,7 @@
                         </select> 
                 
                     </div>
-            </div>
+          </fieldset>
           
           <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:10px;">
             <button type="submit" class="btn">Salvar</button>
@@ -259,14 +339,15 @@ function formatarData(dataISO) {
 
 
   let editandoId = null;
-  const API = "/api/avaliacao_experiencia"; // base da API
+  const API = "/api/funcionario"; // base da API
 
   function abrirFormulario(){
-    document.getElementById("form-popup").style.display = "flex";
-    document.getElementById("tituloForm").innerText = "Nova Requisição";
-    editandoId = null;
-    document.getElementById("formExperiencia").reset();
+  document.getElementById("form-popup").style.display = "flex";
+  document.getElementById("tituloForm").innerText = "Novo Cadastro";
+  editandoId = null;
+  document.getElementById("formExperiencia").reset();
   }
+
 
   function fecharFormulario(){
     document.getElementById("form-popup").style.display = "none";
@@ -288,14 +369,28 @@ async function salvarRequisicao(event) {
   const dados = {
     empresa: unidadeSelecionada ? unidadeSelecionada.nome : null,
     nome: document.getElementById("nome").value,
+    cpf: document.getElementById("cpf").value,
+    contato: document.getElementById("contato").value,
+    emailpessoal: document.getElementById("emailpessoal").value,
+    dtnascimento: document.getElementById("dtnascimento").value,
+    sexo: document.getElementById("sexo").value,
+    filhos: document.getElementById("filhos").value,
+    cidade: document.getElementById("cidade").value,
+    estado: document.getElementById("estado").value,
+    formacao_escolar: document.getElementById("formacao_escolar").value,
+    formacao_superior: document.getElementById("formacao_superior").value,
+    matricula: document.getElementById("matricula").value,
+    emailprofissional: document.getElementById("emailprofissional").value,
     cargo: document.getElementById("cargo").value,
-    dt_admissao: document.getElementById("dt_admissao").value,
-    dt_integracao: document.getElementById("dt_integracao").value,
-    dt_avaliacao1: document.getElementById("dt_avaliacao1").value,
-    dt_avaliacao2: document.getElementById("dt_avaliacao2").value,
-    padrinho: document.getElementById("padrinho").value,
-    dt_padrinho: document.getElementById("dt_padrinho").value,
-    status: document.getElementById("status").value
+    salariobase: document.getElementById("salariobase").value,
+    ch: document.getElementById("ch").value,
+    dtadmissao: document.getElementById("dtadmissao").value,
+    dtintegracao: document.getElementById("dtintegracao").value,
+    dtdemissao: document.getElementById("dtdemissao").value,
+    pcd: document.getElementById("pcd").value,
+    motivo_desligamento: document.getElementById("motivo_desligamento").value,
+    status: document.getElementById("status").value,
+    usuario: usuarioLogado?.nome || "admin"
   };
 
   try {
@@ -372,67 +467,76 @@ async function salvarRequisicao(event) {
       return;
     }
 
-    // Agrupar por status
-    const grupos = [...new Set(registros.map(t => t.status || 'Sem Status'))];
+    // Agrupar por cargo (ou "Sem Cargo")
+const grupos = [...new Set(registros.map(t => t.cargo || 'Sem Cargo'))];
 
-    const container = document.getElementById("tabelaRequisicoes"); // ✅ CORREÇÃO AQUI
-    container.innerHTML = grupos.map(grp => {
-      const items = registros.filter(t => (t.status||'') === grp);
-      return `
-        <div class="grupo-tipo">
-          <h3>${grp} (${items.length})</h3>
-          <table>
+const container = document.getElementById("tabelaRequisicoes");
+
+container.innerHTML = grupos.map(grp => {
+
+    const items = registros.filter(t => (t.cargo || 'Sem Cargo') === grp);
+
+    return `
+    <div class="grupo-tipo">
+        <h3>${grp} (${items.length})</h3>
+
+        <table>
             <thead>
-              <tr>
-                <th>#</th>
-                <th>Data admissão</th>
-                <th>Data integração</th>
-                <th>Colaborador</th>
-                <th>Cargo</th>
-                <th>Avaliação 1</th>
-                <th>Avaliação 2</th>
-                <th>Padrinho</th>
-                <th>Ações</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${items.map(i => `
                 <tr>
-                  <td>${i.id}</td>
-                  <td>${formatarData(i.dt_admissao)}</td>
-                  <td>${formatarData(i.dt_integracao)}</td>
-                  <td>${i.nome || ''}</td>
-                  <td>${i.cargo || ''}</td>
-                  <td>${formatarData(i.dt_avaliacao1)}</td>
-                  <td>${formatarData(i.dt_avaliacao2)}</td>
-                  <td>${i.padrinho || ''}</td>
-                  <td>
-                    <button class="btn" onclick="editar(${i.id})">Editar</button>
-                    <button class="btn" onclick="excluir(${i.id})">Excluir</button>
-                    <button class="btn" onclick="PDF(${i.id})">PDF</button>
-                  </td>
+                    <th>#</th>
+                    <th>Colaborador</th>
+                    <th>Cargo</th>
+                    <th>Admissão</th>
+                    <th>PCD</th>
+                    <th>Sexo</th>
+                    <th>Motivo Desligamento</th>
+                    <th>Status</th>
+                    <th>Ações</th>
                 </tr>
-              `).join('')}
+            </thead>
+
+            <tbody>
+                ${items.map(i => `
+                <tr>
+                    <td>${i.id}</td>
+                    <td>${i.nome || ''}</td>
+                    <td>${i.cargo || ''}</td>
+                    <td>${formatarData(i.dtadmissao) || ''}</td>
+                    <td>${i.pcd || ''}</td>
+                    <td>${i.sexo || ''}</td>
+                    <td>${i.motivo_desligamento || ''}</td>
+                    <td>${i.status || ''}</td>
+                    <td>
+                        <button class="btn" onclick="editar(${i.id})">
+                            Editar
+                        </button>
+                        <button class="btn" onclick="PDF(${i.id})">
+                            PDF
+                        </button>
+                    </td>
+                </tr>
+                `).join('')}
             </tbody>
-          </table>
-        </div>
-      `;
-    }).join('');
+        </table>
+    </div>
+    `;
+}).join('');
+
   }
 
 
-  // === EDITAR ===
+// === EDITAR ===
 async function editar(id) {
   try {
     const resp = await fetch(`${API}/${id}`);
     const resultado = await resp.json();
 
     if (!resultado.sucesso) {
-      alert(resultado.mensagem || "Erro ao buscar registro.");
+      alert(resultado.erro || "Erro ao buscar registro.");
       return;
     }
 
-    const reg = resultado.dados; // ✅ Corrigido: era resultado.dado
+    const reg = resultado.dados || {};  // ✅ Primeiro cria o reg
 
     if (!reg) {
       alert("Registro não encontrado.");
@@ -441,41 +545,70 @@ async function editar(id) {
 
     abrirFormulario();
     editandoId = id;
-    document.getElementById("tituloForm").innerText = "Editar Avaliação";
+    document.getElementById("tituloForm").innerText = "Editar Colaborador";
 
-    // Popular campos
-    document.getElementById("nome").value = reg.nome || "";
-    document.getElementById("cargo").value = reg.cargo || "";
-    document.getElementById("dt_admissao").value = reg.dt_admissao || "";
-    document.getElementById("dt_integracao").value = reg.dt_integracao || "";
-    document.getElementById("dt_avaliacao1").value = reg.dt_avaliacao1 || "";
-    document.getElementById("dt_avaliacao2").value = reg.dt_avaliacao2 || "";
-    document.getElementById("padrinho").value = reg.padrinho || "";
-    document.getElementById("dt_padrinho").value = reg.dt_padrinho || "";
-    document.getElementById("status").value = reg.status || "Em Experiência";
+    // Preencher campos
+    document.getElementById("nome").value = reg.nome ?? "";
+    document.getElementById("cpf").value = reg.cpf ?? "";
+    document.getElementById("contato").value = reg.contato ?? "";
+    document.getElementById("emailpessoal").value = reg.emailpessoal ?? "";
+    document.getElementById("dtnascimento").value = reg.dtnascimento ?? "";
+    document.getElementById("sexo").value = reg.sexo ?? "";
+    document.getElementById("filhos").value = reg.filhos ?? "";
+    document.getElementById("cidade").value = reg.cidade ?? "";
+    document.getElementById("estado").value = reg.estado ?? "";
+    document.getElementById("formacao_escolar").value = reg.formacao_escolar ?? "";
+    document.getElementById("formacao_superior").value = reg.formacao_superior ?? "";
+    document.getElementById("matricula").value = reg.matricula ?? "";
+    document.getElementById("emailprofissional").value = reg.emailprofissional ?? "";
+    document.getElementById("cargo").value = reg.cargo ?? "";
+    document.getElementById("salariobase").value = reg.salariobase ?? "";
+    document.getElementById("ch").value = reg.ch ?? "";
+    document.getElementById("dtadmissao").value = reg.dtadmissao ?? "";
+    document.getElementById("dtintegracao").value = reg.dtintegracao ?? "";
+    document.getElementById("dtdemissao").value = reg.dtdemissao ?? "";
+    document.getElementById("pcd").value = reg.pcd ?? "";
+    document.getElementById("motivo_desligamento").value = reg.motivo_desligamento ?? "";
+    document.getElementById("status").value = reg.status ?? "Ativo";
 
-    // Alterar submit para atualizar
     document.getElementById("formExperiencia").onsubmit = (e) => atualizar(e, id);
+
   } catch (erro) {
     console.error("Erro ao editar:", erro);
     alert("Erro ao carregar dados para edição.");
   }
 }
 
+
   // === ATUALIZAR ===
   async function atualizar(e, id) {
   e.preventDefault();
 
   const dados = {
+    empresa: unidadeSelecionada ? unidadeSelecionada.nome : null,
     nome: document.getElementById("nome").value,
+    cpf: document.getElementById("cpf").value,
+    contato: document.getElementById("contato").value,
+    emailpessoal: document.getElementById("emailpessoal").value,
+    dtnascimento: document.getElementById("dtnascimento").value,
+    sexo: document.getElementById("sexo").value,
+    filhos: document.getElementById("filhos").value,
+    cidade: document.getElementById("cidade").value,
+    estado: document.getElementById("estado").value,
+    formacao_escolar: document.getElementById("formacao_escolar").value,
+    formacao_superior: document.getElementById("formacao_superior").value,
+    matricula: document.getElementById("matricula").value,
+    emailprofissional: document.getElementById("emailprofissional").value,
     cargo: document.getElementById("cargo").value,
-    dt_admissao: document.getElementById("dt_admissao").value,
-    dt_integracao: document.getElementById("dt_integracao").value,
-    dt_avaliacao1: document.getElementById("dt_avaliacao1").value,
-    dt_avaliacao2: document.getElementById("dt_avaliacao2").value,
-    padrinho: document.getElementById("padrinho").value,
-    dt_padrinho: document.getElementById("dt_padrinho").value,
-    status: document.getElementById("status").value
+    salariobase: document.getElementById("salariobase").value,
+    ch: document.getElementById("ch").value,
+    dtadmissao: document.getElementById("dtadmissao").value,
+    dtintegracao: document.getElementById("dtintegracao").value,
+    dtdemissao: document.getElementById("dtdemissao").value,
+    pcd: document.getElementById("pcd").value,
+    motivo_desligamento: document.getElementById("motivo_desligamento").value,
+    status: document.getElementById("status").value,
+    usuario: usuarioLogado?.nome || "admin"
   };
 
   const resp = await fetch(`${API}/${id}`, {
@@ -543,7 +676,7 @@ async function editar(id) {
     // Cabeçalho
     doc.addImage('/static/image/genesis1.png', 'JPEG', 10, 5, 30, 12);
     doc.setFontSize(16);
-    doc.text("AVALIAÇÃO DE EXPERIÊNCIA", 105, 15, { align: "center" });
+    doc.text("FICHA CADASTRAL", 105, 15, { align: "center" });
 
     // Linha separadora
     doc.line(10, 20, 200, 20);
@@ -559,38 +692,50 @@ async function editar(id) {
     doc.setFont("helvetica", "normal");
 
     doc.text(`Colaborador: ${r.nome || ""}`, 10, y); y += espacamento;
-    doc.text(`Cargo: ${r.cargo || ""}`, 10, y); y += espacamento;
-    doc.text(`Data de Admissão: ${r.dt_admissao ? formatarData(r.dt_admissao) : ""}`, 10, y); y += espacamento;
-    doc.text(`Data de Integração: ${r.dt_integracao ? formatarData(r.dt_integracao) : ""}`, 10, y); y += espacamento;
+    doc.text(`CPF: ${r.cpf || ""}`, 10, y); y += espacamento;
+    doc.text(`Contato: ${r.contato || ""}`, 10, y); y += espacamento;
+    doc.text(`E-mail pessoal: ${r.emailpessoal || ""}`, 10, y); y += espacamento;
+    doc.text(`Data de Nascimento: ${r.dtnascimento ? formatarData(r.dtnascimento) : ""}`, 10, y); y += espacamento;
+    doc.text(`Sexo: ${r.sexo || ""}`, 10, y); y += espacamento;
+    doc.text(`Cidade: ${r.cidade || ""}`, 10, y); y += espacamento;
+    doc.text(`Estado: ${r.estado || ""}`, 10, y); y += espacamento;
 
     // Bloco 2 — Avaliações
     y += 4;
     doc.setFont("helvetica", "bold");
-    doc.text("Avaliações", 10, y);
+    doc.text("Formação", 10, y);
     y += 6;
     doc.setFont("helvetica", "normal");
 
-    doc.text(`1ª Avaliação: ${r.dt_avaliacao1 ? formatarData(r.dt_avaliacao1) : ""}`, 10, y); y += espacamento;
-    doc.text(`2ª Avaliação: ${r.dt_avaliacao2 ? formatarData(r.dt_avaliacao2) : ""}`, 10, y); y += espacamento;
-    doc.text(`Padrinho: ${r.padrinho || ""}`, 10, y); y += espacamento;
-    doc.text(`Data de Apadrinhamento: ${r.dt_padrinho ? formatarData(r.dt_padrinho) : ""}`, 10, y); y += espacamento;
+    doc.text(`Escolaridade: ${r.formacao_escolar || ""}`, 10, y); y += espacamento;
+    doc.text(`Formação / Superior: ${r.formacao_superior || ""}`, 10, y); y += espacamento;
 
     // Bloco 3 — Status
     y += 4;
     doc.setFont("helvetica", "bold");
-    doc.text("Status", 10, y);
+    doc.text("Dados de contratação", 10, y);
     y += 6;
     doc.setFont("helvetica", "normal");
 
-    doc.text(`Situação Atual: ${r.status || ""}`, 10, y); y += espacamento;
+    doc.text(`Matricula: ${r.matricula || ""}`, 10, y); y += espacamento;
+    doc.text(`Cargo: ${r.cargo || ""}`, 10, y); y += espacamento;
+    doc.text(`E-mail corporativo: ${r.emailprofissional || ""}`, 10, y); y += espacamento;
+    doc.text(`Salário base: ${r.salariobase || ""}`, 10, y); y += espacamento;
+    doc.text(`Jornada de trabalho: ${r.ch || ""}`, 10, y); y += espacamento;
+    doc.text(`PCD: ${r.pcd || ""}`, 10, y); y += espacamento;
+    doc.text(`Admissão: ${r.dtadmissao ? formatarData(r.dtadmissao) : ""}`, 10, y); y += espacamento;
+    doc.text(`Integração: ${r.dtintegracao ? formatarData(r.dtintegracao) : ""}`, 10, y); y += espacamento;
+    doc.text(`Desligamento: ${r.dtdemissao ? formatarData(r.dtdemissao) : ""}`, 10, y); y += espacamento;
+    doc.text(`Motivo: ${r.motivo_desligamento || ""}`, 10, y); y += espacamento;
+    doc.text(`Situação: ${r.status || ""}`, 10, y); y += espacamento;
 
     // Bloco 4 — Rodapé
     y = 280;
     doc.setFontSize(9);
-    doc.text("© 2025 Genesis Lotus - Sistema de Avaliação de Experiência", 105, y, { align: "center" });
+    doc.text("© 2025 Genesis Lotus", 105, y, { align: "center" });
 
     // Salvar PDF
-    const nomeArquivo = `Avaliacao_Experiencia_${r.nome?.replace(/\s+/g, "_") || id}.pdf`;
+    const nomeArquivo = `Ficha_Cadastral_${r.nome?.replace(/\s+/g, "_") || id}.pdf`;
     doc.save(nomeArquivo);
 
   } catch (erro) {
@@ -640,6 +785,55 @@ async function editar(id) {
     if (id) localStorage.setItem('unidadeSelecionada', JSON.stringify({ id, nome }));
     else localStorage.removeItem('unidadeSelecionada');
   });
+
+  async function editar(id) {
+  try {
+    const resp = await fetch(`${API}/${id}`);
+    const resultado = await resp.json();
+
+    if (!resultado.sucesso || !resultado.dado) {
+      alert("Erro ao buscar registro.");
+      return;
+    }
+
+    const r = resultado.dado;
+
+    editandoId = id;
+    document.getElementById("tituloForm").innerText = "Editar Registro";
+
+    // Preencher campos do formulário
+    document.getElementById("nome").value = r.nome || "";
+    document.getElementById("cpf").value = r.cpf || "";
+    document.getElementById("contato").value = r.contato || "";
+    document.getElementById("emailpessoal").value = r.emailpessoal || "";
+    document.getElementById("dtnascimento").value = r.dtnascimento || "";
+    document.getElementById("sexo").value = r.sexo || "";
+    document.getElementById("filhos").value = r.filhos || "";
+    document.getElementById("cidade").value = r.cidade || "";
+    document.getElementById("estado").value = r.estado || "";
+    document.getElementById("formacao_escolar").value = r.formacao_escolar || "";
+    document.getElementById("formacao_superior").value = r.formacao_superior || "";
+    document.getElementById("matricula").value = r.matricula || "";
+    document.getElementById("emailprofissional").value = r.emailprofissional || "";
+    document.getElementById("cargo").value = r.cargo || "";
+    document.getElementById("salariobase").value = r.salariobase || "";
+    document.getElementById("ch").value = r.ch || "";
+    document.getElementById("dtadmissao").value = r.dtadmissao || "";
+    document.getElementById("dtintegracao").value = r.dtintegracao || "";
+    document.getElementById("dtdemissao").value = r.dtdemissao || "";
+    document.getElementById("pcd").value = r.pcd || "";
+    document.getElementById("motivo_desligamento").value = r.motivo_desligamento || "";
+    document.getElementById("status").value = r.status || "";
+
+    // Abrir modal
+    document.getElementById("form-popup").style.display = "flex";
+
+  } catch (erro) {
+    console.error("Erro ao editar registro:", erro);
+    alert("Erro inesperado ao editar.");
+  }
+}
+
 
   document.addEventListener("DOMContentLoaded", () => {
     // garantir que unidades carreguem no load
