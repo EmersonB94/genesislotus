@@ -422,6 +422,8 @@ def listar_treinamentos():
     mes = request.args.get('mes')
     ano = request.args.get('ano')
 
+    print("Unidade selecionada:", unidade) # print teste
+
     try:
         conn = conectar()
         cursor = conn.cursor(dictionary=True)
@@ -454,7 +456,7 @@ def listar_treinamentos():
         return jsonify({"sucesso": False, "mensagem": str(e)}), 500
 
 
-@app.route('/acoes_treinamentos', methods=['POST'])
+@app.route('/api/acoes_treinamentos', methods=['POST'])
 def salvar_treinamento():
     try:
         data = request.get_json()
@@ -493,12 +495,14 @@ def salvar_treinamento():
         return jsonify({"sucesso": False, "mensagem": str(e)}), 500
 
 
-@app.route('/acoes_treinamentos/<int:id>', methods=['PUT'])
+@app.route('/api/acoes_treinamentos/<int:id>', methods=['PUT'])
 def editar_treinamento(id):
     try:
         data = request.get_json()
         conn = conectar()
         cursor = conn.cursor()
+
+        print("JSON recebido:", data)
 
         sql = """
         UPDATE acoestreinamentos SET
@@ -533,7 +537,7 @@ def editar_treinamento(id):
         return jsonify({"sucesso": False, "mensagem": str(e)}), 500
 
 
-@app.route('/acoes_treinamentos/<int:id>', methods=['DELETE'])
+@app.route('/api/acoes_treinamentos/<int:id>', methods=['DELETE'])
 def excluir_treinamento(id):
     try:
         conn = conectar()
@@ -555,6 +559,8 @@ def listar_avaliacao_experiencia():
     mes = request.args.get('mes')          # "01".. "12"
     ano = request.args.get('ano')          # "2025"
     status = request.args.get('status')    # "Aprovado", "Reprovado", etc.
+
+    print("Unidade selecionada:", unidade) # print teste
 
     try:
         conn = conectar()
@@ -715,6 +721,8 @@ def editar_avaliacao_experiencia(id):
         conn = conectar()
         cursor = conn.cursor()
 
+        print("Dados a editar:", data)
+
         # ✅ Usando NULL (None) ao invés de strings vazias para campos opcionais
         sql = """
         UPDATE rg_avaliacao_experiencia SET
@@ -734,7 +742,7 @@ def editar_avaliacao_experiencia(id):
 
         # ✅ Usando `.get()` com fallback para None, não ''
         valores = (
-            data.get('empresa') or None,
+            data.get('empresa'),
             data.get('nome') or None,
             data.get('cargo') or None,
             data.get('dt_admissao') or None,
@@ -1258,7 +1266,7 @@ def editar_empresa(id):
         cursor = conn.cursor()
         sql = """
         UPDATE cad_empresa
-        SET nome_fantasia=%s, cnpj=%s, endereco=%s, telefone=%s, responsavel=%s
+        SET nome_fantasia=%s, cnpj=%s, endereco=%s, telefone=%s, responsavel=%s, usuario=%s
         WHERE id=%s
         """
         cursor.execute(sql, (
@@ -1267,6 +1275,7 @@ def editar_empresa(id):
             data['endereco'],
             data['telefone'],
             data['responsavel'],
+            data.get('usuario', ''),
             id
         ))
         conn.commit()
@@ -1389,6 +1398,8 @@ def obter_totais():
         conn = conectar()
         cursor = conn.cursor(dictionary=True)
 
+        print("Unidade selecionada: ", unidade)
+
         # ===== Contar usuários ativos =====
         if unidade:
             cursor.execute("SELECT COUNT(*) AS total FROM cad_usuario WHERE status='Ativo' AND empresa=%s", (unidade,))
@@ -1396,9 +1407,13 @@ def obter_totais():
             cursor.execute("SELECT COUNT(*) AS total FROM cad_usuario WHERE status='Ativo'")
         total_usuarios = cursor.fetchone()['total']
 
+        print("Usuarios: ", total_usuarios)
+
         # ===== Contar chamados ativos =====
-        cursor.execute("SELECT COUNT(*) AS total FROM rg_chamado WHERE status='Em aberto'")
+        cursor.execute("SELECT COUNT(*) AS total FROM rg_chamado WHERE status='Em aberto' or status='Em andamento'")
         total_chamados = cursor.fetchone()['total']
+
+        print("Chamados: ", total_chamados)
 
         # ===== Contar indicadores =====
         if unidade:
@@ -1407,6 +1422,8 @@ def obter_totais():
             cursor.execute("SELECT COUNT(*) AS total FROM indicadores")
         total_indicadores = cursor.fetchone()['total']
 
+        print("Indicadores: ", total_indicadores)
+
         # ===== Contar clientes (empresas) =====
         if unidade:
             cursor.execute("SELECT COUNT(*) AS total FROM cad_empresa WHERE nome_fantasia=%s", (unidade,))
@@ -1414,25 +1431,49 @@ def obter_totais():
             cursor.execute("SELECT COUNT(*) AS total FROM cad_empresa")
         total_clientes = cursor.fetchone()['total']
 
+        print("Clientes: ", total_clientes  )
+
         # ===== Contar ações =====
-        cursor.execute("SELECT COUNT(*) AS total FROM acoestreinamentos WHERE tipo_acao = %s", ('Ação',))
+        cursor.execute("SELECT COUNT(*) AS total FROM acoestreinamentos WHERE tipo_acao = %s and empresa = %s""", ('Ação',unidade))
         total_acoes = cursor.fetchone()['total']
 
+        print("Ações: ", total_acoes)
 
         # ===== Contar treinamentos =====
-        cursor.execute("SELECT COUNT(*) AS total FROM acoestreinamentos WHERE tipo_acao = %s", ('Treinamento',))
+        cursor.execute(
+            """
+            SELECT COUNT(*) AS total 
+            FROM acoestreinamentos 
+            WHERE tipo_acao = %s AND empresa = %s
+            """,
+            ('Treinamento', unidade)
+        )
+
         total_treinamentos = cursor.fetchone()['total']
+
+        print("Treinamentos: ", total_treinamentos)
 
         # ===== Contar requisições de pessoal =====
 
-        cursor.execute("SELECT COUNT(*) AS total FROM rg_requisicao_pessoal")
+        cursor.execute("SELECT COUNT(*) AS total FROM rg_requisicao_pessoal where empresa=%s", (unidade,))
         total_requisicoes = cursor.fetchone()['total']
 
-        cursor.execute("SELECT COUNT(*) AS total FROM rg_avaliacao_experiencia")
+        print("Requisição: ", total_requisicoes)
+
+        cursor.execute("SELECT COUNT(*) AS total FROM rg_avaliacao_experiencia where empresa=%s", (unidade,))
         total_avaliacoes = cursor.fetchone()['total']
 
-        cursor.execute("SELECT COUNT(*) AS total FROM rg_entrevista_desligamento")
+        print("Avaliação Exp.: ", total_avaliacoes)
+
+        cursor.execute("SELECT COUNT(*) AS total FROM rg_entrevista_desligamento where empresa=%s", (unidade,))
         total_entrevista = cursor.fetchone()['total']
+
+        print("Entrevista Desligamento: ", total_entrevista)
+
+        cursor.execute("SELECT COUNT(*) AS total FROM rg_processo_seletivo where empresa=%s", (unidade,))
+        total_processo_seletivo = cursor.fetchone()['total']
+
+        print("Processo Seletivo: ", total_processo_seletivo)
 
         cursor.close()
         conn.close()
@@ -1446,6 +1487,7 @@ def obter_totais():
                 "acoes": total_acoes,
                 "treinamentos": total_treinamentos,
                 "requisicoes": total_requisicoes,
+                "pss" : total_processo_seletivo,
                 "avaliacoes": total_avaliacoes,
                 "entrevista": total_entrevista,
                 "chamados": total_chamados
@@ -2043,37 +2085,43 @@ def atualizar_chamado(id_chamado):
         conn = conectar()
         cursor = conn.cursor()
 
-        # Se o status for "Concluído", define dtconclusao = NOW()
+        print("JSON recebido:", dados)
+
+        # Pegando corretamente o campo observacoes
+        obs = dados.get("observacoes")
+
         if dados["status"] == "Concluído":
             cursor.execute("""
                 UPDATE rg_chamado
                 SET descricao=%s, modulo=%s, motivo=%s, obs=%s, prioridade=%s,
-                    setor=%s, status=%s, dtconclusao=NOW()
+                    setor=%s, status=%s, usuario=%s, dtconclusao=NOW()
                 WHERE id=%s
             """, (
                 dados["descricao"],
                 dados["modulo"],
                 dados["motivo"],
-                dados.get("observacoes"),
+                obs,
                 dados["prioridade"],
                 dados["setor"],
                 dados["status"],
+                dados["usuario"],
                 id_chamado
             ))
         else:
             cursor.execute("""
                 UPDATE rg_chamado
                 SET descricao=%s, modulo=%s, motivo=%s, obs=%s, prioridade=%s,
-                    setor=%s, status=%s
+                    setor=%s, status=%s, usuario=%s
                 WHERE id=%s
             """, (
                 dados["descricao"],
                 dados["modulo"],
                 dados["motivo"],
-                dados.get("observacoes"),
+                obs,
                 dados["prioridade"],
                 dados["setor"],
                 dados["status"],
+                dados["usuario"],
                 id_chamado
             ))
 
@@ -2083,16 +2131,16 @@ def atualizar_chamado(id_chamado):
     except Exception as e:
         print("Erro ao atualizar chamado:", e)
         return jsonify({"sucesso": False, "mensagem": f"Erro ao atualizar chamado: {e}"}), 500
+
     finally:
         cursor.close()
         conn.close()
-
 
 # === Listar com filtros ===
 @app.route("/chamados/filtros", methods=["GET"])
 def filtrar_chamados():
     try:
-        usuario = request.args.get("usuario")
+        # usuario = request.args.get("usuario")
         modulo = request.args.get("modulo")
         prioridade = request.args.get("prioridade")
         status = request.args.get("status")
@@ -2103,9 +2151,6 @@ def filtrar_chamados():
         query = "SELECT * FROM rg_chamado WHERE 1=1"
         params = []
 
-        if usuario:
-            query += " AND usuario = %s"
-            params.append(usuario)
         if modulo:
             query += " AND modulo = %s"
             params.append(modulo)

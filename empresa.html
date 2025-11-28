@@ -82,7 +82,7 @@
       <h4>Olá, <span id="usuarioLogado"></span></p></h4   >
       <nav>
         <a href="inicio"><i class="fa-solid fa-chart-line"></i> Início</a>
-        <a href="usuario"><i class="fa-solid fa-users"></i> Usuários</a>
+        <a onclick="abrirUsuario()"><i class="fa-solid fa-users"></i> Usuários</a>
         <a href="empresa" class="active"><i class="fa-solid fa-building"></i> Empresas</a>
         <a href="chamados_admin"><i class="fa-solid fa-headset"></i></i> Chamados</a>
         <a href="ficha_indicadores"><i class="fa-solid fa-building"></i> Ficha Indicadores</a>
@@ -133,6 +133,11 @@
     const overlay = document.getElementById("overlay");
     const formPopup = document.getElementById("formEmpresa");
     const usuarioLogado = JSON.parse(localStorage.getItem("usuarioLogado"));
+
+    function abrirUsuario() {
+      const u = JSON.parse(localStorage.getItem("usuarioLogado"));
+      window.location.href = `/usuario?email=${encodeURIComponent(u.email)}`;
+    }
 
     document.getElementById("usuarioLogado").innerText = usuarioLogado?.nome || "";
 
@@ -214,8 +219,7 @@
               <th>Endereço</th>
               <th>Telefone</th>
               <th>Responsável</th>
-              <th>Usuário</th>
-              <th>Data/Hora Cadastro</th>
+              <th>Cadastro / Atualização</th>
               <th>Ações</th>
             </tr>
           </thead>
@@ -227,7 +231,6 @@
                 <td>${e.endereco}</td>
                 <td>${e.telefone}</td>
                 <td>${e.responsavel}</td>
-                <td>${e.usuario || ''}</td>
                 <td>${e.data_hora_cadastro ? new Date(e.data_hora_cadastro).toLocaleString() : ''}</td>
                 <td>
                   <button class="btn-edit" onclick='abrirForm(${JSON.stringify(e)})'>Editar</button>

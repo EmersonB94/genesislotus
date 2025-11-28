@@ -130,7 +130,7 @@
         <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
           <button class="btn" onclick="abrirFormulario()">Novo</button>
           <button class="btn" onclick="exportarTabela()">Exportar</button>
-          <select id="selectUnidade" class="btn" style="padding: 9px 14px;">
+          <select id="selectUnidade" class="btn" style="padding: 9px 14px;" onclick="carregarTabela()">
             <option value="">Selecione a Unidade</option>
           </select>
           <button class="btn" onclick="sair()">Sair</button>
@@ -349,7 +349,7 @@
   async function carregarTabela() {
     const unidadeSelecionada = JSON.parse(localStorage.getItem('unidadeSelecionada'));
     if (!unidadeSelecionada) {
-      document.getElementById("tabelaRequisicoes").innerHTML = "<p>Selecione uma unidade.</p>";
+      document.getElementById("tabelaRequisicoes").innerHTML = "<h3>Selecione uma unidade.</h3>";
       return;
     }
 

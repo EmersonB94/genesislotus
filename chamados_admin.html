@@ -6,6 +6,7 @@
   <title>Abertura de Chamado - Genesis Lotus</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <link rel="stylesheet" href="/static/css/style.css">
+
   <style>
     .filtros {
       margin-bottom: 15px;
@@ -22,18 +23,66 @@
     .filtros button {
       padding: 6px 12px;
     }
+
+    /* Modal */
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+    .overlay.show {
+      display: flex;
+    }
+    .modal {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      width: 450px;
+      max-height: 90vh;
+      overflow-y: auto;
+      position: relative;
+    }
+    .close-btn {
+      position: absolute;
+      right: 10px;
+      top: 10px;
+      background: transparent;
+      border: none;
+      font-size: 22px;
+      cursor: pointer;
+    }
+    .modal form input, .modal form textarea, .modal form select {
+      width: 100%;
+      margin-bottom: 12px;
+      padding: 8px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+    .btn {
+      margin-top: 10px;
+      padding: 8px;
+      cursor: pointer;
+    }
   </style>
 </head>
+
 <body>
+
+  <!-- ====== MENU ====== -->
   <aside>
     <div>
       <div class="logo">
-        <img src="/static/image/LogoGenesis-Lotus2.png" alt="Genesis Lotus" class="logo-img">
+        <img src="/static/image/LogoGenesis-Lotus2.png" class="logo-img">
       </div>
-      <h4>Olá, <span id="usuarioLogado"></span></p></h4   >
+      <h4>Olá, <span id="usuarioLogado"></span></h4>
+
       <nav>
         <a href="inicio"><i class="fa-solid fa-chart-line"></i> Início</a>
-        <a href="usuario"><i class="fa-solid fa-users"></i> Usuários</a>
+        <a onclick="abrirUsuario()"><i class="fa-solid fa-users"></i> Usuários</a>
         <a href="empresa"><i class="fa-solid fa-building"></i> Empresas</a>
         <a href="chamados_admin" class="active"><i class="fa-solid fa-headset"></i> Chamados</a>
         <a href="ficha_indicadores"><i class="fa-solid fa-building"></i> Ficha Indicadores</a>
@@ -42,6 +91,7 @@
     <footer style="text-align:center; font-size:0.8rem; opacity:0.8;">© 2025 Genesis Lotus</footer>
   </aside>
 
+  <!-- ====== CONTEÚDO ====== -->
   <main>
     <header>
       <h1><i class="fa-solid fa-headset"></i> Abertura de Chamados</h1>
@@ -49,23 +99,31 @@
       <button class="btn" onclick="sair()"><i class="fa-solid fa-right-from-bracket"></i> Sair</button>
     </header>
 
+    <!-- FILTROS -->
     <section>
       <div class="filtros">
         <input type="date" id="filtroDataInicio">
         <input type="date" id="filtroDataFim">
+
         <select id="filtroModulo">
           <option value="">Módulo</option>
           <option>RH</option><option>Administrador</option><option>SST</option><option>DP</option>
         </select>
+
         <select id="filtroPrioridade">
           <option value="">Prioridade</option>
           <option>Baixa</option><option>Média</option><option>Alta</option>
         </select>
+
         <select id="filtroStatus">
           <option value="">Status</option>
-          <option>Em aberto</option><option>Em andamento</option><option>Concluído</option>
+          <option>Em aberto</option>
+          <option>Em andamento</option>
+          <option>Concluído</option>
         </select>
+
         <input type="text" id="filtroSolicitante" placeholder="Solicitante">
+
         <button onclick="filtrarChamados()"><i class="fa-solid fa-filter"></i> Filtrar</button>
       </div>
 
@@ -73,14 +131,74 @@
     </section>
   </main>
 
-  <div id="overlayContainer"></div>
+  <!-- ============================
+       FORMULÁRIO FIXO NO HTML
+     ============================ -->
+  <div id="overlayContainer" class="overlay">
+    <div class="modal" onclick="event.stopPropagation()">
 
+      <button class="close-btn" onclick="fecharForm()">×</button>
+      <h3 id="tituloForm">Novo Chamado</h3>
+
+      <form id="formChamado">
+
+        <textarea id="descricao" placeholder="Descrição" required rows="3"></textarea>
+
+        <select id="modulo" required>
+          <option value="">Selecione o módulo</option>
+          <option>RH</option>
+          <option>Administrador</option>
+          <option>SST</option>
+          <option>DP</option>
+        </select>
+
+        <input id="motivo" placeholder="Motivo" required>
+
+        <textarea id="observacoes" placeholder="Observações" rows="3"></textarea>
+
+        <select id="prioridade" required>
+          <option value="">Prioridade</option>
+          <option>Baixa</option>
+          <option>Média</option>
+          <option>Alta</option>
+        </select>
+
+        <input id="setor" placeholder="Setor" required>
+
+        <input type="text" id="usuario">
+        <input type="date" id="dtconclusao">
+
+        <select id="status">
+          <option value="Em aberto">Em aberto</option>
+          <option value="Em andamento">Em andamento</option>
+          <option value="Concluído">Concluído</option>
+        </select>
+
+        <button type="submit" class="btn">Salvar Chamado</button>
+
+      </form>
+    </div>
+  </div>
+
+  <!-- ============================
+            JAVASCRIPT
+     ============================ -->
   <script>
+    let chamadoEditando = null;
+
     const usuarioLogado = JSON.parse(localStorage.getItem("usuarioLogado"));
     document.getElementById("usuarioLogado").innerText = usuarioLogado?.nome || "";
-    const areaTabela = document.getElementById("areaTabela");
-    const overlayContainer = document.getElementById("overlayContainer");
 
+    function abrirUsuario() {
+      const u = JSON.parse(localStorage.getItem("usuarioLogado"));
+      window.location.href = `/usuario?email=${encodeURIComponent(u.email)}`;
+    }
+
+    const overlay = document.getElementById("overlayContainer");
+    const formulario = document.getElementById("formChamado");
+    const tituloForm = document.getElementById("tituloForm");
+
+    // SAIR
     function sair() {
       localStorage.removeItem("usuarioLogado");
       window.location.href = "/";
@@ -88,124 +206,129 @@
 
     function formatarData(dataISO) {
       if (!dataISO) return "";
-      const data = new Date(dataISO);
-      return data.toLocaleDateString("pt-BR");
+      return new Date(dataISO).toLocaleDateString("pt-BR");
     }
 
-    // === Modal: Novo ou Editar ===
+    // ========== ABRIR FORM ==========
     function abrirForm(chamado = null) {
-      const edicao = !!chamado;
-      overlayContainer.innerHTML = `
-        <div class="overlay" onclick="clicarForaModal(event)">
-          <div class="modal">
-            <button class="close-btn" onclick="fecharForm()">×</button>
-            <h3>${edicao ? "Editar Chamado" : "Novo Chamado"}</h3>
-            <form onsubmit="${edicao ? `atualizarChamado(event, ${chamado.id})` : "salvarChamado(event)"}">
-              <textarea id="descricao" placeholder="Descrição" required rows="3">${chamado?.descricao || ""}</textarea>
-              <select id="modulo" required>
-                <option value="">Selecione o módulo</option>
-                <option ${chamado?.modulo==="RH"?"selected":""}>RH</option>
-                <option ${chamado?.modulo==="Administrador"?"selected":""}>Administrador</option>
-                <option ${chamado?.modulo==="SST"?"selected":""}>SST</option>
-                <option ${chamado?.modulo==="DP"?"selected":""}>DP</option>
-              </select>
-              <input id="motivo" value="${chamado?.motivo || ""}" placeholder="Motivo" required>
-              <textarea id="observacoes" placeholder="Observações" rows="3">${chamado?.obs || ""}</textarea>
-              <select id="prioridade" required>
-                <option value="">Prioridade</option>
-                <option ${chamado?.prioridade==="Baixa"?"selected":""}>Baixa</option>
-                <option ${chamado?.prioridade==="Média"?"selected":""}>Média</option>
-                <option ${chamado?.prioridade==="Alta"?"selected":""}>Alta</option>
-              </select>
-              <input id="setor" value="${chamado?.setor || ""}" placeholder="Setor" required>
-              <input id="status" value="${chamado?.status || 'Em aberto'}" placeholder="Status">
-              <button type="submit" class="btn">${edicao ? "Salvar Alterações" : "Salvar Chamado"}</button>
-            </form>
-          </div>
-        </div>
-      `;
+      chamadoEditando = chamado;
+
+      tituloForm.innerText = chamado ? "Editar Chamado" : "Novo Chamado";
+
+      // Preencher se edição
+      document.getElementById("descricao").value = chamado?.descricao || "";
+      document.getElementById("modulo").value = chamado?.modulo || "";
+      document.getElementById("motivo").value = chamado?.motivo || "";
+      document.getElementById("observacoes").value = chamado?.obs || "";
+      document.getElementById("prioridade").value = chamado?.prioridade || "";
+      document.getElementById("setor").value = chamado?.setor || "";
+      document.getElementById("usuario").value = chamado?.usuario || "";
+      document.getElementById("dtconclusao").value = chamado?.dtconclusao || "";
+      document.getElementById("status").value = chamado?.status || "Em aberto";
+
+      overlay.classList.add("show");
     }
 
-    function clicarForaModal(e){ if(e.target.classList.contains("overlay")) fecharForm(); }
-    function fecharForm(){ overlayContainer.innerHTML = ""; }
-
-    async function salvarChamado(event) {
-      event.preventDefault();
-      const payload = getFormData();
-      payload.usuario = usuarioLogado?.nome;
-      payload.status = "Em aberto";
-      const resp = await fetch("/chamados", {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
-      const data = await resp.json();
-      alert(data.mensagem);
-      fecharForm(); carregarChamados();
+    function fecharForm() {
+      overlay.classList.remove("show");
+      chamadoEditando = null;
+      formulario.reset();
     }
 
-    async function atualizarChamado(event, id) {
-      event.preventDefault();
-      const payload = getFormData();
-      const resp = await fetch(`/chamados/${id}`, {method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
-      const data = await resp.json();
-      alert(data.mensagem);
-      fecharForm(); carregarChamados();
-    }
+    // ========== SALVAR / ATUALIZAR ==========
+    formulario.addEventListener("submit", async function (e) {
+      e.preventDefault();
 
-    function getFormData() {
-      return {
-        descricao: document.getElementById("descricao").value,
-        modulo: document.getElementById("modulo").value,
-        motivo: document.getElementById("motivo").value,
-        observacoes: document.getElementById("observacoes").value,
-        prioridade: document.getElementById("prioridade").value,
-        setor: document.getElementById("setor").value,
-        status: document.getElementById("status").value
+      const payload = {
+        descricao: descricao.value,
+        modulo: modulo.value,
+        motivo: motivo.value,
+        observacoes: observacoes.value,
+        prioridade: prioridade.value,
+        usuario: document.getElementById("usuario").value,
+        setor: setor.value,
+        status: document.getElementById("status").value,
       };
-    }
 
+      let url = "/chamados";
+      let metodo = "POST";
+
+      if (chamadoEditando) {
+        url = `/chamados/${chamadoEditando.id}`;
+        metodo = "PUT";
+      }
+
+      const resp = await fetch(url, {
+        method: metodo,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      const data = await resp.json();
+      alert(data.mensagem);
+
+      fecharForm();
+      filtrarChamados();
+    });
+
+    // ========== LISTAR ==========
     async function carregarChamados() {
       const resp = await fetch(`/chamados?usuario=${encodeURIComponent(usuarioLogado?.nome || '')}`);
       const data = await resp.json();
+
       if (resp.ok && data.sucesso) renderTabela(data.chamados);
       else areaTabela.innerHTML = "<p>Nenhum chamado encontrado.</p>";
     }
 
-    function renderTabela(chamados){
+    function renderTabela(chamados) {
       areaTabela.innerHTML = `
         <table>
           <thead><tr>
-            <th>Solicitante</th><th>Descrição</th><th>Módulo</th><th>Motivo</th><th>Prioridade</th>
-            <th>Setor</th><th>Solicitação</th><th>Conclusão</th><th>Status</th><th>Ações</th>
+            <th>Solicitante</th><th>Descrição</th><th>Módulo</th><th>Motivo</th>
+            <th>Prioridade</th><th>Setor</th><th>Solicitação</th><th>Conclusão</th>
+            <th>Status</th><th>Ações</th>
           </tr></thead>
           <tbody>
-            ${chamados.map(c=>`
-              <tr>
-                <td>${c.usuario}</td><td>${c.descricao}</td><td>${c.modulo}</td><td>${c.motivo}</td>
-                <td>${c.prioridade}</td><td>${c.setor}</td>
-                <td>${formatarData(c.dtregistro)}</td><td>${formatarData(c.dtconclusao)}</td>
-                <td>${c.status}</td>
-                <td><button onclick='abrirForm(${JSON.stringify(c)})'><i class="fa-solid fa-pen"></i></button></td>
-              </tr>`).join("")}
+          ${chamados.map(c => `
+            <tr>
+              <td>${c.usuario}</td>
+              <td>${c.descricao}</td>
+              <td>${c.modulo}</td>
+              <td>${c.motivo}</td>
+              <td>${c.prioridade}</td>
+              <td>${c.setor}</td>
+              <td>${formatarData(c.dtregistro)}</td>
+              <td>${formatarData(c.dtconclusao)}</td>
+              <td>${c.status}</td>
+              <td><button onclick='abrirForm(${JSON.stringify(c)})'><i class="fa-solid fa-pen"></i></button></td>
+            </tr>
+          `).join("")}
           </tbody>
         </table>
       `;
     }
 
-    async function filtrarChamados(){
+    // ========== FILTRAR ==========
+    async function filtrarChamados() {
       const params = new URLSearchParams({
         usuario: usuarioLogado?.nome || "",
-        modulo: document.getElementById("filtroModulo").value,
-        prioridade: document.getElementById("filtroPrioridade").value,
-        status: document.getElementById("filtroStatus").value,
-        solicitante: document.getElementById("filtroSolicitante").value,
-        data_inicio: document.getElementById("filtroDataInicio").value,
-        data_fim: document.getElementById("filtroDataFim").value
+        modulo: filtroModulo.value,
+        prioridade: filtroPrioridade.value,
+        status: filtroStatus.value,
+        solicitante: filtroSolicitante.value,
+        data_inicio: filtroDataInicio.value,
+        data_fim: filtroDataFim.value
       });
+
       const resp = await fetch(`/chamados/filtros?${params}`);
       const data = await resp.json();
+
       if (resp.ok && data.sucesso) renderTabela(data.chamados);
       else alert("Erro ao filtrar chamados.");
     }
 
-    carregarChamados();
+    filtrarChamados();
   </script>
+
 </body>
 </html>

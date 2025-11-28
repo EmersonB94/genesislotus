@@ -85,7 +85,7 @@
     </div>
     <h4>Olá, <span id="usuarioLogado"></span></p></h4   >      <nav>
         <a href="inicio"><i class="fa-solid fa-chart-line"></i> Início</a>
-        <a href="usuario" class="active"><i class="fa-solid fa-users"></i> Usuários</a>
+        <a onclick="abrirUsuario()" class="active"><i class="fa-solid fa-users"></i> Usuários</a>
         <a href="empresa"><i class="fa-solid fa-building"></i> Empresas</a>
         <a href="chamados_admin"><i class="fa-solid fa-headset"></i></i> Chamados</a>
         <a href="ficha_indicadores"><i class="fa-solid fa-building"></i> Ficha Indicadores</a>
@@ -184,6 +184,11 @@
     const usuarioLogado = JSON.parse(localStorage.getItem("usuarioLogado"));
     document.getElementById("usuarioLogado").innerText = usuarioLogado?.nome || "";
 
+    function abrirUsuario() {
+      const u = JSON.parse(localStorage.getItem("usuarioLogado"));
+      window.location.href = `/usuario?email=${encodeURIComponent(u.email)}`;
+    }
+    
     const areaTabela = document.getElementById("areaTabela");
     const overlayContainer = document.getElementById("overlayContainer");
 

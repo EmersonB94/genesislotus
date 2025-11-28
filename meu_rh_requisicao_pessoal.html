@@ -130,7 +130,7 @@
         <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
           <button class="btn" onclick="abrirFormulario()">Nova Requisição</button>
           <button class="btn" onclick="exportarTabela()">Exportar</button>
-          <select id="selectUnidade" class="btn" style="padding: 9px 14px;" onchange="carregarTabela()">
+          <select id="selectUnidade" class="btn" style="padding: 9px 14px;" onclick="carregarTabela()">
             <option value="">Selecione a Unidade</option>
           </select>
           <button class="btn" onclick="sair()">Sair</button>
@@ -227,9 +227,13 @@
               <textarea id="competencias_tecnicas" rows="2"></textarea>
 
               <label class="logo">Competências comportamentais</label>
-              <textarea id="competencias_comportamentais" rows="2"></textarea>
-
-              
+              <textarea id="competencias_comportamentais" rows="4" style="
+                width: 100%;
+                padding: 12px;
+                border: 1px solid #ccc;
+                border-radius: 8px;
+                resize: vertical;
+              " required></textarea>
 
               <label class="logo">Observações</label>
               <textarea id="observacoes" rows="2"></textarea>
@@ -424,7 +428,7 @@
   async function carregarTabela() {
     const unidadeSelecionada = JSON.parse(localStorage.getItem('unidadeSelecionada'));
     if (!unidadeSelecionada) {
-      document.getElementById("tabelaRequisicoes").innerHTML = "<p>Selecione uma unidade.</p>";
+      document.getElementById("tabelaRequisicoes").innerHTML = "<h3>Selecione uma unidade.</h3>";
       return;
     }
 
@@ -451,7 +455,7 @@
     const container = document.getElementById("tabelaRequisicoes");
 
     if (!registros.length) {
-      container.innerHTML = "<p>Nenhum registro encontrado para os filtros selecionados.</p>";
+      container.innerHTML = "<h3>Nenhum registro encontrado para os filtros selecionados.</h3>";
       return;
     }
 

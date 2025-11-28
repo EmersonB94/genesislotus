@@ -130,8 +130,8 @@
         <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
           <button class="btn" onclick="abrirFormulario()">Novo Registro</button>
           <button class="btn" onclick="exportarTabela()">Exportar</button>
-          <select id="selectUnidade" class="btn" style="padding: 9px 14px;" onchange="carregarTabela()">
-            <option value="">Selecione a Unidade</option>
+          <select id="selectUnidade" class="btn" style="padding: 9px 14px;" onclick="carregarTabela()">
+            <option value=""><h3>Selecione a Unidade</h3></option>
           </select>
           <button class="btn" onclick="sair()">Sair</button>
         </div>
@@ -211,16 +211,16 @@
               <input type="text" id="nome" required>
 
               <label class="logo">Cargo</label>
-              <input type="text" id="cargo">
+              <input type="text" id="cargo" required>
 
               <label class="logo">Contato</label>
               <input type="text" id="contato">
 
               <label class="logo">E-mail</label>
-              <input type="text" id="email">
+              <input type="text" id="email" required>
 
               <label class="logo">Data entrevista</label>
-              <input type="date" id="data">
+              <input type="date" id="data" required>
 
               <label class="logo">Fase (Entrevista)</label>
               <input type="number" id="fase" value="5" min="1">
@@ -229,10 +229,22 @@
               <input type="text" id="formacao">
 
               <label class="logo">Síntese da Entrevista Comportamental </label>
-              <input type="text" id="sintese">
-
+              <textarea id="sintese" rows="12" style="
+                width: 100%;
+                padding: 12px;
+                border: 1px solid #ccc;
+                border-radius: 8px;
+                resize: vertical;
+              "></textarea>
+              
               <label class="logo">Conclusão </label>
-              <input type="text" id="conclusao">
+              <textarea id="conclusao" rows="8" style="
+                width: 100%;
+                padding: 12px;
+                border: 1px solid #ccc;
+                border-radius: 8px;
+                resize: vertical;
+              " required></textarea>
 
               <select id="modo" required>
                 <option value="Online">Online</option>
@@ -383,7 +395,7 @@ async function atualizar(event, id){
   async function carregarTabela() {
     const unidadeSelecionada = JSON.parse(localStorage.getItem('unidadeSelecionada'));
     if (!unidadeSelecionada) {
-      document.getElementById("tabelaRequisicoes").innerHTML = "<p>Selecione uma unidade.</p>";
+      document.getElementById("tabelaRequisicoes").innerHTML = "<h3>Selecione uma unidade.</h3>";
       return;
     }
 

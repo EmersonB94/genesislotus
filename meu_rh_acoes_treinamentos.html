@@ -129,7 +129,7 @@
       <div>
         <button class="btn" onclick="abrirFormulario()">Novo Registro</button>
         <button class="btn" onclick="exportarTabela()">Exportar</button>
-        <select id="selectUnidade" class="btn" style="padding: 9px 14px;" onchange="carregarTabela()">
+        <select id="selectUnidade" class="btn" style="padding: 9px 14px;" onclick="carregarTabela()">
           <!-- <option value="">Selecione a Unidade</option> -->
         </select>
         <button class="btn" onclick="sair()">Sair</button>
@@ -208,7 +208,7 @@ document.getElementById("usuarioLogado").innerText = usuarioLogado?.nome || "";
 
 let editandoId = null;
 
-const API = "/acoes_treinamentos";
+const API = "/api/acoes_treinamentos";
 
 // função auxiliar de formatação
   function formatarData(dataISO) {
@@ -356,23 +356,32 @@ async function carregarTabela() {
 
 
 // === EDITAR ===
-async function editar(id){
-  const resp = await fetch(API);
+async function editar(id) { 
+
+  const resp = await fetch("/api/acoes_treinamentos");
   const dados = await resp.json();
-  const reg = dados.dados.find(r => r.id === id);
-  if(!reg) return;
+
+  console.log("Resposta API:", dados);
+
+  const reg = dados.dados.find(r => Number(r.id) === Number(id));
+  if(!reg) {
+    console.warn("Registro não encontrado para ID:", id);
+    return;
+  }
 
   abrirFormulario();
   editandoId = id;
 
   document.getElementById("tema").value = reg.tema;
   document.getElementById("realizado").value = reg.realizado;
-  // ✅ Converte a data para formato aceito pelo input date
+
   if (reg.data_realizacao) {
-    document.getElementById("dataRealizacao").value = new Date(reg.data_realizacao).toISOString().split('T')[0];
-  } else {  
+    document.getElementById("dataRealizacao").value =
+      new Date(reg.data_realizacao).toISOString().split('T')[0];
+  } else {
     document.getElementById("dataRealizacao").value = "";
   }
+
   document.getElementById("local").value = reg.local;
   document.getElementById("tipoAcao").value = reg.tipo_acao;
   document.getElementById("duracao").value = reg.duracao;
@@ -382,11 +391,11 @@ async function editar(id){
   document.getElementById("pat").value = reg.pat;
   document.getElementById("participantes").value = reg.participantes;
 
-  // document.querySelector("#formTreinamento button[type='submit']").onclick = (e) => atualizar(e, id);
   document.querySelector("#formTreinamento h2").innerText = "Editar Registro";
-  document.querySelector("#formTreinamento button[type='submit']").onclick = (e) => atualizar(e, id);
-
+  document.querySelector("#formTreinamento button[type='submit']").onclick = 
+      (e) => atualizar(e, id);
 }
+
 
 // === ATUALIZAR ===
 async function atualizar(event, id){

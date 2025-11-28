@@ -125,7 +125,7 @@
         <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
           <button class="btn" onclick="abrirFormulario()">Novo</button>
           <button class="btn" onclick="exportarTabela()">Exportar</button>
-          <select id="selectUnidade" class="btn" style="padding: 9px 14px;" onchange="carregarTabela()">
+          <select id="selectUnidade" class="btn" style="padding: 9px 14px;" onclick="carregarTabela()">
             <option value="">Selecione a Unidade</option>
           </select>
           <button class="btn" onclick="sair()">Sair</button>
@@ -156,12 +156,12 @@
 
           <select id="filtroStatus" class="btn" style="padding:9px 12px;">
             <option value="">Todos os Status</option>
-            <option value="Em Experiência">Em Experiência</option>
-            <option value="Desligado antes do fim da Experiência (Contratante)">Desligado antes do fim da Experiência (Contratante)</option>
-            <option value="Desligado antes do fim da Experiência (Colaborador)">Desligado antes do fim da Experiência (Colaborador)</option>
-            <option value="Desligado ao fim da Experiência (Contratante)">Desligado ao fim da Experiência (Contratante)</option>
-            <option value="Desligado ao fim da Experiência (Colaborador)">Desligado ao fim da Experiência (Colaborador)</option>
-            <option value="Contratado">Contratado</option>
+            <option value="1. Em Experiência">Em Experiência</option>
+            <option value="2. Contratado">Contratado</option>
+            <option value="3. Desligado antes do fim da Experiência (Contratante)">Desligado antes do fim da Experiência (Contratante)</option>
+            <option value="4. Desligado ao fim da Experiência (Contratante)">Desligado ao fim da Experiência (Contratante)</option>
+            <option value="5. Desligado antes do fim da Experiência (Colaborador)">Desligado antes do fim da Experiência (Colaborador)</option>
+            <option value="6. Desligado ao fim da Experiência (Colaborador)">Desligado ao fim da Experiência (Colaborador)</option>
           </select>
 
           <button class="btn" onclick="carregarTabela()">Filtrar</button>
@@ -182,8 +182,12 @@
             
               <div style="flex:1;">
                 <label class="logo">Dados colaborador</label></p>
+                <input type="text" id="unidade" disabled>
                 <label class="logo">Colaborador</label>
-                <input type="text" id="nome" required>
+                <!-- <input type="text" id="nome" required> -->
+                <select id="nome" style="padding: 9px 14px;">
+                  <option value="">Selecione o colaborador</option>
+                </select>
                 <label class="logo">Cargo</label>
                 <input type="text" id="cargo" required>
                 <label class="logo">Admissão (data)</label>
@@ -208,12 +212,12 @@
                 <input type="date" id="dt_padrinho">
                 <label class="logo">Status</label>
                 <select id="status" required>
-                  <option value="Em Experiência">Em Experiência</option>
-                  <option value="Desligado antes do fim da Experiência (Contratante)">Desligado antes do fim da Experiência (Contratante)</option>
-                  <option value="Desligado antes do fim da Experiência (Colaborador)">Desligado antes do fim da Experiência (Colaborador)</option>
-                  <option value="Desligado ao fim da Experiência (Contratante)">Desligado ao fim da Experiência (Contratante)</option>
-                  <option value="Desligado ao fim da Experiência (Colaborador)">Desligado ao fim da Experiência (Colaborador)</option>
-                  <option value="Contratado">Contratado</option>
+                  <option value="1. Em Experiência">Em Experiência</option>
+                  <option value="2. Contratado">Contratado</option>
+                  <option value="3. Desligado antes do fim da Experiência (Contratante)">Desligado antes do fim da Experiência (Contratante)</option>
+                  <option value="4. Desligado ao fim da Experiência (Contratante)">Desligado ao fim da Experiência (Contratante)</option>
+                  <option value="5. Desligado antes do fim da Experiência (Colaborador)">Desligado antes do fim da Experiência (Colaborador)</option>
+                  <option value="6. Desligado ao fim da Experiência (Colaborador)">Desligado ao fim da Experiência (Colaborador)</option>
                 </select> 
               </div>
           </div>
@@ -311,8 +315,13 @@ async function salvarRequisicao(event) {
 
   const unidadeSelecionada = JSON.parse(localStorage.getItem('unidadeSelecionada'));
 
+  editandoEmpresa = reg.empresa;
+
   const dados = {
-    empresa: unidadeSelecionada ? unidadeSelecionada.nome : null,
+    empresa: editandoId
+      ? editandoEmpresa
+      : (unidadeSelecionada ? unidadeSelecionada.nome : null),
+
     nome: document.getElementById("nome").value,
     cargo: document.getElementById("cargo").value,
     dt_admissao: document.getElementById("dt_admissao").value,
@@ -373,9 +382,10 @@ async function salvarRequisicao(event) {
   async function carregarTabela() {
     const unidadeSelecionada = JSON.parse(localStorage.getItem('unidadeSelecionada'));
     if (!unidadeSelecionada) {
-      document.getElementById("tabelaRequisicoes").innerHTML = "<p>Selecione uma unidade.</p>";
+      document.getElementById("tabelaRequisicoes").innerHTML = "<h3>Selecione uma unidade.</h3>";
       return;
     }
+    
 
     const mes = document.getElementById("filtroMes").value;
     const ano = document.getElementById("filtroAno").value;
@@ -394,7 +404,7 @@ async function salvarRequisicao(event) {
     const registros = Array.isArray(dados) ? dados : dados.dados || [];
 
     if (!registros.length) {
-      document.getElementById("tabelaRequisicoes").innerHTML = "<p>Nenhum registro encontrado.</p>";
+      document.getElementById("tabelaRequisicoes").innerHTML = "<h3>Nenhum registro encontrado.</h3>";
       return;
     }
 
@@ -415,8 +425,8 @@ async function salvarRequisicao(event) {
                 <th>Data integração</th>
                 <th>Colaborador</th>
                 <th>Cargo</th>
-                <th>Avaliação 1</th>
-                <th>Avaliação 2</th>
+                <th>1ª Avaliação</th>
+                <th>2ª Avaliação</th>
                 <th>Padrinho</th>
                 <th>Ações</th>
               </tr>
@@ -469,6 +479,7 @@ async function editar(id) {
     document.getElementById("tituloForm").innerText = "Editar Avaliação";
 
     // Popular campos
+    document.getElementById("unidade").value = reg.empresa || "";
     document.getElementById("nome").value = reg.nome || "";
     document.getElementById("cargo").value = reg.cargo || "";
     document.getElementById("dt_admissao").value = reg.dt_admissao || "";
@@ -492,6 +503,7 @@ async function editar(id) {
   e.preventDefault();
 
   const dados = {
+    empresa: document.getElementById("unidade").value,
     nome: document.getElementById("nome").value,
     cargo: document.getElementById("cargo").value,
     dt_admissao: document.getElementById("dt_admissao").value,
@@ -628,6 +640,7 @@ async function editar(id) {
   // === Unidades permitidas (mantive seu endpoint antigo) ===
   carregarTabela();
   carregarUnidades();
+  carregarFuncionarios();
 
   async function carregarUnidades() {
     try {
@@ -657,6 +670,49 @@ async function editar(id) {
       console.error("Erro ao carregar unidades:", err);
     }
   }
+
+  async function carregarFuncionarios() {
+    try {
+      const resp = await fetch('/api/funcionario');
+      const dados = await resp.json();
+
+      if (dados.sucesso) {
+
+        const select = document.getElementById('nome');
+        select.innerHTML = '<option value="">Selecione o colaborador</option>';
+
+        dados.dados.forEach(u => {     // ← note: no backend o nome é "dados"
+          const nomes = (u.nome || "")
+            .split(";")
+            .map(n => n.trim())
+            .filter(Boolean);
+
+          nomes.forEach(nome => {
+            const opt = document.createElement("option");
+            opt.value = u.nome;
+            opt.textContent = nome;
+            select.appendChild(opt);
+          });
+        });
+
+        const funcionarioSalvo = JSON.parse(localStorage.getItem('nomefuncionario'));
+
+        if (funcionarioSalvo)
+          select.value = funcionarioSalvo.id;
+        else if (dados.dados.length > 0) {
+          const u0 = dados.dados[0];
+          select.value = u0.id;
+          localStorage.setItem('nomefuncionario', JSON.stringify(u0));
+        }
+      }
+
+    } catch (err) {
+      console.error("Erro ao carregar colaboradores:", err);
+    }
+  }
+
+
+
 
   document.getElementById('selectUnidade').addEventListener('change', () => {
     const select = document.getElementById('selectUnidade');

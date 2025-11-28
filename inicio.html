@@ -99,7 +99,7 @@
     <div class="logo">
       <img src="/static/image/LogoGenesis-Lotus2.png" alt="Genesis Lotus" class="logo-img">
     </div>
-    <h4>Olá, <span id="usuarioLogado"></span></p></h4   >
+    <h4>Olá, <span id="usuarioLogado" ></span> (<span id="usuarioLogadoCargo"></span>)</h4>
     <nav>
       <a href="inicio" class="active"><i class="fa-solid fa-chart-line"></i> Início</a>
       <a id="btnRH" onclick="abrirIndicadores()"><i class="fa-solid fa-bullseye"></i> Indicadores</a>
@@ -125,7 +125,7 @@
     <div style="display: flex; align-items: center; gap: 10px;">
       <a href="chamado" class="btn"><i class="fa-solid fa-gear"></i> Chamados</a>
       <button class="btn" onclick="abrirPerfil()">Perfil de usuário</button>
-      <select id="selectUnidade" class="btn" style="padding: 9px 14px;">
+      <select id="selectUnidade" class="btn" style="padding: 9px 14px;" onclick="carregarTotais">
         <option value="">Selecione a Unidade</option>
       </select>
       <button class="btn" onclick="sair()">Sair</button>
@@ -149,6 +149,7 @@
     <div class="card"><p>Ações</p><h2 id="totalAcoes">0</h2></div>
     <div class="card"><p>Treinamentos</p><h2 id="totalTreinamentos">0</h2></div>
     <div class="card"><p>Requisições de Pessoal</p><h2 id="totalRequisicoes">0</h2></div>
+    <div class="card"><p>Entrevistas</p><h2 id="totalPSS">0</h2></div>
     <div class="card"><p>Avaliações de Experiência</p><h2 id="totalAvaliacoes">0</h2></div>
     <div class="card"><p>Entrevista Desligamento</p><h2 id="totalEntrevista">0</h2></div>
   </div>
@@ -165,6 +166,7 @@
 <script>
 const usuarioLogado = JSON.parse(localStorage.getItem("usuarioLogado"));
 document.getElementById("usuarioLogado").innerText = usuarioLogado?.nome || "";
+document.getElementById("usuarioLogadoCargo").innerText = usuarioLogado?.cargo || "";
 // Bloquear/mostrar botões conforme permissão
 document.getElementById("btnRH").style.display = usuarioLogado.perm_rh ? "block" : "none";
 document.getElementById("btnDP").style.display = usuarioLogado.perm_dp ? "block" : "none";
@@ -218,6 +220,7 @@ async function carregarTotais() {
       document.getElementById('totalAcoes').textContent = t.acoes;
       document.getElementById('totalTreinamentos').textContent = t.treinamentos;
       document.getElementById('totalRequisicoes').textContent = t.requisicoes;
+      document.getElementById('totalPSS').textContent = t.pss;
       document.getElementById('totalEntrevista').textContent = t.entrevista;
       document.getElementById('totalAvaliacoes').textContent = t.avaliacoes;
     } else {
