@@ -287,7 +287,7 @@
             <div style="flex:1;">
 
             <label class="logo">Status</label>
-              <select id="status">
+              <select id="status" disabled>
                 <option value="Pendente">Pendente</option>
                 <option value="Em análise">Em análise</option>
                 <option value="Aprovada">Aprovada</option>
@@ -611,6 +611,37 @@
     alert(resultado.mensagem || "Resposta recebida.");
     if(resultado.sucesso) carregarTabela();
   }
+
+  const usuarioLog = JSON.parse(localStorage.getItem("usuarioLogado"));
+
+
+  async function carregarPermissao() {
+
+      const resp = await fetch(`/permissao_atualizar_requisicao?usuario=${usuarioLog.nome}`);
+      const dados = await resp.json();
+
+      // Caso retorno erro
+      if (dados.erro) {
+          console.error(dados.erro);
+          return;
+      }
+
+      // Chama função que exibe ou esconde o botão
+      configurarBotaoStatus(dados.permissao_status);
+  }
+
+  function configurarBotaoStatus(permissao) {
+      const botaoStatus = document.getElementById("status");
+
+      if (permissao === "S") {
+        botaoStatus.disabled = false;   // ativa
+        } else {
+            botaoStatus.disabled = true;    // mantém desativado
+      }
+  }
+
+  carregarPermissao();
+
 
   // === EXPORTAR ===
   function exportarTabela() {

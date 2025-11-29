@@ -4,6 +4,9 @@ import mysql.connector
 import random, string
 from datetime import datetime
 
+import smtplib # Comandos dos e-mails
+from email.mime.text import MIMEText # Comandos dos e-mails
+
 agora = datetime.now()
 
 app = Flask(__name__, static_folder='static', template_folder='.')
@@ -52,16 +55,19 @@ def esqueci_senha():
         if not usuario:
             return jsonify({"sucesso": False, "mensagem": "E-mail não encontrado."}), 404
 
-        # Gera nova senha aleatória (8 caracteres)
+        # Gera nova senha aleatória
         nova_senha = ''.join(random.choices(string.ascii_letters + string.digits, k=8))
 
         # Atualiza no banco
         cursor.execute("UPDATE cad_usuario SET senha=%s WHERE email=%s", (nova_senha, email))
         conn.commit()
 
+        # ---- Enviar e-mail ----
+        enviar_email_nova_senha(usuario["email"], usuario["nome"], nova_senha)
+
         return jsonify({
             "sucesso": True,
-            "mensagem": "Uma nova senha foi gerada. Entre em contato com os administradores para obtê-la."
+            "mensagem": "Uma nova senha foi enviada para o seu e-mail."
         })
 
     except Exception as e:
@@ -70,6 +76,7 @@ def esqueci_senha():
     finally:
         cursor.close()
         conn.close()
+
 
 # === LOGIN ===    
 @app.route('/login', methods=['POST'])
@@ -161,8 +168,34 @@ def page_meurh():
 
     if usuario["modrh"] != "S":
         return "Acesso negado a este módulo, entre em contato com os administradores caso precise de acesso", 403
+    
 
     return send_from_directory('.', 'meu_rh.html')
+    
+
+@app.route('/permissao_atualizar_requisicao', methods=["GET"]) # Verifica a permissão de criar status da requisição de pessoal
+def permissao_rh_requisicao():
+    usuario = request.args.get("usuario")
+
+    print("Carregar usuario logado em permissao rh:",usuario)
+
+    if not usuario:
+        return jsonify({"erro": "Usuário não informado"}), 401
+
+    conn = conectar()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT modrh_req_full FROM cad_usuario WHERE nome=%s", (usuario,))
+    usuario = cursor.fetchone()
+
+    if not usuario:
+        return jsonify({"erro": "Usuário inválido"}), 404
+
+    # retorno da permissão
+    return jsonify({
+        "usuario": usuario,
+        "permissao_status": usuario["modrh_req_full"]  # "S" ou "N"
+    })
+
 
 @app.route('/meu_rh_acoes_treinamentos')
 def page_acoestreinamentos():
@@ -272,7 +305,22 @@ def page_usuario():
 def page_empresa():
     return send_from_directory('.', 'empresa.html')
 
+@app.route("/enviar_email", methods=["GET"])
+def enviar_email():
+    remetente = "coord.ti@genesisgenteegestao.com"
+    senha = "yivx shwv hcow ahpv"
 
+    msg = MIMEText("Mensagem de teste de conexão")
+    msg["Subject"] = "Teste de conexão"
+    msg["From"] = remetente
+    msg["To"] = remetente
+
+    with smtplib.SMTP("smtp.gmail.com", 587) as smtp:
+        smtp.starttls()
+        smtp.login(remetente, senha)
+        smtp.send_message(msg)
+
+    print("Email enviado!")
 
 # === CADASTRO ===
 @app.route('/cadastrar', methods=['POST'])
@@ -320,6 +368,72 @@ def cadastrar_usuario():
         cursor.close()
         conn.close()
 
+def enviar_email_nova_senha(email_destino, nome, nova_senha):
+    remetente = "coord.ti@genesisgenteegestao.com"
+    senha = "yivx shwv hcow ahpv"
+
+    corpo = f"""
+        Olá {nome},
+
+        Uma nova senha foi gerada para sua conta no sistema Genesis Lotus.
+
+        Nome: {nome}
+        E-mail: {email_destino}
+        Nova Senha: {nova_senha}
+
+        Recomendamos que você altere essa senha após realizar o login.
+
+        Caso não tenha solicitado essa alteração, entre em contato com o administrador imediatamente.
+
+        Atenciosamente,
+        Equipe Genesis Lotus
+        """
+
+    msg = MIMEText(corpo)
+    msg["Subject"] = "Genesis Lotus -> Recuperação de Senha"
+    msg["From"] = remetente
+    msg["To"] = email_destino  # agora envia para o e-mail correto
+
+    with smtplib.SMTP("smtp.gmail.com", 587) as smtp:
+        smtp.starttls()
+        smtp.login(remetente, senha)
+        smtp.send_message(msg)
+
+    print("📧 Email de nova senha enviado para:", email_destino)
+
+
+def enviar_email_atualizacao(email_destino, nome, status, unidade):
+    remetente = "coord.ti@genesisgenteegestao.com"
+    senha = "yivx shwv hcow ahpv"
+
+    corpo = f"""
+        Olá {nome},
+
+        Seus dados foram atualizados com sucesso no sistema Genesis Lotus.
+
+        Nome: {nome};
+        E-mail: {email_destino}
+        Unidade(s): {unidade}
+        Status: {status}
+
+        Caso não tenha solicitado essa alteração, entre em contato com o administrador imediatamente.
+
+        Atenciosamente,
+        Equipe Genesis Lotus
+        """
+    
+    msg = MIMEText(corpo)
+    msg["Subject"] = "Genesis Lotus -> Atualização de Usuário"
+    msg["From"] = remetente
+    msg["To"] = "gestaodadosindicadores@gmail.com" #= email_destino
+
+    with smtplib.SMTP("smtp.gmail.com", 587) as smtp:
+        smtp.starttls()
+        smtp.login(remetente, senha)
+        smtp.send_message(msg)
+
+    print("📧 Email de atualização de usuário enviado para:", email_destino)
+
 # === EDITAR USUÁRIO ===
 @app.route('/usuario/<int:id>', methods=['PUT'])
 def editar_usuario(id):
@@ -356,12 +470,21 @@ def editar_usuario(id):
         ))
 
         conn.commit()
+
+# >>> ENVIA O E-MAIL AQUI <<<               
+        enviar_email_atualizacao(
+            email_destino=data['email'],
+            nome=data['nome'],
+            status=data['status'],
+            unidade=data['empresa']
+        )
+
         return jsonify({"sucesso": True, "mensagem": "Usuário atualizado com sucesso!"})
 
     except Exception as e:
         print("🚨 ERRO AO EDITAR USUÁRIO:", e)
         return jsonify({"sucesso": False, "mensagem": f"Erro: {str(e)}"}), 500
-
+    
     finally:
         cursor.close()
         conn.close()
