@@ -63,7 +63,7 @@ def esqueci_senha():
         conn.commit()
 
         # ---- Enviar e-mail ----
-        enviar_email_nova_senha(usuario["email"], usuario["nome"], nova_senha)
+        # enviar_email_nova_senha(usuario["email"], usuario["nome"], nova_senha)
 
         return jsonify({
             "sucesso": True,
@@ -353,35 +353,41 @@ def enviar_email_brevo():
         print("❌ ERRO AO ENVIAR EMAIL:", e)
         return jsonify({"sucesso": False, "erro": str(e)})
 
-@app.route("/enviar_email_brevo2", methods=["GET"])
-def enviar_email_brevo_teste():
+# SUSPENDER INATIVOS #
+
+@app.route('/suspender_usuarios_inativos')
+def suspender_inativos():
     try:
-        remetente = "gestaodadosindicadores@gmail.com"
-        destinatario = "coord.ti@genesisgenteegestao.com"
+        conn = conectar()
+        cursor = conn.cursor()
 
-        smtp_host = "smtp-relay.brevo.com"
-        smtp_port = 465  # Porta SSL
-        smtp_login = "9cef56001@smtp-brevo.com"
-        smtp_password = "45xa6pXAUcSOtyZr"
+        sql = """
+            UPDATE cad_usuario
+            SET status = 'Suspenso Inatividade'
+            WHERE 
+                (
+                    dtacesso IS NULL 
+                    AND cadastro < DATE_SUB(CURDATE(), INTERVAL 30 DAY)
+                )
+                OR
+                (
+                    dtacesso IS NOT NULL
+                    AND dtacesso < DATE_SUB(CURDATE(), INTERVAL 60 DAY)
+                );
+        """
 
-        msg = MIMEText("Mensagem de teste de conexão via Brevo (SSL 465)")
-        msg["Subject"] = "Teste de conexão - Brevo SSL"
-        msg["From"] = remetente
-        msg["To"] = destinatario
+        cursor.execute(sql)
+        conn.commit()
 
-        # Usando SMTP_SSL (porta 465)
-        with smtplib.SMTP_SSL(smtp_host, smtp_port, timeout=10) as smtp:
-            smtp.login(smtp_login, smtp_password)
-            smtp.send_message(msg)
-
-        print("📧 Email enviado com sucesso (Brevo SSL)!")
-        return jsonify({"sucesso": True, "mensagem": "Email enviado com sucesso (Brevo SSL)!!"})
+        print("Usuários inativos foram atualizados com sucesso.")
+        return jsonify({"sucesso": True, "mensagem": "Processo gerado!"})
 
     except Exception as e:
-        print("❌ ERRO AO ENVIAR EMAIL:", e)
-        return jsonify({"sucesso": False, "erro": str(e)})
+        print("Erro ao atualizar usuários:", e)
 
-
+    finally:
+        cursor.close()
+        conn.close()
 
 # === CADASTRO ===
 @app.route('/cadastrar', methods=['POST'])
@@ -533,12 +539,12 @@ def editar_usuario(id):
         conn.commit()
 
 # >>> ENVIA O E-MAIL AQUI <<<               
-        enviar_email_atualizacao(
-            email_destino=data['email'],
-            nome=data['nome'],
-            status=data['status'],
-            unidade=data['empresa']
-        )
+        # enviar_email_atualizacao(
+            # email_destino=data['email'],
+            # nome=data['nome'],
+            # status=data['status'],
+            # unidade=data['empresa']
+        # )
 
         return jsonify({"sucesso": True, "mensagem": "Usuário atualizado com sucesso!"})
 
@@ -2469,6 +2475,4 @@ def atualizar_cadindicador(id):
     return jsonify({"sucesso": True, "mensagem": "Indicador atualizado com sucesso!"})
 
 if __name__ == '__main__':
-
     app.run(debug=True)
-
