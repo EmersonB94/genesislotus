@@ -322,6 +322,38 @@ def enviar_email():
 
     print("Email enviado!")
 
+@app.route("/enviar_email_brevo", methods=["GET"])
+def enviar_email_brevo():
+    try:
+        remetente = "gestaodadosindicadores@gmail.com"
+        destinatario = "coord.ti@genesisgenteegestao.com"
+
+        # 🔵 DADOS DO BREVO
+        smtp_host = "smtp-relay.brevo.com"
+        smtp_port = 587
+        smtp_login = "9cef56001@smtp-brevo.com"
+        smtp_password = "45xa6pXAUcSOtyZr"
+
+        # 🔵 Corpo do e-mail
+        msg = MIMEText("Mensagem de teste de conexão via Brevo")
+        msg["Subject"] = "Teste de conexão - Brevo"
+        msg["From"] = remetente
+        msg["To"] = destinatario
+
+        # 🔵 Conectar ao servidor SMTP Brevo
+        with smtplib.SMTP(smtp_host, smtp_port, timeout=10) as smtp:
+            smtp.starttls()
+            smtp.login(smtp_login, smtp_password)
+            smtp.send_message(msg)
+
+        print("📧 Email enviado com sucesso (Brevo)!")
+        return jsonify({"sucesso": True, "mensagem": "Email enviado com sucesso brevo!"})
+
+    except Exception as e:
+        print("❌ ERRO AO ENVIAR EMAIL:", e)
+        return jsonify({"sucesso": False, "erro": str(e)})
+
+
 # === CADASTRO ===
 @app.route('/cadastrar', methods=['POST'])
 def cadastrar_usuario():
