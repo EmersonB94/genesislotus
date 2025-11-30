@@ -354,7 +354,7 @@ def enviar_email_brevo():
         return jsonify({"sucesso": False, "erro": str(e)})
 
 @app.route("/enviar_email_brevo2", methods=["GET"])
-def enviar_email():
+def enviar_email_brevo_teste():
     try:
         remetente = "gestaodadosindicadores@gmail.com"
         destinatario = "coord.ti@genesisgenteegestao.com"
@@ -2471,3 +2471,4 @@ def atualizar_cadindicador(id):
 if __name__ == '__main__':
 
     app.run(debug=True)
+
