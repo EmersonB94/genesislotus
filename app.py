@@ -353,6 +353,35 @@ def enviar_email_brevo():
         print("❌ ERRO AO ENVIAR EMAIL:", e)
         return jsonify({"sucesso": False, "erro": str(e)})
 
+@app.route("/enviar_email_brevo2", methods=["GET"])
+def enviar_email():
+    try:
+        remetente = "gestaodadosindicadores@gmail.com"
+        destinatario = "coord.ti@genesisgenteegestao.com"
+
+        smtp_host = "smtp-relay.brevo.com"
+        smtp_port = 465  # Porta SSL
+        smtp_login = "9cef56001@smtp-brevo.com"
+        smtp_password = "45xa6pXAUcSOtyZr"
+
+        msg = MIMEText("Mensagem de teste de conexão via Brevo (SSL 465)")
+        msg["Subject"] = "Teste de conexão - Brevo SSL"
+        msg["From"] = remetente
+        msg["To"] = destinatario
+
+        # Usando SMTP_SSL (porta 465)
+        with smtplib.SMTP_SSL(smtp_host, smtp_port, timeout=10) as smtp:
+            smtp.login(smtp_login, smtp_password)
+            smtp.send_message(msg)
+
+        print("📧 Email enviado com sucesso (Brevo SSL)!")
+        return jsonify({"sucesso": True, "mensagem": "Email enviado com sucesso (Brevo SSL)!!"})
+
+    except Exception as e:
+        print("❌ ERRO AO ENVIAR EMAIL:", e)
+        return jsonify({"sucesso": False, "erro": str(e)})
+
+
 
 # === CADASTRO ===
 @app.route('/cadastrar', methods=['POST'])
@@ -2440,4 +2469,5 @@ def atualizar_cadindicador(id):
     return jsonify({"sucesso": True, "mensagem": "Indicador atualizado com sucesso!"})
 
 if __name__ == '__main__':
+
     app.run(debug=True)
