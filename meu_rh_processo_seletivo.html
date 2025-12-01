@@ -220,7 +220,7 @@
               <input type="text" id="email" required>
 
               <label class="logo">Data entrevista</label>
-              <input type="date" id="data" required>
+              <input type="datetime-local" id="data" required>
 
               <label class="logo">Fase (Entrevista)</label>
               <input type="number" id="fase" value="5" min="1">
@@ -230,6 +230,15 @@
 
               <label class="logo">Síntese da Entrevista Comportamental </label>
               <textarea id="sintese" rows="12" style="
+                width: 100%;
+                padding: 12px;
+                border: 1px solid #ccc;
+                border-radius: 8px;
+                resize: vertical;
+              "></textarea>
+
+              <label class="logo">Perfil Comportamental </label>
+              <textarea id="perfil_comportamental" rows="8" style="
                 width: 100%;
                 padding: 12px;
                 border: 1px solid #ccc;
@@ -329,6 +338,7 @@ async function salvarRequisicao(event){
         fase: document.getElementById("fase").value || 1,
         formacao: document.getElementById("formacao").value.trim(),
         sintese: document.getElementById("sintese").value.trim(),
+        perfil_comportamental: document.getElementById("perfil_comportamental").value.trim(),
         conclusao: document.getElementById("conclusao").value.trim(),
         modo: document.getElementById("modo").value,
         status: document.getElementById("status").value,
@@ -376,10 +386,11 @@ async function editar(id){
   cargo.value = r.cargo || "";
   contato.value = r.contato || "";
   email.value = r.email || "";
-  data.value = r.data ? r.data.split("T")[0] : "";
+  data.value = r.data || "";
   fase.value = r.fase || "1";
   formacao.value = r.formacao || "";
   sintese.value = r.sintese || "";
+  perfil_comportamental.value = r.perfil_comportamental || "";
   conclusao.value = r.conclusao || "";
   modo.value = r.modo || "Presencial";
   status.value = r.status || "Em processo";
@@ -543,6 +554,8 @@ async function atualizar(event, id){
       ["Formação acadêmica", r.formacao],
       [""],
       ["Sintese", r.sintese],
+      [""],
+      ["Perfil Comportamental", r.perfil_comportamental],
       [""],
       ["Conclusão", r.conclusao]
     ];

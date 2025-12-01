@@ -2,7 +2,7 @@ from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 import mysql.connector
 import random, string
-from datetime import datetime
+from datetime import datetime, date
 
 import smtplib # Comandos dos e-mails
 from email.mime.text import MIMEText # Comandos dos e-mails
@@ -355,7 +355,7 @@ def enviar_email_brevo():
 
 # SUSPENDER INATIVOS #
 
-@app.route('/suspender_usuarios_inativos')
+@app.route('/suspender_usuarios_inativos', methods=['GET']) # em cron-job - executa essa ação 1x por dia
 def suspender_inativos():
     try:
         conn = conectar()
@@ -388,6 +388,65 @@ def suspender_inativos():
     finally:
         cursor.close()
         conn.close()
+
+# Atualizar indicadores
+
+@app.route('/atualizar_indicadores_status', methods=['GET']) # em cron-job - executa essa ação 1x por dia
+def atualizar_indicadores_status():
+    conn = None
+    cursor = None
+
+    try:
+        conn = conectar()
+        cursor = conn.cursor()
+
+        sql = """
+            UPDATE indicadores
+            SET status = 'Vencido e não aplicado'
+            WHERE prazo < CURDATE();
+        """
+
+        cursor.execute(sql)
+        conn.commit()
+
+        return jsonify({"sucesso": True, "mensagem": "Indicadores vencidos foram atualizados."})
+
+    except Exception as e:
+        print("Erro ao atualizar indicadores:", e)
+        return jsonify({"sucesso": False, "mensagem": "Erro ao atualizar indicadores.", "erro": str(e)})
+
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
+
+def registrar_movimento(usuario, empresa, tipo, modulo, descricao):
+    conn = None
+    cursor = None
+
+    try:
+        conn = conectar()
+        cursor = conn.cursor()
+
+        sql = """
+            INSERT INTO rg_mov (usuario, empresa, tipo, modulo, descricao, dtregistro)
+            VALUES (%s, %s, %s, %s, %s, now())
+        """
+
+        cursor.execute(sql, (usuario, empresa, tipo, modulo, descricao))
+        conn.commit()
+
+        print("Movimento registrado com sucesso.")
+
+    except Exception as e:
+        print("Erro ao registrar movimento:", e)
+
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
 
 # === CADASTRO ===
 @app.route('/cadastrar', methods=['POST'])
@@ -675,6 +734,14 @@ def salvar_treinamento():
             data.get('participantes', 0)
         )
 
+        registrar_movimento(
+            "Não definido",
+            data['empresa'],
+            "Novo",
+            "RH-Ações e treinamentos",
+            data['tema']
+        )
+
         cursor.execute(sql, valores)
         conn.commit()
         cursor.close()
@@ -715,6 +782,14 @@ def editar_treinamento(id):
             data.get('pat', ''),
             data.get('participantes', 0),
             id
+        )
+
+        registrar_movimento(
+            "Não definido",
+            data['empresa'],
+            "Editar",
+            "RH-Ações e treinamentos",
+            f"({id}) Edição {data['tema']}"
         )
 
         cursor.execute(sql, valores)
@@ -1876,6 +1951,15 @@ def criar_requisicao():
             dados.get('responsavel_rh'),
             dados.get('observacoes')
         )
+
+        registrar_movimento(
+            "Não definido",
+            dados['empresa'],
+            "Novo",
+            "RH-Requisição de pessoal",
+            f"Requisição ({numero_requisicao})"
+        )
+
         cursor.execute(sql, params)
         conn.commit()
         return jsonify({"sucesso": True, "mensagem": "Requisição criada com sucesso.", "id": cursor.lastrowid})
@@ -1908,6 +1992,15 @@ def atualizar_requisicao(id):
             if key in dados:
                 campos.append(f"{key}=%s")
                 params.append(dados.get(key))
+
+        registrar_movimento(
+            "Não definido",
+            dados.get('empresa', 'Não informado'),
+            "Editar",
+            "RH-Requisição de pessoal",
+            f"Requisição ({dados.get('numero_requisicao', 'Sem número')})"
+        )
+        
         if not campos:
             return jsonify({"sucesso": False, "mensagem": "Nenhum campo para atualizar."}), 400
 
@@ -1959,7 +2052,7 @@ def criar_processo_seletivo():
         INSERT INTO rg_processo_seletivo (
           numero_requisicao, nome, cargo,
           contato, email, empresa,
-          data, fase, formacao, sintese, conclusao,
+          data, fase, formacao, sintese, perfil_comportamental, conclusao,
           modo, status, usuario, dtregistro, dtatualizacao
         ) VALUES (
           %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW(), NOW()
@@ -1994,6 +2087,7 @@ def criar_processo_seletivo():
             dados.get('fase') or 1,
             dados.get('formacao') or 'Não Informado',
             dados.get('sintese') or 'Não Informado',
+            dados.get('perfil_comportamental') or 'Não Informado',
             dados.get('conclusao') or 'Não Informado',
             dados.get('modo') or '',
             dados.get('status') or 'Em processo',
@@ -2074,15 +2168,31 @@ def buscar_processo_por_id(id):
         cursor = conn.cursor(dictionary=True)
         cursor.execute("SELECT * FROM rg_processo_seletivo WHERE id=%s", (id,))
         row = cursor.fetchone()
+
+        print("Dado retornado:", row)
+
         if not row:
             return jsonify({"sucesso": False, "mensagem": "Registro não encontrado."}), 404
+
+        # 🔥 Ajustar campo data
+        if isinstance(row.get("data"), (datetime, date)):
+            dt = row["data"]
+            if isinstance(dt, date) and not isinstance(dt, datetime):
+                dt = datetime(dt.year, dt.month, dt.day, 0, 0)
+            row["data"] = dt.strftime("%Y-%m-%dT%H:%M")
+
         return jsonify({"sucesso": True, "dado": row})
+
     except Exception as e:
         print("ERRO buscar_processo_por_id:", e)
         return jsonify({"sucesso": False, "mensagem": str(e)}), 500
+
     finally:
-        try: cursor.close(); conn.close()
-        except: pass
+        try:
+            cursor.close()
+            conn.close()
+        except:
+            pass
 
 
 # === ATUALIZAR ===
@@ -2098,7 +2208,7 @@ def atualizar_processo(id):
         UPDATE rg_processo_seletivo
         SET numero_requisicao=%s, nome=%s, cargo=%s,
             contato=%s, email=%s, empresa=%s,
-            data=%s, fase=%s, formacao=%s, sintese=%s, conclusao=%s,
+            data=%s, fase=%s, formacao=%s, sintese=%s, perfil_comportamental=%s, conclusao=%s,
             modo=%s, status=%s, usuario=%s, dtatualizacao=NOW()
         WHERE id=%s
         """
@@ -2127,6 +2237,7 @@ def atualizar_processo(id):
             dados.get('fase') or 1,
             dados.get('formacao') or '',
             dados.get('sintese') or '',
+            dados.get('perfil_comportamental') or '',
             dados.get('conclusao') or '',
             dados.get('modo') or '',
             dados.get('status'),
@@ -2166,6 +2277,8 @@ def buscar_requisicao():
         """, (numero,))
 
         dado = cursor.fetchone()
+
+        print(dado)
 
         cursor.close()
         conn.close()
