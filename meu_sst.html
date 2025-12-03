@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Meu SST</title>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link rel="stylesheet" href="/static/css/style.css">
+
+<style>
+    
+</style>
+
+</head>
+<body>
+<aside>
+  <div>
+    <div class="logo">
+      <img src="/static/image/LogoGenesis-Lotus2.png" alt="Genesis Lotus" class="logo-img">
+    </div>
+    <h4>Olá, <span id="usuarioLogado" ></span> (<span id="usuarioLogadoCargo"></span>)</h4>
+    <nav>
+      <a href="inicio"><i class="fa-solid fa-chart-line"></i> Início</a>
+      <a href="indicadores"><i class="fa-solid fa-bullseye"></i> Indicadores</a>
+      <a href="meu_sst" class="active"><i class="fa-solid fa-bullseye"></i> Meu SST</a>
+      <a href="meu_sst_acoes_treinamentos"><i class="fa-solid fa-chalkboard-teacher"></i> Ações e treinamentos</a>
+      <a href="meu_sst_acidentes"><i class="fa-solid fa-chalkboard-teacher"></i> Acidentes</a>
+      <a href="meu_sst_ASOs"><i class="fa-solid fa-chalkboard-teacher"></i> ASOs</a>
+    </nav>
+  </div>
+  <footer style="text-align:center; font-size:0.8rem; opacity:0.8;">© 2025 Genesis Lotus</footer>
+</aside>
+
+<main>
+  <header>
+    <h1>Meu SST</h1>
+    <button class="btn" onclick="sair()">Sair</button>
+  </header>
+
+  <div class="cards">
+    <div class="card">
+      <p>Ações</p>
+      <h2 id="totalUsuarios">0</h2>
+    </div>
+    <div class="card">
+      <p>Treinamentos</p>
+      <h2 id="totalIndicadores">0</h2>
+    </div>
+    <div class="card">
+      <p>Acidentes</p>
+      <h2 id="totalClientes">0</h2>
+    </div>
+    <div class="card">
+      <p>ASOs</p>
+      <h2 id="totalAcoesTreinamentos">0</h2>
+    </div>
+  </div>
+
+</main>
+
+<script src="/static/js/meu_sst.js"></script>
+
+</body>
+</html>

@@ -75,6 +75,19 @@
       from { transform: scale(0.9); opacity: 0; }
       to { transform: scale(1); opacity: 1; }
     }
+
+    /* Container dos toasts */
+  #toast-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 99999;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  
   </style>
 </head>
 <body>
@@ -89,6 +102,7 @@
         <a href="empresa"><i class="fa-solid fa-building"></i> Empresas</a>
         <a href="chamados_admin"><i class="fa-solid fa-headset"></i></i> Chamados</a>
         <a href="ficha_indicadores"><i class="fa-solid fa-building"></i> Ficha Indicadores</a>
+        <a href="movimentacoes"><i class="fa-solid fa-building"></i> Movimentações</a>
       </nav>
     </div>
     <footer style="text-align:center; font-size:0.8rem; opacity:0.8;">© 2025 Genesis Lotus</footer>
@@ -179,6 +193,7 @@
   </div>
 </div>
 
+  <div id="toast-container"></div>
 
 
   <script>
@@ -192,6 +207,25 @@
     
     const areaTabela = document.getElementById("areaTabela");
     const overlayContainer = document.getElementById("overlayContainer");
+
+    function showToast(message, tipo = "success") {
+      const container = document.getElementById("toast-container");
+
+      const toast = document.createElement("div");
+      toast.classList.add("toast");
+
+      if (tipo === "success") toast.classList.add("toast-success");
+      else toast.classList.add("toast-error");
+
+      toast.textContent = message;
+
+      container.appendChild(toast);
+
+      setTimeout(() => {
+        toast.remove();
+      }, 3500);
+    } 
+
 
     // === Função auxiliar de formatação de data ===
     function formatarData(dataISO) {
@@ -298,15 +332,15 @@
 
         const data = await resp.json();
         if(resp.ok && data.sucesso){
-          alert(data.mensagem);
+          showToast(data.mensagem, "success");
           fecharForm();
           carregarUsuarios();
         } else {
-          alert(data.mensagem || "Erro ao salvar usuário.");
+          showToast(data.mensagem || "Erro ao salvar usuário.", "error");
         }
       } catch(e){
         console.error(e);
-        alert("Erro de conexão com o servidor.");
+        showToast("Erro de conexão com o servidor.", "error");
       }
     }
 

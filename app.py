@@ -135,6 +135,10 @@ def inicio_page():
 def chamado_page():
     return send_from_directory('.', 'chamados.html')
 
+@app.route('/movimentacoes')
+def mov_page():
+    return send_from_directory('.', 'mov.html')
+
 @app.route('/chamados_admin')
 def chamadoAdmin_page():
     return send_from_directory('.', 'chamados_admin.html')
@@ -259,7 +263,19 @@ def page_meusst():
     if usuario["modsst"] != "S":
         return "Acesso negado a este módulo, entre em contato com os administradores caso precise de acesso", 403
     
-    return send_from_directory('.', 'meusst.html')
+    return send_from_directory('.', 'meu_sst.html')
+
+@app.route('/meu_sst_acoes_treinamentos')
+def page_meusstacoes():
+    return send_from_directory('.', 'meu_sst_acoes_treinamentos.html')
+
+@app.route('/meu_sst_acidentes')
+def page_meusstasos():
+    return send_from_directory('.', 'meu_sst_acidentes.html')
+
+@app.route('/meu_sst_asos')
+def page_meusstacidentes():
+    return send_from_directory('.', 'meu_sst_asos.html')
 
 @app.route('/admin')
 def page_admin():
@@ -355,7 +371,7 @@ def enviar_email_brevo():
 
 # SUSPENDER INATIVOS #
 
-@app.route('/suspender_usuarios_inativos', methods=['GET']) # em cron-job - executa essa ação 1x por dia
+@app.route('/cron/suspender_usuarios_inativos', methods=['GET']) # em cron-job - executa essa ação 1x por dia
 def suspender_inativos():
     try:
         conn = conectar()
@@ -391,7 +407,7 @@ def suspender_inativos():
 
 # Atualizar indicadores
 
-@app.route('/atualizar_indicadores_status', methods=['GET']) # em cron-job - executa essa ação 1x por dia
+@app.route('/cron/atualizar_indicadores_status', methods=['GET']) # em cron-job - executa essa ação 1x por dia
 def atualizar_indicadores_status():
     conn = None
     cursor = None
@@ -437,7 +453,7 @@ def registrar_movimento(usuario, empresa, tipo, modulo, descricao):
         cursor.execute(sql, (usuario, empresa, tipo, modulo, descricao))
         conn.commit()
 
-        print("Movimento registrado com sucesso.")
+        print("Movimento registrado com sucesso.(",tipo,")(",descricao,")")
 
     except Exception as e:
         print("Erro ao registrar movimento:", e)
@@ -482,6 +498,14 @@ def cadastrar_usuario():
             data.get('modsst', 'N'),
             data.get('modadm', 'N')
         ))
+
+        registrar_movimento(
+            "Não definido",
+            "Não se aplica",
+            "Novo",
+            "ADM-Usuário",
+            f"({id}) Novo {data['nome']}"
+        )
 
         conn.commit()
         return jsonify({"sucesso": True, "mensagem": "Usuário cadastrado com sucesso!"})
@@ -595,6 +619,14 @@ def editar_usuario(id):
             id
         ))
 
+        registrar_movimento(
+            "Não definido",
+            "Não se aplica",
+            "Editar",
+            "ADM-Usuário",
+            f"({id}) Edição {data['nome']}"
+        )
+
         conn.commit()
 
 # >>> ENVIA O E-MAIL AQUI <<<               
@@ -661,6 +693,170 @@ def atualizar_perfil():
         print("🚨 ERRO AO ATUALIZAR PERFIL:", e)
         return jsonify({"sucesso": False, "mensagem": str(e)}), 500
 
+# === ACIDENTES ===#
+
+@app.route("/api/acidentes", methods=["GET"])
+def listar_acidentes():
+    try:
+        empresa = request.args.get("unidade")
+        mes = request.args.get("mes")
+        ano = request.args.get("ano")
+
+        conn = conectar()
+        cursor = conn.cursor(dictionary=True)
+
+        sql = "SELECT * FROM rg_acidentes WHERE empresa = %s"
+        valores = [empresa]
+
+        if mes:
+            sql += " AND DATE_FORMAT(data, '%m') = %s"
+            valores.append(mes)
+
+        if ano:
+            sql += " AND DATE_FORMAT(data, '%Y') = %s"
+            valores.append(ano)
+
+        sql += " ORDER BY data DESC"
+
+        cursor.execute(sql, valores)
+        registros = cursor.fetchall()
+
+        return jsonify({"sucesso": True, "dados": registros})
+
+    except Exception as e:
+        return jsonify({"sucesso": False, "mensagem": f"Erro: {e}"})
+
+@app.route('/api/acidentes/<int:id>', methods=['GET'])
+def buscar_acidente(id):
+    try:
+        conn = conectar()
+        cursor = conn.cursor(dictionary=True)
+
+        cursor.execute("SELECT * FROM rg_acidentes WHERE id = %s", (id,))
+        dado = cursor.fetchone()
+
+        return jsonify(dado if dado else {})
+
+    except Exception as e:
+        return jsonify({"erro": str(e)})
+
+@app.route("/api/acidentes", methods=["POST"])
+def salvar_acidente():
+    try:
+        dados = request.get_json()
+
+        conn = conectar()
+        cursor = conn.cursor()
+
+        sql = """
+            INSERT INTO rg_acidentes
+            (empresa, nome, cargo, ocorrido, data, local, tipo, responsavel,
+             cat, afastamento, dataretorno, dtregistro, usuario)
+            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,NOW(),%s)
+        """
+
+        valores = (
+            dados.get("empresa"),
+            dados.get("nome"),
+            dados.get("cargo"),
+            dados.get("ocorrido"),
+            dados.get("data"),
+            dados.get("local"),
+            dados.get("tipo"),
+            dados.get("responsavel"),
+            dados.get("cat"),
+            dados.get("afastamento"),
+            dados.get("dataretorno"),
+            dados.get("usuario")
+        )
+
+        cursor.execute(sql, valores)
+        conn.commit()
+
+        return jsonify({"sucesso": True, "mensagem": "Acidente registrado com sucesso!"})
+
+    except Exception as e:
+        return jsonify({"sucesso": False, "mensagem": f"Erro: {e}"})
+
+@app.route('/api/acidentes/<int:id>', methods=['PUT'])
+def editar_acidente(id):
+    try:
+        data = request.get_json()
+
+        sql = """
+        UPDATE rg_acidentes SET
+            empresa=%s, nome=%s, cargo=%s, ocorrido=%s, data=%s, local=%s, tipo=%s,
+            responsavel=%s, cat=%s, afastamento=%s, dataretorno=%s, usuario=%s, dtatualizacao=now()
+        WHERE id=%s
+        """
+
+        valores = (
+            data["empresa"],
+            data["nome"],
+            data["cargo"],
+            data["ocorrido"],
+            data["data"],
+            data["local"],
+            data["tipo"],
+            data["responsavel"],
+            data["cat"],
+            data["afastamento"],
+            data["dataretorno"],
+            data["usuario"],
+            id
+        )
+
+        registrar_movimento(
+            data.get["usuario"],
+            data.get["empresa"],
+            "Editar",
+            "SST-Acidentes",
+            data["nome"]
+        )
+
+        conn = conectar()
+        cursor = conn.cursor()
+        cursor.execute(sql, valores)
+        conn.commit()
+
+        return jsonify({"sucesso": True, "mensagem": "Registro atualizado com sucesso!"})
+
+    except Exception as e:
+        return jsonify({"sucesso": False, "mensagem": str(e)})
+    
+# === ASOS ===#
+
+@app.route("/api/asos", methods=["GET"])
+def listar_asos():
+    try:
+        empresa = request.args.get("unidade")
+        mes = request.args.get("mes")
+        ano = request.args.get("ano")
+
+        conn = conectar()
+        cursor = conn.cursor(dictionary=True)
+
+        sql = "SELECT * FROM rg_asos WHERE empresa = %s"
+        valores = [empresa]
+
+        if mes:
+            sql += " AND DATE_FORMAT(data, '%m') = %s"
+            valores.append(mes)
+
+        if ano:
+            sql += " AND DATE_FORMAT(data, '%Y') = %s"
+            valores.append(ano)
+
+        sql += " ORDER BY data DESC"
+
+        cursor.execute(sql, valores)
+        registros = cursor.fetchall()
+
+        return jsonify({"sucesso": True, "dados": registros})
+
+    except Exception as e:
+        return jsonify({"sucesso": False, "mensagem": f"Erro: {e}"})
+
     
 # === AÇÕES / TREINAMENTOS ===
 
@@ -715,7 +911,7 @@ def salvar_treinamento():
         sql = """
         INSERT INTO acoestreinamentos (
             empresa, tema, realizado, data_realizacao, local, tipo_acao,
-            duracao, departamento, responsavel, modalidade, pat, participantes, data_hora_registro
+            duracao, departamento, responsavel, modalidade, pat, participantes, area, data_hora_registro
         ) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,NOW())
         """
 
@@ -731,15 +927,16 @@ def salvar_treinamento():
             data.get('responsavel', ''),
             data.get('modalidade', ''),
             data.get('pat', ''),
-            data.get('participantes', 0)
+            data.get('participantes', 0),
+            data.get('area', '')
         )
 
         registrar_movimento(
             "Não definido",
             data['empresa'],
             "Novo",
-            "RH-Ações e treinamentos",
-            data['tema']
+            data.get('area', '') + "Ações e treinamentos",
+            f"({id}) Edição {data['tema']}"
         )
 
         cursor.execute(sql, valores)
@@ -764,7 +961,8 @@ def editar_treinamento(id):
         sql = """
         UPDATE acoestreinamentos SET
             empresa=%s, tema=%s, realizado=%s, data_realizacao=%s, local=%s, tipo_acao=%s,
-            duracao=%s, departamento=%s, responsavel=%s, modalidade=%s, pat=%s, participantes=%s
+            duracao=%s, departamento=%s, responsavel=%s, modalidade=%s, pat=%s, participantes=%s,
+            area=%s
         WHERE id=%s
         """
 
@@ -781,14 +979,15 @@ def editar_treinamento(id):
             data.get('modalidade', ''),
             data.get('pat', ''),
             data.get('participantes', 0),
+            data.get('area', ''),
             id
         )
 
         registrar_movimento(
             "Não definido",
-            data['empresa'],
+            data.get('empresa', ''),
             "Editar",
-            "RH-Ações e treinamentos",
+            data.get('area', '') + "Ações e treinamentos",
             f"({id}) Edição {data['tema']}"
         )
 
@@ -1555,6 +1754,9 @@ def editar_empresa(id):
 
 @app.route('/api/indicadores', methods=['GET'])
 def obter_indicadores():
+
+    print("Buscar indicador selecionado!")
+
     try:
         conn = conectar()
         cursor = conn.cursor(dictionary=True)
@@ -1606,6 +1808,15 @@ def salvar_indicador():
             data.get('analise_critica', ''), data.get('acao_corretiva', ''),
             data.get('prazo', None), data.get('status', 'Pendente')
         ))
+
+        registrar_movimento(
+            "Não informado",
+            data['unidade'],
+            "Novo",
+            "ADM-Indicadores",
+            data['indicador']
+        )
+
         conn.commit()
         cursor.close()
         conn.close()
@@ -1630,6 +1841,15 @@ def editar_indicador(id):
             data.get('analise_critica', ''), data.get('acao_corretiva', ''),
             data.get('prazo', None), data.get('status', 'Pendente'), id
         ))
+
+        registrar_movimento(
+            "Não informado",
+            data['unidade'],
+            "Editar",
+            "ADM-Indicadores",
+            data['indicador']
+        )
+
         conn.commit()
         cursor.close()
         conn.close()
@@ -1667,7 +1887,7 @@ def obter_totais():
 
         # ===== Contar usuários ativos =====
         if unidade:
-            cursor.execute("SELECT COUNT(*) AS total FROM cad_usuario WHERE status='Ativo' AND empresa=%s", (unidade,))
+            cursor.execute("SELECT COUNT(*) AS total FROM cad_usuario WHERE status='Ativo' AND empresa LIKE %s """, (f"%{unidade}%",))
         else:
             cursor.execute("SELECT COUNT(*) AS total FROM cad_usuario WHERE status='Ativo'")
         total_usuarios = cursor.fetchone()['total']
@@ -2094,6 +2314,14 @@ def criar_processo_seletivo():
             dados.get('usuario') or (dados.get('usuario_id') or '')
         )
 
+        registrar_movimento(
+            dados['usuario'],
+            dados['empresa'],
+            "Novo",
+            "RH-Processo Seletivo",
+            numero_requisicao
+        )
+
         cursor.execute(sql, params)
         conn.commit()
         inserted_id = cursor.lastrowid
@@ -2245,6 +2473,14 @@ def atualizar_processo(id):
             id
         )
 
+        registrar_movimento(
+            dados['usuario'],
+            dados['empresa'],
+            "Editar",
+            "RH-Processo Seletivo",
+            dados['numero_requisicao'],
+        )
+
         cursor.execute(sql, params)
         conn.commit()
 
@@ -2337,6 +2573,14 @@ def criar_chamado():
             dados["status"]
         ))
 
+        registrar_movimento(
+            dados["usuario"],
+            "Não se aplica",
+            "Novo",
+            "ADM-Chamados",
+            dados['descricao']
+        )
+
         conn.commit()
 
         # Retorno de sucesso
@@ -2428,6 +2672,14 @@ def atualizar_chamado(id_chamado):
                 id_chamado
             ))
 
+        registrar_movimento(
+            dados["usuario"],
+            "Não se aplica",
+            "Editar",
+            "ADM-Chamados",
+            dados['descricao']
+        )
+
         conn.commit()
         return jsonify({"sucesso": True, "mensagem": "Chamado atualizado com sucesso!"})
 
@@ -2485,6 +2737,39 @@ def filtrar_chamados():
     finally:
         cursor.close()
         conn.close()
+
+# MOVIMENTAÇÃO #
+
+@app.route("/mov")
+def listar_mov():
+    conn = None
+    cursor = None
+
+    try:
+        conn = conectar()
+        cursor = conn.cursor(dictionary=True)
+
+        cursor.execute("""
+            SELECT * FROM rg_mov
+            ORDER BY dtregistro DESC
+        """)
+        mov = cursor.fetchall()
+
+        return jsonify({"sucesso": True, "MOV": mov})
+
+    except Exception as e:
+        print(e)
+        return jsonify({"sucesso": False, "mensagem": "Erro ao buscar movimentações."}), 500
+
+    finally:
+        try:
+            if cursor:
+                cursor.close()
+            if conn:
+                conn.close()
+        except:
+            pass
+
 
 @app.route("/cadindicadores", methods=["POST"])
 def salvar_cadindicador():
@@ -2544,6 +2829,8 @@ def listar_cadindicadores():
             ORDER BY nome DESC
         """)
         indicadores = cursor.fetchall()
+
+        print("Carragando ficha técnica de indicadores!")
 
         return jsonify({"sucesso": True, "indicadores": indicadores})
     except Exception as e:

@@ -130,7 +130,10 @@
       <form id="formIndicador">
         <input type="hidden" id="id">
         <label>Indicador:</label>
-        <input type="text" id="indicador" required>
+        <!-- <input type="text" id="SelectIndicador" required> -->
+        <select id="SelectIndicador" style="padding: 9px 14px;" required>
+          <option value="">Selecione o indicador</option>
+        </select>
         <label>Mês:</label>
         <input type="text" id="mes" required>
         <label>Ano:</label>
@@ -148,6 +151,7 @@
           <option value="Pendente">Pendente</option>
           <option value="Em desenvolvimento">Em desenvolvimento</option>
           <option value="Realizado">Realizado</option>
+          <option value="Vencido e não aplicado">Ação vencida</option>
         </select>
         <br><br>
         <button class="btn" type="submit">Salvar</button>
@@ -161,8 +165,18 @@
   <table id="tabelaIndicadores">
     <thead>
       <tr>
-        <th>ID</th><th>Empresa</th><th>Indicador</th><th>Mês</th><th>Ano</th>
-        <th>Valor</th><th>Análise</th><th>Plano de Ação</th><th>Status</th><th>Registro</th><th>Ações</th>
+        <th>ID</th>
+        <th>Empresa</th>
+        <th>Indicador</th>
+        <th>Mês</th>
+        <th>Ano</th>
+        <th>Valor</th>
+        <th>Análise</th>
+        <th>Plano de Ação</th>
+        <th>Data Ação</th>
+        <th>Status</th>
+        <th>Registro</th>
+        <th>Ações</th>
       </tr>
     </thead>
     <tbody></tbody>
@@ -186,7 +200,7 @@ function abrirFormulario(indicador = null) {
   if (indicador) {
     document.getElementById("tituloForm").textContent = "Editar Indicador";
     document.getElementById("id").value = indicador.id;
-    document.getElementById("indicador").value = indicador.indicador;
+    document.getElementById("SelectIndicador").value = indicador.nome;
     document.getElementById("mes").value = indicador.mes;
     document.getElementById("ano").value = indicador.ano;
     document.getElementById("valor").value = indicador.valor;
@@ -254,11 +268,11 @@ async function carregarIndicadores() {
       <td>${ind.valor}</td>
       <td>${ind.analise_critica || ""}</td>
       <td>${ind.acao_corretiva || ""}</td>
+      <td>${formatarData(ind.prazo)}</td>
       <td>${ind.status}</td>
       <td>${formatarData(ind.dtregistro)}</td>
       <td>
         <button class="btn" onclick='abrirFormulario(${JSON.stringify(ind)})'><i class="fa-solid fa-pen-to-square"></i> Editar</button>
-        <button class="btn" onclick='excluirIndicador(${ind.id})'><i class="fa-solid fa-trash"></i> Excluir</button>
       </td>`;
     tabela.appendChild(tr);
   });
@@ -267,7 +281,7 @@ async function carregarIndicadores() {
 }
 
 function atualizarFiltroIndicadores(lista) {
-  const filtro = document.getElementById("filtroIndicador");
+  /* const filtro = document.getElementById("filtroIndicador"); */
   const indicadores = [...new Set(lista.map(i => i.indicador))];
   filtro.innerHTML = `<option value="">Todos os Indicadores</option>`;
   indicadores.forEach(ind => {
@@ -290,7 +304,7 @@ form.addEventListener("submit", async (e) => {
 
   const unidadeSelecionada = JSON.parse(localStorage.getItem("unidadeSelecionada"));
   const indicador = {
-    indicador: document.getElementById("indicador").value,
+    indicador: document.getElementById("SelectIndicador").value,
     mes: document.getElementById("mes").value,
     ano: document.getElementById("ano").value,
     valor: document.getElementById("valor").value,
@@ -327,7 +341,7 @@ async function carregarUnidades() {
       dados.unidades.forEach(u => {
         u.nome.split(";").map(n => n.trim()).filter(n => n).forEach(nome => {
           const opt = document.createElement("option");
-          opt.value = u.id;
+          opt.value = u.nome;
           opt.textContent = nome;
           select.appendChild(opt);
         });
@@ -337,6 +351,39 @@ async function carregarUnidades() {
       if (unidadeSalva) select.value = unidadeSalva.id;
     }
   } catch (err) { console.error("Erro ao carregar unidades:", err); }
+}
+
+// ======================== FICHA INDICADORES ==========================
+async function carregarFichaIndicadores() {
+  try {
+    const resp = await fetch('/cadindicadores');
+    const dados = await resp.json();
+
+    if (dados.sucesso) {
+      const select = document.getElementById('SelectIndicador');
+      const filtro = document.getElementById('filtroIndicador');
+
+      select.innerHTML = '<option value="">Selecione o indicador</option>';
+      filtro.innerHTML = '<option value="">Todos os indicadores</option>';
+
+      dados.indicadores.forEach(u => {
+        // SELECT PRINCIPAL
+        const opt1 = document.createElement("option");
+        opt1.value = u.nome; // ← usa nome
+        opt1.textContent = u.nome;
+        select.appendChild(opt1);
+
+        // SELECT FILTRO
+        const opt2 = document.createElement("option");
+        opt2.value = u.nome;
+        opt2.textContent = u.nome;
+        filtro.appendChild(opt2);
+      });
+
+    }
+  } catch (err) {
+    console.error("Erro ao carregar indicadores:", err);
+  }
 }
 
 document.getElementById('selectUnidade').addEventListener('change', () => {
@@ -361,8 +408,9 @@ function exportarTabela() {
   XLSX.writeFile(wb, `Genesis_Lotus_Indicadores_${nomeUnidade}.xlsx`);
 }
 
-carregarIndicadores();
 carregarUnidades();
+carregarFichaIndicadores();
+carregarIndicadores();
 </script>
 </body>
 </html>

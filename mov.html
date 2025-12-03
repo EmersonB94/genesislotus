@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Abertura de Chamado - Genesis Lotus</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="/static/css/style.css">
+
+  <style>
+    .filtros {
+      margin-bottom: 15px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+    .filtros input, .filtros select {
+      padding: 6px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+    .filtros button {
+      padding: 6px 12px;
+    }
+
+    /* Modal */
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+    .overlay.show {
+      display: flex;
+    }
+    .modal {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      width: 450px;
+      max-height: 90vh;
+      overflow-y: auto;
+      position: relative;
+    }
+    .close-btn {
+      position: absolute;
+      right: 10px;
+      top: 10px;
+      background: transparent;
+      border: none;
+      font-size: 22px;
+      cursor: pointer;
+    }
+    .modal form input, .modal form textarea, .modal form select {
+      width: 100%;
+      margin-bottom: 12px;
+      padding: 8px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+    .btn {
+      margin-top: 10px;
+      padding: 8px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- ====== MENU ====== -->
+  <aside>
+    <div>
+      <div class="logo">
+        <img src="/static/image/LogoGenesis-Lotus2.png" class="logo-img">
+      </div>
+      <h4>Olá, <span id="usuarioLogado"></span></h4>
+
+      <nav>
+        <a href="inicio"><i class="fa-solid fa-chart-line"></i> Início</a>
+        <a onclick="abrirUsuario()"><i class="fa-solid fa-users"></i> Usuários</a>
+        <a href="empresa"><i class="fa-solid fa-building"></i> Empresas</a>
+        <a href="chamados_admin"><i class="fa-solid fa-headset"></i> Chamados</a>
+        <a href="ficha_indicadores"><i class="fa-solid fa-building"></i> Ficha Indicadores</a>
+        <a href="movimentacoes" class="active"><i class="fa-solid fa-building"></i> Movimentações</a>
+      </nav>
+    </div>
+    <footer style="text-align:center; font-size:0.8rem; opacity:0.8;">© 2025 Genesis Lotus</footer>
+  </aside>
+
+  <!-- ====== CONTEÚDO ====== -->
+  <main>
+    <header>
+      <h1><i class="fa-solid fa-headset"></i> Controle de Movimentações</h1>
+      <button class="btn" onclick="sair()"><i class="fa-solid fa-right-from-bracket"></i> Sair</button>
+    </header>
+
+    <!-- FILTROS -->
+    <section>
+      <div class="filtros">
+        <input type="date" id="filtroDataInicio">
+        <input type="date" id="filtroDataFim">
+
+        <select id="filtroModulo">
+          <option value="">Módulo</option>
+          <option>RH</option><option>Administrador</option><option>SST</option><option>DP</option>
+        </select>
+
+        <select id="filtroPrioridade">
+          <option value="">Prioridade</option>
+          <option>Baixa</option><option>Média</option><option>Alta</option>
+        </select>
+
+        <select id="filtroStatus">
+          <option value="">Status</option>
+          <option>Em aberto</option>
+          <option>Em andamento</option>
+          <option>Concluído</option>
+        </select>
+
+        <input type="text" id="filtroSolicitante" placeholder="Solicitante">
+
+        <button onclick="filtrarMov()"><i class="fa-solid fa-filter"></i> Filtrar</button>
+      </div>
+
+      <div id="areaTabela"></div>
+    </section>
+  </main>
+
+  
+
+  <!-- ============================
+            JAVASCRIPT
+     ============================ -->
+  <script>
+    let chamadoEditando = null;
+
+    const usuarioLogado = JSON.parse(localStorage.getItem("usuarioLogado"));
+    document.getElementById("usuarioLogado").innerText = usuarioLogado?.nome || "";
+
+    const overlay = document.getElementById("overlayContainer");
+    const formulario = document.getElementById("formChamado");
+    const tituloForm = document.getElementById("tituloForm");
+
+    // SAIR
+    function sair() {
+      localStorage.removeItem("usuarioLogado");
+      window.location.href = "/";
+    }
+
+    function formatarData(dataISO) {
+      if (!dataISO) return "";
+      return new Date(dataISO).toLocaleDateString("pt-BR");
+    }
+
+
+    // ========== LISTAR ==========
+    async function carregarMov() {
+    const resp = await fetch(`/mov`);
+    const data = await resp.json();
+
+    if (resp.ok && data.sucesso) renderTabela(data.MOV);
+    else areaTabela.innerHTML = "<p>Nenhuma movimentação encontrada.</p>";
+    }
+
+    function renderTabela(mov) {
+      areaTabela.innerHTML = `
+        <table>
+          <thead><tr>
+            <th>Data / Hora</th><th>Usuário</th><th>Empresa</th><th>Tipo</th>
+            <th>Módulo</th><th>Descrição</th>
+          </tr></thead>
+          <tbody>
+          ${mov.map(c => `
+            <tr>
+              <td>${formatarData(c.dtregistro)}</td>
+              <td>${c.usuario}</td>
+              <td>${c.empresa}</td>
+              <td>${c.tipo}</td>
+              <td>${c.modulo}</td>
+              <td>${c.descricao}</td>
+            </tr>
+          `).join("")}
+          </tbody>
+        </table>
+      `;
+    }
+
+    
+
+    carregarMov();
+  </script>
+
+</body>
+</html>

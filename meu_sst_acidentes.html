@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Ações / Treinamentos</title>
+<title>Acidentes</title>
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <link rel="stylesheet" href="/static/css/style.css">
@@ -107,12 +107,10 @@
       <nav>
         <a href="inicio"><i class="fa-solid fa-chart-line"></i> Início</a>
         <a href="indicadores"><i class="fa-solid fa-bullseye"></i> Indicadores</a>
-        <a href="meu_rh"><i class="fa-solid fa-puzzle-piece"></i> Meu RH</a>
-        <a href="meu_rh_acoes_treinamentos" class="active"><i class="fa-solid fa-chalkboard-teacher"></i> Ações e Treinamentos</a>
-        <a href="meu_rh_avaliacao_experiencia"><i class="fa-solid fa-book-open"></i> Avaliação de Experiência</a>
-        <a href="meu_rh_requisicao_pessoal"><i class="fa-solid fa-chalkboard-teacher"></i> Requisições de Pessoal</a>
-        <a href="meu_rh_processo_seletivo"><i class="fa-solid fa-chalkboard-teacher"></i> Processo Seletivo</a>
-        <a href="meu_rh_entrevista_desligamento"><i class="fa-solid fa-chalkboard-teacher"></i> Entrevista de Desligamento</a>
+        <a href="meu_sst"><i class="fa-solid fa-puzzle-piece"></i> Meu SST</a>
+        <a href="meu_sst_acoes_treinamentos"><i class="fa-solid fa-chalkboard-teacher"></i> Ações e treinamentos</a>
+        <a href="meu_sst_acidentes" class="active"><i class="fa-solid fa-book-open"></i> Acidentes</a>
+        <a href="meu_sst_asos"><i class="fa-solid fa-chalkboard-teacher"></i> ASOs</a>
       </nav>
     </div>
     <footer style="text-align:center; font-size:0.8rem; opacity:0.8;">
@@ -125,7 +123,7 @@
 
   <main>
     <header>
-      <h1>Ações / Treinamentos</h1>
+      <h1>Acidentes de trabalho</h1>
       <div>
         <button class="btn" onclick="abrirFormulario()">Novo Registro</button>
         <button class="btn" onclick="exportarTabela()">Exportar</button>
@@ -172,26 +170,29 @@
     
     <form id="formTreinamento" onsubmit="salvarTreinamento(event)">
       <h2>Novo Registro</h2>
-      <input type="text" id="tema" placeholder="Tema" required>
-      <textarea id="realizado" placeholder="O que foi realizado" required></textarea>
-      <input type="date" id="dataRealizacao" required>
+      <input type="text" id="nome" placeholder="Colaborador" required>
+      <input type="text" id="cargo" placeholder="Cargo" required>
+      <textarea id="ocorrido" placeholder="Ocorrido" required></textarea>
+      <input type="date" id="data" required>
       <input type="text" id="local" placeholder="Local">
-      <select id="tipoAcao">
-        <option value="Treinamento">Treinamento</option>
-        <option value="Ação">Ação</option>
+      <select id="tipo">
+        <option value="Tipico - Queda dentro da empresa">Tipico - Queda dentro da empresa</option>
+        <option value="Tipico - Corte durante operação de máquina">Tipico - Corte durante operação de máquina</option>
+        <option value="Tipico - Lesão por manuseio de ferramentas">Tipico - Lesão por manuseio de ferramentas</option>
+        <option value="Tipico - Queimadura no ambiente de trabalho">Tipico - Queimadura no ambiente de trabalho</option>
+        <option value="Trajeto - casa → trabalho">Trajeto - casa → trabalho</option> 
+        <option value="Trajeto - trabalho → casa">Trajeto - trabalho → casa</option> 
+        <option value="Trajeto - trabalho → outro local por ordem da empresa">Trajeto - trabalho → outro local por ordem da empresa</option> 
+        <option value="Ocupacional - Doença Profissional">Ocupacional - Doença Profissional</option> 
+        <option value="Ocupacional - Doença do Trabalho">Ocupacional - Doença do Trabalho</option> 
       </select>
-      <input type="number" id="duracao" placeholder="Duração (horas)" min="0" step="0.1">
-      <input type="text" id="departamento" placeholder="Departamento Responsável">
-      <input type="text" id="responsavel" placeholder="Pessoal Responsável">
-      <select id="modalidade">
-        <option value="Presencial">Presencial</option>
-        <option value="Virtual">Virtual</option>
-      </select>
-      <select id="pat">
+      <input type="text" id="responsavel" placeholder="Segurança do trabalho responsável">
+      <input type="text" id="cat" placeholder="Nº CAT">
+      <select id="afastamento" required>
         <option value="Sim">Sim</option>
         <option value="Não">Não</option>
       </select>
-      <input type="number" id="participantes" placeholder="Total de Participantes" min="0">
+      <input type="date" id="dataretorno" required>
       <button type="submit" class="btn">Salvar</button>
       <button type="button" class="btn" onclick="fecharFormulario()">Fechar</button>
     </form>
@@ -201,7 +202,7 @@
 <!-- Importação da biblioteca XLSX (necessária para exportar Excel) -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
-<script src="/static/js/meu_rh_acoes_treinamentos.js"></script>
+<script src="/static/js/meu_sst_acidentes.js"></script>
 
 </body>
 </html>
