@@ -76,16 +76,7 @@
       to { transform: scale(1); opacity: 1; }
     }
 
-    /* Container dos toasts */
-  #toast-container {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    z-index: 99999;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-  }
+    
 
   
   </style>
@@ -411,6 +402,7 @@
         }
       } catch (error) {
         console.error('Erro ao carregar empresas:', error);
+        showToast("Erro ao carregar empresas", "error");
       }
     }
   </script>

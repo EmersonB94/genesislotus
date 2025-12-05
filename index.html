@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Genesis Lotus - Login</title>
+  <title>Genesis Lotu</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <link rel="icon" type="image/png" href="/static/image/LogoGenesis-Lotus2.png">
   <style>
@@ -85,6 +85,54 @@
       width: 300px;
       text-align: center;
     }
+
+    /* COMANDOS DE ALERTA */
+
+    .toast {
+    min-width: 250px;
+    padding: 15px 20px;
+    border-radius: 8px;
+    color: #fff;
+    font-size: 15px;
+    animation: slideIn 0.4s ease, fadeOut 0.5s ease 4s forwards;
+  }
+
+  .toast-success {
+    background-color: #28a745;
+  }
+
+  .toast-error {
+    background-color: #dc3545;
+  }
+
+  @keyframes slideIn {
+    from {
+      opacity: 0;
+      transform: translateX(50px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  @keyframes fadeOut {
+    to {
+      opacity: 0;
+      transform: translateX(50px);
+    }
+  }
+
+  /* Container dos toasts */
+  #toast-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 99999;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
   </style>
 </head>
 <body>
@@ -98,76 +146,6 @@
 
   <div id="overlayContainer"></div>
 
-  <script>
-    async function login(){
-      const email = document.getElementById("email").value.trim();
-      const senha = document.getElementById("senha").value.trim();
-      if(!email || !senha){
-        alert("Preencha e-mail e senha!");
-        return;
-      }
-
-      //const resp = await fetch("http://localhost:5000/login", {
-      
-      const resp = await fetch(`/login`, {
-
-      //const resp = await fetch("/genesislotus/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, senha })
-      });
-
-
-      const data = await resp.json();
-
-      if(data.sucesso){
-        localStorage.setItem("usuarioLogado", JSON.stringify(data.usuario));
-        window.location.href = "/inicio";
-      } else {
-        alert(data.mensagem);
-      } 
-
-
-    }
-
-    // === Esqueci minha senha ===
-    function abrirEsqueciSenha(){
-      const overlay = document.getElementById("overlayContainer");
-      overlay.innerHTML = `
-        <div class="overlay">
-          <div class="popup">
-            <h3>Recuperar senha</h3>
-            <p>Informe seu e-mail cadastrado:</p>
-            <input type="email" id="emailRecuperacao" placeholder="Seu e-mail">
-            <button onclick="enviarRecuperacao()">Enviar</button>
-            <button style="background:#ccc; color:#000; margin-top:8px;" onclick="fecharModal()">Fechar</button>
-          </div>
-        </div>
-      `;
-    }
-
-    function fecharModal(){
-      document.getElementById("overlayContainer").innerHTML = "";
-    }
-
-    async function enviarRecuperacao(){
-      const email = document.getElementById("emailRecuperacao").value.trim();
-      if(!email){
-        alert("Informe seu e-mail.");
-        return;
-      }
-
-      
-      const resp = await fetch(`/esqueci_senha`, {
-        method: "POST",
-        headers: {"Content-Type":"application/json"},
-        body: JSON.stringify({ email })
-      });
-
-      const data = await resp.json();
-      alert(data.mensagem);
-      fecharModal();
-    }
-  </script>
+  <script src="/static/js/login.js"></script>
 </body>
 </html>
