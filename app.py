@@ -873,20 +873,20 @@ def listar_treinamentos():
         conn = conectar()
         cursor = conn.cursor(dictionary=True)
 
-        query = "SELECT * FROM acoestreinamentos WHERE 1=1"
+        query = "SELECT * FROM rg_acoes_treinamentos WHERE 1=1"
         params = []
 
         if unidade:
             query += " AND empresa = %s"
             params.append(unidade)
         if mes:
-            query += " AND MONTH(data_realizacao) = %s"
+            query += " AND MONTH(data) = %s"
             params.append(mes)
         if ano:
-            query += " AND YEAR(data_realizacao) = %s"
+            query += " AND YEAR(data) = %s"
             params.append(ano)
 
-        query += " ORDER BY data_realizacao DESC"
+        query += " ORDER BY data DESC"
 
         cursor.execute(query, params)
         registros = cursor.fetchall()
@@ -909,9 +909,9 @@ def salvar_treinamento():
         cursor = conn.cursor()
 
         sql = """
-        INSERT INTO acoestreinamentos (
-            empresa, tema, realizado, data_realizacao, local, tipo_acao,
-            duracao, departamento, responsavel, modalidade, pat, participantes, area, data_hora_registro
+        INSERT INTO rg_acoes_treinamentos (
+            empresa, tema, realizado, data, local, tipo_acao,
+            duracao, departamento, responsavel, modalidade, pat, participantes, area, dtregistro
         ) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,NOW())
         """
 
@@ -959,10 +959,10 @@ def editar_treinamento(id):
         print("JSON recebido:", data)
 
         sql = """
-        UPDATE acoestreinamentos SET
-            empresa=%s, tema=%s, realizado=%s, data_realizacao=%s, local=%s, tipo_acao=%s,
+        UPDATE rg_acoes_treinamentos SET
+            empresa=%s, tema=%s, realizado=%s, data=%s, local=%s, tipo_acao=%s,
             duracao=%s, departamento=%s, responsavel=%s, modalidade=%s, pat=%s, participantes=%s,
-            area=%s
+            area=%s, dtatualizacao=now()
         WHERE id=%s
         """
 
@@ -1006,7 +1006,7 @@ def excluir_treinamento(id):
     try:
         conn = conectar()
         cursor = conn.cursor()
-        cursor.execute("DELETE FROM acoestreinamentos WHERE id=%s", (id,))
+        cursor.execute("DELETE FROM rg_acoes_treinamentos WHERE id=%s", (id,))
         conn.commit()
         cursor.close()
         conn.close()
@@ -1151,7 +1151,7 @@ def salvar_avaliacao_experiencia():
         sql = """
         INSERT INTO rg_avaliacao_experiencia (
             empresa, nome, cargo, dt_admissao, dt_integracao, dt_avaliacao1,
-            dt_avaliacao2, padrinho, dt_padrinho, status, dt_atualizacao
+            dt_avaliacao2, padrinho, dt_padrinho, status, dtregistro
         ) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,NOW())
         """
 
@@ -1200,7 +1200,7 @@ def editar_avaliacao_experiencia(id):
             padrinho=%s,
             dt_padrinho=%s,
             status=%s,
-            dt_atualizacao=NOW()
+            dtatualizacao=NOW()
         WHERE id=%s
         """
 
@@ -1919,7 +1919,7 @@ def obter_totais():
         print("Clientes: ", total_clientes  )
 
         # ===== Contar ações =====
-        cursor.execute("SELECT COUNT(*) AS total FROM acoestreinamentos WHERE tipo_acao = %s and empresa = %s""", ('Ação',unidade))
+        cursor.execute("SELECT COUNT(*) AS total FROM rg_acoes_treinamentos WHERE tipo_acao = %s and empresa = %s""", ('Ação',unidade))
         total_acoes = cursor.fetchone()['total']
 
         print("Ações: ", total_acoes)
@@ -1928,7 +1928,7 @@ def obter_totais():
         cursor.execute(
             """
             SELECT COUNT(*) AS total 
-            FROM acoestreinamentos 
+            FROM rg_acoes_treinamentos 
             WHERE tipo_acao = %s AND empresa = %s
             """,
             ('Treinamento', unidade)
@@ -2087,8 +2087,8 @@ def obter_requisicao(id):
                 'data_abertura_vaga',
                 'data_inicio_selecao',
                 'data_contratacao',
-                'data_criacao',
-                'ultima_atualizacao'
+                'dtregistro',
+                'dtatualizacao'
             ):
                 if row.get(k):
                     row[k] = str(row[k])  # ✅ converte para string sem precisar de datetime
@@ -2135,7 +2135,7 @@ def criar_requisicao():
           motivo, colaborador_substituido, urgencia, prazo_desejado,
           faixa_salarial, tipo_contrato, formacao_exigida, experiencia_minima,
           competencias_tecnicas, competencias_comportamentais, responsavel_rh,
-          observacoes, data_criacao, ultima_atualizacao
+          observacoes, dtregistro
         ) VALUES (
           %s, %s, %s,
           %s, %s, %s,
@@ -2143,7 +2143,7 @@ def criar_requisicao():
           %s, %s, %s, %s,
           %s, %s, %s, %s,
           %s, %s, %s,
-          %s, NOW(), NOW()
+          %s, NOW()
         )
         """
         params = (
@@ -2225,7 +2225,7 @@ def atualizar_requisicao(id):
             return jsonify({"sucesso": False, "mensagem": "Nenhum campo para atualizar."}), 400
 
         params.append(id)
-        sql = f"UPDATE rg_requisicao_pessoal SET {', '.join(campos)}, ultima_atualizacao=NOW() WHERE id=%s"
+        sql = f"UPDATE rg_requisicao_pessoal SET {', '.join(campos)}, dtatualizacao=NOW() WHERE id=%s"
         cursor.execute(sql, tuple(params))
         conn.commit()
         if cursor.rowcount == 0:
