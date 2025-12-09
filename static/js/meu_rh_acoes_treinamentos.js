@@ -1,6 +1,25 @@
 const usuarioLogado = JSON.parse(localStorage.getItem("usuarioLogado"));
 document.getElementById("usuarioLogado").innerText = usuarioLogado?.nome || "";
 
+function showToast(message, tipo = "success") {
+      const container = document.getElementById("toast-container");
+
+      const toast = document.createElement("div");
+      toast.classList.add("toast");
+
+      if (tipo === "success") toast.classList.add("toast-success");
+      else toast.classList.add("toast-error");
+
+      toast.textContent = message;
+
+      container.appendChild(toast);
+
+      setTimeout(() => {
+        toast.remove();
+      }, 3500);
+    } 
+
+
 let editandoId = null;
 
 const API = "/api/acoes_treinamentos";
@@ -44,6 +63,7 @@ async function salvarTreinamento(event){
 
   // 🔹 PEGAR EMPRESA (unidade) SELECIONADA
   const unidadeSelecionada = JSON.parse(localStorage.getItem('unidadeSelecionada'));
+  const usuarioLogado = JSON.parse(localStorage.getItem('usuarioLogado'));
 
   const dados = {
     empresa: unidadeSelecionada ? unidadeSelecionada.nome : null, // 🔹 <--- AJUSTE AQUI
@@ -58,7 +78,9 @@ async function salvarTreinamento(event){
     modalidade: document.getElementById("modalidade").value,
     pat: document.getElementById("pat").value,
     participantes: document.getElementById("participantes").value,
-    area: "RH"
+    area: document.getElementById("area").value,
+    status: document.getElementById("status").value,
+    usuario: usuarioLogado ? usuarioLogado.nome : null,
   };
 
   const resp = await fetch(API, {
@@ -67,7 +89,7 @@ async function salvarTreinamento(event){
     body: JSON.stringify(dados)
   });
   const resultado = await resp.json();
-  alert(resultado.mensagem);
+  showToast(resultado.mensagem, "success");
   if(resultado.sucesso){
     fecharFormulario();
     carregarTabela();
@@ -84,19 +106,21 @@ async function carregarTabela() {
 
   const mes = document.getElementById("filtroMes").value;
   const ano = document.getElementById("filtroAno").value;
+  const area = document.getElementById("area").value;
 
   // Monta query string com filtros
   const params = new URLSearchParams({
     unidade: unidadeSelecionada.nome,
     mes,
-    ano
+    ano,
+    area
   });
 
   const resp = await fetch(`/api/acoes_treinamentos?${params.toString()}`);
   const dados = await resp.json();
 
   if (!dados.sucesso) {
-    alert("Erro ao carregar registros.");
+    showToast("Erro ao carregar registros.", "error");
     return;
   }
 
@@ -119,17 +143,16 @@ async function carregarTabela() {
         <table>
           <thead>
             <tr>
-              <th>Tema</th><th>Realizado</th><th>Data</th><th>Local</th><th>Tipo</th>
+              <th>Tema</th><th>Data</th><th>Local</th><th>Tipo</th>
               <th>Duração</th><th>Departamento</th><th>Responsável</th><th>Modalidade</th>
-              <th>PAT</th><th>Participantes</th><th>Ações</th>
+              <th>PAT</th><th>Participantes</th><th>Status</th><th>Ações</th>
             </tr>
           </thead>
           <tbody>
             ${items.map(i => `
               <tr>
                 <td>${i.tema}</td>
-                <td>${i.realizado}</td>
-                <td>${formatarData(i.data_realizacao)}</td>
+                <td>${formatarData(i.data)}</td>
                 <td>${i.local}</td>
                 <td>${i.tipo_acao}</td>
                 <td>${i.duracao}</td>
@@ -138,6 +161,7 @@ async function carregarTabela() {
                 <td>${i.modalidade}</td>
                 <td>${i.pat}</td>
                 <td>${i.participantes}</td>
+                <td>${i.status}</td>
                 <td>
                   <button class="btn" onclick="editar(${i.id})">Editar</button>
                 </td>
@@ -171,9 +195,9 @@ async function editar(id) {
   document.getElementById("tema").value = reg.tema;
   document.getElementById("realizado").value = reg.realizado;
 
-  if (reg.data_realizacao) {
+  if (reg.data) {
     document.getElementById("dataRealizacao").value =
-      new Date(reg.data_realizacao).toISOString().split('T')[0];
+      new Date(reg.data).toISOString().split('T')[0];
   } else {
     document.getElementById("dataRealizacao").value = "";
   }
@@ -199,6 +223,7 @@ async function atualizar(event, id){
 
   // 🔹 PEGAR EMPRESA (unidade) SELECIONADA
   const unidadeSelecionada = JSON.parse(localStorage.getItem('unidadeSelecionada'));
+  const usuarioLogado = JSON.parse(localStorage.getItem('usuarioLogado'));
 
   const dados = {
     empresa: unidadeSelecionada ? unidadeSelecionada.nome : null, // 🔹 <--- AJUSTE AQUI
@@ -213,7 +238,9 @@ async function atualizar(event, id){
     modalidade: modalidade.value,
     pat: pat.value,
     participantes: participantes.value,
-    area: "RH"
+    area: area.value,
+    status: statusform.value,
+    usuario: usuarioLogado ? usuarioLogado.nome : null
   };
 
   const resp = await fetch(`${API}/${id}`, {
@@ -222,7 +249,7 @@ async function atualizar(event, id){
     body: JSON.stringify(dados)
   });
   const resultado = await resp.json();
-  alert(resultado.mensagem);
+  showToast(resultado.mensagem, "success");
   if(resultado.sucesso){
     fecharFormulario();
     carregarTabela();
@@ -245,7 +272,7 @@ function exportarTabela() {
   const tabelas = document.querySelectorAll("#tabelaTreinamentos table");
 
   if (!tabelas.length) {
-    alert("Nenhum dado encontrado para exportar.");
+    showToast("Nenhum dado encontrado para exportar.", "error");
     return;
   }
 
