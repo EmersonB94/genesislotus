@@ -183,15 +183,20 @@
       <input type="number" id="duracao" placeholder="Duração (horas)" min="0" step="0.1">
       <input type="text" id="departamento" placeholder="Departamento Responsável">
       <input type="text" id="responsavel" placeholder="Pessoal Responsável">
+      <input type="text" id="area" value="RH" readonly>
       <select id="modalidade">
         <option value="Presencial">Presencial</option>
-        <option value="Virtual">Virtual</option>
+        <option value="Online">Online</option>
       </select>
       <select id="pat">
         <option value="Sim">Sim</option>
         <option value="Não">Não</option>
       </select>
       <input type="number" id="participantes" placeholder="Total de Participantes" min="0">
+      <select id="statusform">
+        <option value="1. Realizado">1. Realizado</option>
+        <option value="2. Programado">2. Programado</option>
+      </select>
       <button type="submit" class="btn">Salvar</button>
       <button type="button" class="btn" onclick="fecharFormulario()">Fechar</button>
     </form>
@@ -200,6 +205,8 @@
 
 <!-- Importação da biblioteca XLSX (necessária para exportar Excel) -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+<div id="toast-container"></div>
 
 <script src="/static/js/meu_rh_acoes_treinamentos.js"></script>
 

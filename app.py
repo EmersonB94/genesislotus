@@ -1,11 +1,27 @@
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 import mysql.connector
+from mysql.connector import Error  # opcional, para tratamento de erros
 import random, string
 from datetime import datetime, date
 
+
 import smtplib # Comandos dos e-mails
 from email.mime.text import MIMEText # Comandos dos e-mails
+
+def conectar():
+    try:
+        conn = mysql.connector.connect(
+            host="sql10.freesqldatabase.com",
+            database="sql10805265",
+            user="sql10805265",
+            password="SXqt5m8ZIq",
+            port=3306
+        )
+        return conn
+    except Error as e:
+        print(f"Erro ao conectar no MySQL: {e}")
+        return None
 
 agora = datetime.now()
 
@@ -14,24 +30,10 @@ app.config['APPLICATION_ROOT'] = '/genesislotus'
 # app = Flask(__name__)
 CORS(app)
 
-# === CONEXÃO COM BANCO freesqldatabase ===
-def conectar():
-    return mysql.connector.connect(
-        host="sql10.freesqldatabase.com",
-        database="sql10805265",
-        user="sql10805265",
-        password="SXqt5m8ZIq",
-        port=3306
-    ) 
-
-# === CONEXÃO COM BANCO LOCAL ===
-#def conectar():
-    #return mysql.connector.connect(
-        #host="localhost",
-        #user="root",
-        #password="",
-        #database="genesis_lotus_db"
-    #)
+def formatar_datas(valor):
+    if isinstance(valor, datetime):
+        return valor.strftime("%Y-%m-%d")  # formato aceito pelo input date
+    return valor
 
 # === ROTA PARA SERVIR HTML ===
 @app.route('/')
@@ -866,8 +868,10 @@ def listar_treinamentos():
     unidade = request.args.get('unidade')
     mes = request.args.get('mes')
     ano = request.args.get('ano')
+    area = request.args.get('area')
 
     print("Unidade selecionada:", unidade) # print teste
+    print("Area:", area) # print teste
 
     try:
         conn = conectar()
@@ -885,11 +889,21 @@ def listar_treinamentos():
         if ano:
             query += " AND YEAR(data) = %s"
             params.append(ano)
+        if area:
+            query += " AND area = %s"
+            params.append(area)
 
         query += " ORDER BY data DESC"
 
         cursor.execute(query, params)
         registros = cursor.fetchall()
+
+        # 🔥 CONVERTE TODAS AS DATAS PARA STRING YYYY-MM-DD
+        for reg in registros:
+            for campo in reg:
+                reg[campo] = formatar_datas(reg[campo])
+
+        print(registros)
 
         cursor.close()
         conn.close()
@@ -911,8 +925,8 @@ def salvar_treinamento():
         sql = """
         INSERT INTO rg_acoes_treinamentos (
             empresa, tema, realizado, data, local, tipo_acao,
-            duracao, departamento, responsavel, modalidade, pat, participantes, area, dtregistro
-        ) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,NOW())
+            duracao, departamento, responsavel, modalidade, pat, participantes, area, status, dtregistro
+        ) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,NOW())
         """
 
         valores = (
@@ -928,14 +942,16 @@ def salvar_treinamento():
             data.get('modalidade', ''),
             data.get('pat', ''),
             data.get('participantes', 0),
-            data.get('area', '')
+            data.get('area', ''),
+            data.get('status', ''),
+            data.get('usuario', '')
         )
 
         registrar_movimento(
-            "Não definido",
+            data['usuario'],
             data['empresa'],
             "Novo",
-            data.get('area', '') + "Ações e treinamentos",
+            data.get('area', '') + " Ações e treinamentos",
             f"({id}) Edição {data['tema']}"
         )
 
@@ -962,7 +978,7 @@ def editar_treinamento(id):
         UPDATE rg_acoes_treinamentos SET
             empresa=%s, tema=%s, realizado=%s, data=%s, local=%s, tipo_acao=%s,
             duracao=%s, departamento=%s, responsavel=%s, modalidade=%s, pat=%s, participantes=%s,
-            area=%s, dtatualizacao=now()
+            area=%s, status=%s, usuario=%s, dtatualizacao=now()
         WHERE id=%s
         """
 
@@ -980,11 +996,13 @@ def editar_treinamento(id):
             data.get('pat', ''),
             data.get('participantes', 0),
             data.get('area', ''),
+            data.get('status', ''),
+            data.get('usuario', ''),
             id
         )
 
         registrar_movimento(
-            "Não definido",
+            data.get('usuario', ''),
             data.get('empresa', ''),
             "Editar",
             data.get('area', '') + "Ações e treinamentos",
@@ -1151,8 +1169,8 @@ def salvar_avaliacao_experiencia():
         sql = """
         INSERT INTO rg_avaliacao_experiencia (
             empresa, nome, cargo, dt_admissao, dt_integracao, dt_avaliacao1,
-            dt_avaliacao2, padrinho, dt_padrinho, status, dtregistro
-        ) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,NOW())
+            dt_avaliacao2, padrinho, dt_padrinho, status, usuario, dtregistro
+        ) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,NOW())
         """
 
         valores = (
@@ -1166,6 +1184,7 @@ def salvar_avaliacao_experiencia():
             data.get('padrinho', ''),
             data.get('dt_padrinho', ''),
             data.get('status', ''),
+            data.get('usuario', ''),
         )
 
         cursor.execute(sql, valores)
@@ -1200,6 +1219,7 @@ def editar_avaliacao_experiencia(id):
             padrinho=%s,
             dt_padrinho=%s,
             status=%s,
+            usuario=%s,
             dtatualizacao=NOW()
         WHERE id=%s
         """
@@ -1216,6 +1236,7 @@ def editar_avaliacao_experiencia(id):
             data.get('padrinho') or None,
             data.get('dt_padrinho') or None,
             data.get('status') or None,
+            data.get('usuario') or None,
             id
         )
 
@@ -2275,7 +2296,7 @@ def criar_processo_seletivo():
           data, fase, formacao, sintese, perfil_comportamental, conclusao,
           modo, status, usuario, dtregistro, dtatualizacao
         ) VALUES (
-          %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW(), NOW()
+          %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW(), NOW()
         )
         """
 
