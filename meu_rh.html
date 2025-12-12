@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Meu RH</title>
-
+<link rel="icon" type="image/png" href="/static/image/LogoGenesis-Lotus2.png">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <link rel="stylesheet" href="/static/css/style.css">
 
@@ -47,122 +47,20 @@
     <button class="btn" onclick="sair()">Sair</button>
   </header>
 
-  <div class="cards">
-    <div class="card">
-      <p>Ações</p>
-      <h2 id="totalAcoes">0</h2>
-    </div>
-    <div class="card">
-      <p>Treinamentos</p>
-      <h2 id="totalTreinamentos">0</h2>
-    </div>
-  </div>
-
-  <div class="cards">
-    <div class="card">
-      <p>Requisição de Pessoas</p>
-      <h2 id="totalRequisicoes">0</h2>
-    </div>
-    <div class="card">
-      <p>Entrevistas Realizadas</p>
-      <h2 id="totalPSS">0</h2>
-    </div>
-    <div class="card">
-      <p>Avaliações de Experiência</p>
-      <h2 id="totalAvaliacoes">0</h2>
-    </div>
-    <div class="card">
-      <p>Entrevista Desligamento</p>
-      <h2 id="totalAvaliacoes">0</h2>
-    </div>
-  </div>
+  <iframe 
+    id="iframePowerBI"
+    title="GenesisLotusMatriz_RH"
+    width="100%"
+    height="700"
+    src="https://app.powerbi.com/view?r=eyJrIjoiNmYyNmJiZjMtOGIwOC00ZTkwLWIxNDUtZWUzMzJhM2U5N2Q3IiwidCI6ImQ4NTRiMTgzLWRmNDctNDNhNy04YTZkLWQ1NmJmMmE0MWViZCJ9"
+    frameborder="0"
+    allowFullScreen="true"
+    style="border-radius: 10px;">
+  </iframe>
 
 </main>
 
-<script>
+<div id="toast-container"></div>
 
-const usuarioLogado = JSON.parse(localStorage.getItem("usuarioLogado"));
-document.getElementById("usuarioLogado").innerText = usuarioLogado?.nome || ""; 
-
-function sair() {
-  localStorage.removeItem('usuarioLogado');
-  window.location.href = '/';
-}
-
-async function carregarTotais() {
-  const unidadeSelecionada = JSON.parse(localStorage.getItem('unidadeSelecionada'));
-  const empresaId = unidadeSelecionada?.nome || '';
-
-  try {
-    const resp = await fetch(`/api/totais?empresa_id=${empresaId}`);
-    const dados = await resp.json();
-
-    if (dados.sucesso) {
-      const t = dados.totais;
-      document.getElementById('totalAcoes').textContent = t.acoes;
-      document.getElementById('totalTreinamentos').textContent = t.treinamentos;
-      document.getElementById('totalRequisicoes').textContent = t.requisicoes;
-      document.getElementById('totalAvaliacoes').textContent = t.avaliacoes;
-      document.getElementById('totalPSS').textContent = t.pss;
-      document.getElementById('TotalEntrevista').textContent = t.entrevista;
-    } else {
-      console.error("Erro ao carregar totais:", dados.mensagem);
-    }
-  } catch (err) {
-    console.error("Erro de conexão:", err);
-  }
-}
-
-async function carregarUnidades() {
-  try {
-    const resp = await fetch(`/api/unidades_permitidas?usuario_id=${usuarioLogado.id}`);
-    const dados = await resp.json();
-    const select = document.getElementById('selectUnidade');
-
-    if (dados.sucesso) {
-      select.innerHTML = '';
-
-      dados.unidades.forEach(u => {
-        const nomes = u.nome.split(";").map(n => n.trim()).filter(n => n !== "");
-        nomes.forEach(nome => {
-          const opt = document.createElement("option");
-          opt.value = u.id;
-          opt.textContent = nome;
-          select.appendChild(opt);
-        });
-      });
-
-      const unidadeSalva = JSON.parse(localStorage.getItem('unidadeSelecionada'));
-
-      if (unidadeSalva && dados.unidades.some(u => u.id == unidadeSalva.nome)) {
-        select.value = unidadeSalva.id;
-      } else {
-        if (dados.unidades.length > 0) {
-          const primeira = dados.unidades[0];
-          localStorage.setItem('unidadeSelecionada', JSON.stringify(primeira));
-          select.value = primeira.id;
-        }
-      }
-
-      carregarTotais();
-    }
-  } catch (err) {
-    console.error("Erro ao carregar unidades:", err);
-  }
-}
-
-document.getElementById('selectUnidade').addEventListener('change', (e) => {
-  const select = e.target;
-  const id = select.value;
-  const nome = select.options[select.selectedIndex].text;
-  if (id) {
-    localStorage.setItem('unidadeSelecionada', JSON.stringify({ id, nome }));
-    carregarTotais();
-  }
-});
-
-// carregarTotais();
-carregarUnidades();
-</script>
 </body>
 </html>

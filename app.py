@@ -1,27 +1,19 @@
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 import mysql.connector
-from mysql.connector import Error  # opcional, para tratamento de erros
+from mysql.connector import Error  # opcional, para tratamento de erros;
 import random, string
 from datetime import datetime, date
-
-
+from db import conectar # Conecta ao banco de dados;
 import smtplib # Comandos dos e-mails
-from email.mime.text import MIMEText # Comandos dos e-mails
+from email.mime.text import MIMEText # Comandos dos e-mails;
 
-def conectar():
-    try:
-        conn = mysql.connector.connect(
-            host="sql10.freesqldatabase.com",
-            database="sql10805265",
-            user="sql10805265",
-            password="SXqt5m8ZIq",
-            port=3306
-        )
-        return conn
-    except Error as e:
-        print(f"Erro ao conectar no MySQL: {e}")
-        return None
+from routes.cron import cron_bp
+from routes.rotas import rotas_bp
+from routes.powerbi import powerbi_bp
+from routes.analisedados import analise_bp
+from routes.acesso import acesso_bp
+from routes.exportar import exportar_tabelas
 
 agora = datetime.now()
 
@@ -30,254 +22,24 @@ app.config['APPLICATION_ROOT'] = '/genesislotus'
 # app = Flask(__name__)
 CORS(app)
 
+app.register_blueprint(cron_bp)
+app.register_blueprint(rotas_bp)
+app.register_blueprint(powerbi_bp)
+app.register_blueprint(analise_bp)
+app.register_blueprint(acesso_bp)
+
 def formatar_datas(valor):
     if isinstance(valor, datetime):
         return valor.strftime("%Y-%m-%d")  # formato aceito pelo input date
     return valor
 
 # === ROTA PARA SERVIR HTML ===
-@app.route('/')
-def index_page():
-    return send_from_directory('.', 'index.html')
 
-@app.route('/esqueci_senha', methods=['POST'])
-def esqueci_senha():
-    data = request.get_json()
-    email = data.get("email")
-
-    if not email:
-        return jsonify({"sucesso": False, "mensagem": "E-mail é obrigatório."}), 400
-
-    try:
-        conn = conectar()
-        cursor = conn.cursor(dictionary=True)
-        cursor.execute("SELECT * FROM cad_usuario WHERE email=%s", (email,))
-        usuario = cursor.fetchone()
-
-        if not usuario:
-            return jsonify({"sucesso": False, "mensagem": "E-mail não encontrado."}), 404
-
-        # Gera nova senha aleatória
-        nova_senha = ''.join(random.choices(string.ascii_letters + string.digits, k=8))
-
-        # Atualiza no banco
-        cursor.execute("UPDATE cad_usuario SET senha=%s WHERE email=%s", (nova_senha, email))
-        conn.commit()
-
-        # ---- Enviar e-mail ----
-        # enviar_email_nova_senha(usuario["email"], usuario["nome"], nova_senha)
-
-        return jsonify({
-            "sucesso": True,
-            "mensagem": "Uma nova senha foi enviada para o seu e-mail."
-        })
-
-    except Exception as e:
-        print("Erro ao redefinir senha:", e)
-        return jsonify({"sucesso": False, "mensagem": "Erro ao processar solicitação."}), 500
-    finally:
-        cursor.close()
-        conn.close()
-
-
-# === LOGIN ===    
-@app.route('/login', methods=['POST'])
-def login_user():
-    data = request.get_json()
-    email = data.get('email')
-    senha = data.get('senha')
-
-    try:
-        conn = conectar()
-        cursor = conn.cursor(dictionary=True)
-        cursor.execute("SELECT * FROM cad_usuario WHERE email=%s", (email,))
-        usuario = cursor.fetchone()
-
-        if not usuario:
-            return jsonify({"sucesso": False, "mensagem": "E-mail não cadastrado."})
-
-        if usuario['status'] != 'Ativo':
-            return jsonify({"sucesso": False, "mensagem": f"Usuário {usuario['status']}."})
-
-        if usuario['senha'] != senha:
-            return jsonify({"sucesso": False, "mensagem": "Senha incorreta."})
-
-        # ✅ Atualiza o campo dtacesso com data/hora atual
-        agora = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        cursor.execute("UPDATE cad_usuario SET dtacesso=%s WHERE id=%s", (agora, usuario['id']))
-        conn.commit()
-
-        # Remove senha antes de enviar ao frontend
-        usuario.pop('senha', None)
-        # Converter valores de permissões para booleanos (S/N → True/False)
-        usuario["perm_rh"] = (usuario.get("modrh") == "S")
-        usuario["perm_dp"] = (usuario.get("moddp") == "S")
-        usuario["perm_sst"] = (usuario.get("modsst") == "S")
-        usuario["perm_adm"] = (usuario.get("modadm") == "S")
-        usuario["perm_rh_full"] = (usuario.get("modrh_req_full") == "S")
-
-        return jsonify({
-        "sucesso": True,
-        "mensagem": "Login realizado com sucesso.",
-        "usuario": usuario
-        })
-
-    except Exception as e:
-        print("Erro no login:", e)
-        return jsonify({"sucesso": False, "mensagem": "Erro ao processar login."})
-    finally:
-        cursor.close()
-        conn.close()
-
-@app.route('/inicio')
-def inicio_page():
-    return send_from_directory('.', 'inicio.html')
-
-@app.route('/chamado')
-def chamado_page():
-    return send_from_directory('.', 'chamados.html')
-
-@app.route('/movimentacoes')
-def mov_page():
-    return send_from_directory('.', 'mov.html')
-
-@app.route('/chamados_admin')
-def chamadoAdmin_page():
-    return send_from_directory('.', 'chamados_admin.html')
-
-@app.route('/layout')
-def teste_page():
-    return send_from_directory('.', 'layout.html')
-
-@app.route('/indicadores')
-def page_indicador():
-    return send_from_directory('.', 'indicadores.html')
-
-@app.route('/ficha_indicadores')
-def page_indicadorcad():
-    return send_from_directory('.', 'indicadores_cad.html')
-
-@app.route('/meu_rh')
-def page_meurh():
-    email = request.args.get("email")
-
-    if not email:
-        return "Usuário não informado", 401
-
-    conn = conectar()
-    cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT modrh FROM cad_usuario WHERE email=%s", (email,))
-    usuario = cursor.fetchone()
-
-    if not usuario:
-        return "Usuário inválido", 404
-
-    if usuario["modrh"] != "S":
-        return "Acesso negado a este módulo, entre em contato com os administradores caso precise de acesso", 403
-    
-
-    return send_from_directory('.', 'meu_rh.html')
-    
-
-@app.route('/permissao_atualizar_requisicao', methods=["GET"]) # Verifica a permissão de criar status da requisição de pessoal
-def permissao_rh_requisicao():
-    usuario = request.args.get("usuario")
-
-    print("Carregar usuario logado em permissao rh:",usuario)
-
-    if not usuario:
-        return jsonify({"erro": "Usuário não informado"}), 401
-
-    conn = conectar()
-    cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT modrh_req_full FROM cad_usuario WHERE nome=%s", (usuario,))
-    usuario = cursor.fetchone()
-
-    if not usuario:
-        return jsonify({"erro": "Usuário inválido"}), 404
-
-    # retorno da permissão
-    return jsonify({
-        "usuario": usuario,
-        "permissao_status": usuario["modrh_req_full"]  # "S" ou "N"
-    })
-
-
-@app.route('/meu_rh_acoes_treinamentos')
-def page_acoestreinamentos():
-    return send_from_directory('.', 'meu_rh_acoes_treinamentos.html')
-
-@app.route('/meu_rh_avaliacao_experiencia')
-def page_avaliacaoexperiencia():
-    return send_from_directory('.', 'meu_rh_avaliacao_experiencia.html')
-
-@app.route('/meu_rh_requisicao_pessoal')
-def page_requisicaopessoal():    
-    return send_from_directory('.', 'meu_rh_requisicao_pessoal.html')
-
-@app.route('/meu_rh_processo_seletivo')
-def page_processoseletivo():    
-    return send_from_directory('.', 'meu_rh_processo_seletivo.html')
-
-@app.route('/meu_rh_entrevista_desligamento')
-def page_entrevistadesligamento():
-    return send_from_directory('.', 'meu_rh_entrevista_desligamento.html')
-
-@app.route('/meu_dp')
-def page_meudp():
-    email = request.args.get("email")
-
-    if not email:
-        return "Usuário não informado", 401
-
-    conn = conectar()
-    cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT moddp FROM cad_usuario WHERE email=%s", (email,))
-    usuario = cursor.fetchone()
-
-    if not usuario:
-        return "Usuário inválido", 404
-
-    if usuario["moddp"] != "S":
-        return "Acesso negado a este módulo, entre em contato com os administradores caso precise de acesso", 403
-    
-    return send_from_directory('.', 'meu_dp.html')
-
-@app.route('/meu_dp_cad_colaborador')
-def page_cadastrocolaborador():
-    return send_from_directory('.', 'meu_dp_cad_colaborador.html')
-
-@app.route('/meu_sst')
-def page_meusst():
-    email = request.args.get("email")
-
-    if not email:
-        return "Usuário não informado", 401
-
-    conn = conectar()
-    cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT modsst FROM cad_usuario WHERE email=%s", (email,))
-    usuario = cursor.fetchone()
-
-    if not usuario:
-        return "Usuário inválido", 404
-
-    if usuario["modsst"] != "S":
-        return "Acesso negado a este módulo, entre em contato com os administradores caso precise de acesso", 403
-    
-    return send_from_directory('.', 'meu_sst.html')
-
-@app.route('/meu_sst_acoes_treinamentos')
-def page_meusstacoes():
-    return send_from_directory('.', 'meu_sst_acoes_treinamentos.html')
-
-@app.route('/meu_sst_acidentes')
-def page_meusstasos():
-    return send_from_directory('.', 'meu_sst_acidentes.html')
-
-@app.route('/meu_sst_asos')
-def page_meusstacidentes():
-    return send_from_directory('.', 'meu_sst_asos.html')
+@app.route("/exportar")
+def exportar():
+    tabelas = ["rg_processo_seletivo", "rg_requisicao_pessoal", "rg_mov"]
+    exportar_tabelas(tabelas, "backup_banco.xlsx")
+    return "Backup gerado!"
 
 @app.route('/admin')
 def page_admin():
@@ -318,126 +80,6 @@ def page_usuario():
         return "Acesso negado a este módulo, entre em contato com os administradores caso precise de acesso", 403
 
     return send_from_directory('.', 'usuario.html')
-
-@app.route('/empresa')
-def page_empresa():
-    return send_from_directory('.', 'empresa.html')
-
-@app.route("/enviar_email", methods=["GET"])
-def enviar_email():
-    remetente = "coord.ti@genesisgenteegestao.com"
-    senha = "yivx shwv hcow ahpv"
-
-    msg = MIMEText("Mensagem de teste de conexão")
-    msg["Subject"] = "Teste de conexão"
-    msg["From"] = remetente
-    msg["To"] = remetente
-
-    with smtplib.SMTP("smtp.gmail.com", 587) as smtp:
-        smtp.starttls()
-        smtp.login(remetente, senha)
-        smtp.send_message(msg)
-
-    print("Email enviado!")
-
-@app.route("/enviar_email_brevo", methods=["GET"])
-def enviar_email_brevo():
-    try:
-        remetente = "gestaodadosindicadores@gmail.com"
-        destinatario = "coord.ti@genesisgenteegestao.com"
-
-        # 🔵 DADOS DO BREVO
-        smtp_host = "smtp-relay.brevo.com"
-        smtp_port = 587
-        smtp_login = "9cef56001@smtp-brevo.com"
-        smtp_password = "45xa6pXAUcSOtyZr"
-
-        # 🔵 Corpo do e-mail
-        msg = MIMEText("Mensagem de teste de conexão via Brevo")
-        msg["Subject"] = "Teste de conexão - Brevo"
-        msg["From"] = remetente
-        msg["To"] = destinatario
-
-        # 🔵 Conectar ao servidor SMTP Brevo
-        with smtplib.SMTP(smtp_host, smtp_port, timeout=10) as smtp:
-            smtp.starttls()
-            smtp.login(smtp_login, smtp_password)
-            smtp.send_message(msg)
-
-        print("📧 Email enviado com sucesso (Brevo)!")
-        return jsonify({"sucesso": True, "mensagem": "Email enviado com sucesso brevo!"})
-
-    except Exception as e:
-        print("❌ ERRO AO ENVIAR EMAIL:", e)
-        return jsonify({"sucesso": False, "erro": str(e)})
-
-# SUSPENDER INATIVOS #
-
-@app.route('/cron/suspender_usuarios_inativos', methods=['GET']) # em cron-job - executa essa ação 1x por dia
-def suspender_inativos():
-    try:
-        conn = conectar()
-        cursor = conn.cursor()
-
-        sql = """
-            UPDATE cad_usuario
-            SET status = 'Suspenso Inatividade'
-            WHERE 
-                (
-                    dtacesso IS NULL 
-                    AND cadastro < DATE_SUB(CURDATE(), INTERVAL 30 DAY)
-                )
-                OR
-                (
-                    dtacesso IS NOT NULL
-                    AND dtacesso < DATE_SUB(CURDATE(), INTERVAL 60 DAY)
-                );
-        """
-
-        cursor.execute(sql)
-        conn.commit()
-
-        print("Usuários inativos foram atualizados com sucesso.")
-        return jsonify({"sucesso": True, "mensagem": "Processo gerado!"})
-
-    except Exception as e:
-        print("Erro ao atualizar usuários:", e)
-
-    finally:
-        cursor.close()
-        conn.close()
-
-# Atualizar indicadores
-
-@app.route('/cron/atualizar_indicadores_status', methods=['GET']) # em cron-job - executa essa ação 1x por dia
-def atualizar_indicadores_status():
-    conn = None
-    cursor = None
-
-    try:
-        conn = conectar()
-        cursor = conn.cursor()
-
-        sql = """
-            UPDATE indicadores
-            SET status = 'Vencido e não aplicado'
-            WHERE prazo < CURDATE();
-        """
-
-        cursor.execute(sql)
-        conn.commit()
-
-        return jsonify({"sucesso": True, "mensagem": "Indicadores vencidos foram atualizados."})
-
-    except Exception as e:
-        print("Erro ao atualizar indicadores:", e)
-        return jsonify({"sucesso": False, "mensagem": "Erro ao atualizar indicadores.", "erro": str(e)})
-
-    finally:
-        if cursor:
-            cursor.close()
-        if conn:
-            conn.close()
 
 def registrar_movimento(usuario, empresa, tipo, modulo, descricao):
     conn = None
@@ -481,8 +123,8 @@ def cadastrar_usuario():
         sql = """
             INSERT INTO cad_usuario 
             (nome, email, contato, senha, setor, cargo, nivel_usuario, empresa, status, cadastro, 
-             modrh, moddp, modsst, modadm)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, NOW(), %s, %s, %s, %s)
+             modrh, moddp, modsst, modadm, usuario)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, NOW(), %s, %s, %s, %s, %s)
         """
 
         cursor.execute(sql, (
@@ -498,11 +140,12 @@ def cadastrar_usuario():
             data.get('modrh', 'N'),
             data.get('moddp', 'N'),
             data.get('modsst', 'N'),
-            data.get('modadm', 'N')
+            data.get('modadm', 'N'),
+            data.get('usuario', '')
         ))
 
         registrar_movimento(
-            "Não definido",
+            data.get('usuario', ''),
             "Não se aplica",
             "Novo",
             "ADM-Usuário",
@@ -520,72 +163,6 @@ def cadastrar_usuario():
         cursor.close()
         conn.close()
 
-def enviar_email_nova_senha(email_destino, nome, nova_senha):
-    remetente = "coord.ti@genesisgenteegestao.com"
-    senha = "yivx shwv hcow ahpv"
-
-    corpo = f"""
-        Olá {nome},
-
-        Uma nova senha foi gerada para sua conta no sistema Genesis Lotus.
-
-        Nome: {nome}
-        E-mail: {email_destino}
-        Nova Senha: {nova_senha}
-
-        Recomendamos que você altere essa senha após realizar o login.
-
-        Caso não tenha solicitado essa alteração, entre em contato com o administrador imediatamente.
-
-        Atenciosamente,
-        Equipe Genesis Lotus
-        """
-
-    msg = MIMEText(corpo)
-    msg["Subject"] = "Genesis Lotus -> Recuperação de Senha"
-    msg["From"] = remetente
-    msg["To"] = email_destino  # agora envia para o e-mail correto
-
-    with smtplib.SMTP("smtp.gmail.com", 587) as smtp:
-        smtp.starttls()
-        smtp.login(remetente, senha)
-        smtp.send_message(msg)
-
-    print("📧 Email de nova senha enviado para:", email_destino)
-
-
-def enviar_email_atualizacao(email_destino, nome, status, unidade):
-    remetente = "coord.ti@genesisgenteegestao.com"
-    senha = "yivx shwv hcow ahpv"
-
-    corpo = f"""
-        Olá {nome},
-
-        Seus dados foram atualizados com sucesso no sistema Genesis Lotus.
-
-        Nome: {nome};
-        E-mail: {email_destino}
-        Unidade(s): {unidade}
-        Status: {status}
-
-        Caso não tenha solicitado essa alteração, entre em contato com o administrador imediatamente.
-
-        Atenciosamente,
-        Equipe Genesis Lotus
-        """
-    
-    msg = MIMEText(corpo)
-    msg["Subject"] = "Genesis Lotus -> Atualização de Usuário"
-    msg["From"] = remetente
-    msg["To"] = "gestaodadosindicadores@gmail.com" #= email_destino
-
-    with smtplib.SMTP("smtp.gmail.com", 587) as smtp:
-        smtp.starttls()
-        smtp.login(remetente, senha)
-        smtp.send_message(msg)
-
-    print("📧 Email de atualização de usuário enviado para:", email_destino)
-
 # === EDITAR USUÁRIO ===
 @app.route('/usuario/<int:id>', methods=['PUT'])
 def editar_usuario(id):
@@ -598,7 +175,7 @@ def editar_usuario(id):
         UPDATE cad_usuario
         SET nome=%s, email=%s, senha=%s, contato=%s, setor=%s, cargo=%s,
             nivel_usuario=%s, empresa=%s, status=%s, atualizacao=NOW(),
-            modrh=%s, moddp=%s, modsst=%s, modadm=%s
+            modrh=%s, moddp=%s, modsst=%s, modadm=%s, usuario=%s
         WHERE id=%s
         """
 
@@ -612,17 +189,17 @@ def editar_usuario(id):
             data.get('nivel_usuario', ''),
             data.get('empresa', ''),
             data.get('status', ''),
-
             data.get('modrh', 'N'),
             data.get('moddp', 'N'),
             data.get('modsst', 'N'),
             data.get('modadm', 'N'),
+            data.get('usuario', ''),
 
             id
         ))
 
         registrar_movimento(
-            "Não definido",
+            data.get('usuario', ''),
             "Não se aplica",
             "Editar",
             "ADM-Usuário",
@@ -697,134 +274,6 @@ def atualizar_perfil():
 
 # === ACIDENTES ===#
 
-@app.route("/api/acidentes", methods=["GET"])
-def listar_acidentes():
-    try:
-        empresa = request.args.get("unidade")
-        mes = request.args.get("mes")
-        ano = request.args.get("ano")
-
-        conn = conectar()
-        cursor = conn.cursor(dictionary=True)
-
-        sql = "SELECT * FROM rg_acidentes WHERE empresa = %s"
-        valores = [empresa]
-
-        if mes:
-            sql += " AND DATE_FORMAT(data, '%m') = %s"
-            valores.append(mes)
-
-        if ano:
-            sql += " AND DATE_FORMAT(data, '%Y') = %s"
-            valores.append(ano)
-
-        sql += " ORDER BY data DESC"
-
-        cursor.execute(sql, valores)
-        registros = cursor.fetchall()
-
-        return jsonify({"sucesso": True, "dados": registros})
-
-    except Exception as e:
-        return jsonify({"sucesso": False, "mensagem": f"Erro: {e}"})
-
-@app.route('/api/acidentes/<int:id>', methods=['GET'])
-def buscar_acidente(id):
-    try:
-        conn = conectar()
-        cursor = conn.cursor(dictionary=True)
-
-        cursor.execute("SELECT * FROM rg_acidentes WHERE id = %s", (id,))
-        dado = cursor.fetchone()
-
-        return jsonify(dado if dado else {})
-
-    except Exception as e:
-        return jsonify({"erro": str(e)})
-
-@app.route("/api/acidentes", methods=["POST"])
-def salvar_acidente():
-    try:
-        dados = request.get_json()
-
-        conn = conectar()
-        cursor = conn.cursor()
-
-        sql = """
-            INSERT INTO rg_acidentes
-            (empresa, nome, cargo, ocorrido, data, local, tipo, responsavel,
-             cat, afastamento, dataretorno, dtregistro, usuario)
-            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,NOW(),%s)
-        """
-
-        valores = (
-            dados.get("empresa"),
-            dados.get("nome"),
-            dados.get("cargo"),
-            dados.get("ocorrido"),
-            dados.get("data"),
-            dados.get("local"),
-            dados.get("tipo"),
-            dados.get("responsavel"),
-            dados.get("cat"),
-            dados.get("afastamento"),
-            dados.get("dataretorno"),
-            dados.get("usuario")
-        )
-
-        cursor.execute(sql, valores)
-        conn.commit()
-
-        return jsonify({"sucesso": True, "mensagem": "Acidente registrado com sucesso!"})
-
-    except Exception as e:
-        return jsonify({"sucesso": False, "mensagem": f"Erro: {e}"})
-
-@app.route('/api/acidentes/<int:id>', methods=['PUT'])
-def editar_acidente(id):
-    try:
-        data = request.get_json()
-
-        sql = """
-        UPDATE rg_acidentes SET
-            empresa=%s, nome=%s, cargo=%s, ocorrido=%s, data=%s, local=%s, tipo=%s,
-            responsavel=%s, cat=%s, afastamento=%s, dataretorno=%s, usuario=%s, dtatualizacao=now()
-        WHERE id=%s
-        """
-
-        valores = (
-            data["empresa"],
-            data["nome"],
-            data["cargo"],
-            data["ocorrido"],
-            data["data"],
-            data["local"],
-            data["tipo"],
-            data["responsavel"],
-            data["cat"],
-            data["afastamento"],
-            data["dataretorno"],
-            data["usuario"],
-            id
-        )
-
-        registrar_movimento(
-            data.get["usuario"],
-            data.get["empresa"],
-            "Editar",
-            "SST-Acidentes",
-            data["nome"]
-        )
-
-        conn = conectar()
-        cursor = conn.cursor()
-        cursor.execute(sql, valores)
-        conn.commit()
-
-        return jsonify({"sucesso": True, "mensagem": "Registro atualizado com sucesso!"})
-
-    except Exception as e:
-        return jsonify({"sucesso": False, "mensagem": str(e)})
     
 # === ASOS ===#
 
@@ -951,7 +400,7 @@ def salvar_treinamento():
             data['usuario'],
             data['empresa'],
             "Novo",
-            data.get('area', '') + " Ações e treinamentos",
+            data.get('area', '') + "-Ações e treinamentos",
             f"({id}) Edição {data['tema']}"
         )
 
@@ -1005,7 +454,7 @@ def editar_treinamento(id):
             data.get('usuario', ''),
             data.get('empresa', ''),
             "Editar",
-            data.get('area', '') + "Ações e treinamentos",
+            data.get('area', '') + "-Ações e treinamentos",
             f"({id}) Edição {data['tema']}"
         )
 
@@ -1187,6 +636,14 @@ def salvar_avaliacao_experiencia():
             data.get('usuario', ''),
         )
 
+        registrar_movimento(
+            data.get["usuario"],
+            data.get["empresa"],
+            "Novo",
+            "RH-Avaliação de experiência",
+            data["nome"]
+        )
+
         cursor.execute(sql, valores)
         conn.commit()
         return jsonify({"sucesso": True, "mensagem": "Registro salvo com sucesso!"})
@@ -1238,6 +695,14 @@ def editar_avaliacao_experiencia(id):
             data.get('status') or None,
             data.get('usuario') or None,
             id
+        )
+
+        registrar_movimento(
+            data.get["usuario"],
+            data.get["empresa"],
+            "Editar",
+            "RH-Avaliação de experiência",
+            data["nome"]
         )
 
         cursor.execute(sql, valores)
@@ -1369,8 +834,8 @@ def salvar_entrevista_desligamento():
         sql = """
         INSERT INTO rg_entrevista_desligamento (
             empresa, nome, cargo, dt_admissao, dt_demissao, tipo_desligamento,
-            avaliador, r_optou_responder, r_voltaria_trabalhar, r_gostaria_exercer_atividades, 	r_cargo_gostaria_exercer, dt_atualizacao
-        ) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,NOW())
+            avaliador, r_optou_responder, r_voltaria_trabalhar, r_gostaria_exercer_atividades, 	r_cargo_gostaria_exercer, dt_atualizacao, usuario
+        ) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,NOW(),%s)
         """
 
         valores = (
@@ -1385,6 +850,15 @@ def salvar_entrevista_desligamento():
             data.get('r_voltaria_trabalhar', ''),
             data.get('r_gostaria_exercer_atividades', ''),
             data.get('r_cargo_gostaria_exercer', ''),
+            data.get('usuario', ''),
+        )
+
+        registrar_movimento(
+            data.get["usuario"],
+            data.get["empresa"],
+            "Novo",
+            "RH-Entrevista de desligamento",
+            data["nome"]
         )
 
         cursor.execute(sql, valores)
@@ -1408,7 +882,7 @@ def editar_entrevista_desligamento(id):
         UPDATE rg_entrevista_desligamento SET
             empresa=%s, nome=%s, cargo=%s, dt_admissao=%s, dt_demissao=%s, tipo_desligamento=%s,
             avaliador=%s, r_optou_responder=%s, r_voltaria_trabalhar=%s, r_gostaria_exercer_atividades=%s, 
-            r_cargo_gostaria_exercer=%s
+            r_cargo_gostaria_exercer=%s, usuario=%s
         WHERE id=%s
         """
 
@@ -1424,7 +898,16 @@ def editar_entrevista_desligamento(id):
             data.get('r_voltaria_trabalhar', ''),
             data.get('r_gostaria_exercer_atividades', ''),
             data.get('r_cargo_gostaria_exercer', ''),
+            data.get('usuario', ''),
             id
+        )
+
+        registrar_movimento(
+            data.get["usuario"],
+            data.get["empresa"],
+            "Editar",
+            "RH-Entrevista de desligamento",
+            data["nome"]
         )
 
         cursor.execute(sql, valores)
@@ -1503,6 +986,13 @@ def salvar_funcionario():
             data.get('usuario', '')
         )
 
+        registrar_movimento(
+            data.get["usuario"],
+            data.get["empresa"],
+            "Novo",
+            "DP-Colaboradores",
+            data["nome"]
+        )
 
         cursor.execute(sql, valores)
         conn.commit()
@@ -1582,6 +1072,13 @@ def editar_funcionario(id):
             id
         )
 
+        registrar_movimento(
+            data.get["usuario"],
+            data.get["empresa"],
+            "Editar",
+            "DP-Colaboradores",
+            data["nome"]
+        )
 
         cursor.execute(sql, valores)
         conn.commit()
@@ -1735,6 +1232,15 @@ def cadastrar_empresa():
             data['responsavel'],
             data.get('usuario', '')
         ))
+
+        registrar_movimento(
+            data.get["usuario"],
+            data.get["nome_fantasia"],
+            "Novo",
+            "ADMIN-Empresa",
+            data["nome_fantasia"]
+        )
+
         conn.commit()
         cursor.close()
         conn.close()
@@ -1763,6 +1269,15 @@ def editar_empresa(id):
             data.get('usuario', ''),
             id
         ))
+
+        registrar_movimento(
+            data.get["usuario"],
+            data.get["nome_fantasia"],
+            "Editar",
+            "ADMIN-Empresa",
+            data["nome_fantasia"]
+        )
+
         conn.commit()
         cursor.close()
         conn.close()
@@ -1893,116 +1408,7 @@ def excluir_indicador(id):
         print("🚨 ERRO AO EXCLUIR INDICADOR:", e)
         return jsonify({"sucesso": False, "erro": str(e)}), 500
 
-## ANALISE DE TOTAIS ##
 
-@app.route('/api/totais', methods=['GET'])
-def obter_totais():
-    try:
-        # unidade = request.args.get('unidadeSelecionada')  # Captura a unidade enviada pelo front-end
-        unidade = request.args.get('empresa_id')
-
-        conn = conectar()
-        cursor = conn.cursor(dictionary=True)
-
-        print("Unidade selecionada: ", unidade)
-
-        # ===== Contar usuários ativos =====
-        if unidade:
-            cursor.execute("SELECT COUNT(*) AS total FROM cad_usuario WHERE status='Ativo' AND empresa LIKE %s """, (f"%{unidade}%",))
-        else:
-            cursor.execute("SELECT COUNT(*) AS total FROM cad_usuario WHERE status='Ativo'")
-        total_usuarios = cursor.fetchone()['total']
-
-        print("Usuarios: ", total_usuarios)
-
-        # ===== Contar chamados ativos =====
-        cursor.execute("SELECT COUNT(*) AS total FROM rg_chamado WHERE status='Em aberto' or status='Em andamento'")
-        total_chamados = cursor.fetchone()['total']
-
-        print("Chamados: ", total_chamados)
-
-        # ===== Contar indicadores =====
-        if unidade:
-            cursor.execute("SELECT COUNT(*) AS total FROM indicadores WHERE empresa=%s", (unidade,))
-        else:
-            cursor.execute("SELECT COUNT(*) AS total FROM indicadores")
-        total_indicadores = cursor.fetchone()['total']
-
-        print("Indicadores: ", total_indicadores)
-
-        # ===== Contar clientes (empresas) =====
-        if unidade:
-            cursor.execute("SELECT COUNT(*) AS total FROM cad_empresa WHERE nome_fantasia=%s", (unidade,))
-        else:
-            cursor.execute("SELECT COUNT(*) AS total FROM cad_empresa")
-        total_clientes = cursor.fetchone()['total']
-
-        print("Clientes: ", total_clientes  )
-
-        # ===== Contar ações =====
-        cursor.execute("SELECT COUNT(*) AS total FROM rg_acoes_treinamentos WHERE tipo_acao = %s and empresa = %s""", ('Ação',unidade))
-        total_acoes = cursor.fetchone()['total']
-
-        print("Ações: ", total_acoes)
-
-        # ===== Contar treinamentos =====
-        cursor.execute(
-            """
-            SELECT COUNT(*) AS total 
-            FROM rg_acoes_treinamentos 
-            WHERE tipo_acao = %s AND empresa = %s
-            """,
-            ('Treinamento', unidade)
-        )
-
-        total_treinamentos = cursor.fetchone()['total']
-
-        print("Treinamentos: ", total_treinamentos)
-
-        # ===== Contar requisições de pessoal =====
-
-        cursor.execute("SELECT COUNT(*) AS total FROM rg_requisicao_pessoal where empresa=%s", (unidade,))
-        total_requisicoes = cursor.fetchone()['total']
-
-        print("Requisição: ", total_requisicoes)
-
-        cursor.execute("SELECT COUNT(*) AS total FROM rg_avaliacao_experiencia where empresa=%s", (unidade,))
-        total_avaliacoes = cursor.fetchone()['total']
-
-        print("Avaliação Exp.: ", total_avaliacoes)
-
-        cursor.execute("SELECT COUNT(*) AS total FROM rg_entrevista_desligamento where empresa=%s", (unidade,))
-        total_entrevista = cursor.fetchone()['total']
-
-        print("Entrevista Desligamento: ", total_entrevista)
-
-        cursor.execute("SELECT COUNT(*) AS total FROM rg_processo_seletivo where empresa=%s", (unidade,))
-        total_processo_seletivo = cursor.fetchone()['total']
-
-        print("Processo Seletivo: ", total_processo_seletivo)
-
-        cursor.close()
-        conn.close()
-
-        return jsonify({
-            "sucesso": True,
-            "totais": {
-                "usuarios": total_usuarios,
-                "indicadores": total_indicadores,
-                "clientes": total_clientes,
-                "acoes": total_acoes,
-                "treinamentos": total_treinamentos,
-                "requisicoes": total_requisicoes,
-                "pss" : total_processo_seletivo,
-                "avaliacoes": total_avaliacoes,
-                "entrevista": total_entrevista,
-                "chamados": total_chamados
-            }
-        })
-
-    except Exception as e:
-        print("🚨 ERRO AO OBTER TOTAIS:", e)
-        return jsonify({"sucesso": False, "mensagem": str(e)}), 500
 
 @app.route('/api/unidades_permitidas')
 def unidades_permitidas():
@@ -2156,7 +1562,7 @@ def criar_requisicao():
           motivo, colaborador_substituido, urgencia, prazo_desejado,
           faixa_salarial, tipo_contrato, formacao_exigida, experiencia_minima,
           competencias_tecnicas, competencias_comportamentais, responsavel_rh,
-          observacoes, dtregistro
+          observacoes, usuario, dtregistro
         ) VALUES (
           %s, %s, %s,
           %s, %s, %s,
@@ -2164,7 +1570,7 @@ def criar_requisicao():
           %s, %s, %s, %s,
           %s, %s, %s, %s,
           %s, %s, %s,
-          %s, NOW()
+          %s, %s, NOW()
         )
         """
         params = (
@@ -2190,11 +1596,12 @@ def criar_requisicao():
             dados.get('competencias_tecnicas'),
             dados.get('competencias_comportamentais'),
             dados.get('responsavel_rh'),
-            dados.get('observacoes')
+            dados.get('observacoes'),
+            dados.get('usuario')
         )
 
         registrar_movimento(
-            "Não definido",
+            dados.get('usuario'),
             dados['empresa'],
             "Novo",
             "RH-Requisição de pessoal",
@@ -2216,6 +1623,7 @@ def criar_requisicao():
 @app.route('/api/requisicoes_pessoal/<int:id>', methods=['PUT'])
 def atualizar_requisicao(id):
     dados = request.get_json()
+    print(dados)
     try:
         conn = conectar()
         cursor = conn.cursor()
@@ -2227,7 +1635,7 @@ def atualizar_requisicao(id):
             'tipo_requisicao','titulo_cargo','area_setor','empresa','quantidade','motivo',
             'colaborador_substituido','urgencia','prazo_desejado','faixa_salarial','tipo_contrato',
             'formacao_exigida','experiencia_minima','competencias_tecnicas','competencias_comportamentais',
-            'responsavel_rh','observacoes','data_abertura_vaga','data_inicio_selecao','data_contratacao'
+            'responsavel_rh','observacoes','data_abertura_vaga','data_inicio_selecao','data_contratacao', 'usuario'
         ]
         for key in allowed:
             if key in dados:
@@ -2235,7 +1643,7 @@ def atualizar_requisicao(id):
                 params.append(dados.get(key))
 
         registrar_movimento(
-            "Não definido",
+            dados.get('usuario', 'Não informado'),
             dados.get('empresa', 'Não informado'),
             "Editar",
             "RH-Requisição de pessoal",
@@ -2418,7 +1826,7 @@ def buscar_processo_por_id(id):
         cursor.execute("SELECT * FROM rg_processo_seletivo WHERE id=%s", (id,))
         row = cursor.fetchone()
 
-        print("Dado retornado:", row)
+        # print("Dado retornado:", row)s
 
         if not row:
             return jsonify({"sucesso": False, "mensagem": "Registro não encontrado."}), 404
