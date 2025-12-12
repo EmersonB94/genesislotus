@@ -2,10 +2,10 @@ const usuarioLogado = JSON.parse(localStorage.getItem("usuarioLogado"));
 document.getElementById("usuarioLogado").innerText = usuarioLogado?.nome || "";
 document.getElementById("usuarioLogadoCargo").innerText = usuarioLogado?.cargo || "";
 // Bloquear/mostrar botões conforme permissão
-document.getElementById("btnRH").style.display = usuarioLogado.perm_rh ? "block" : "none";
-document.getElementById("btnDP").style.display = usuarioLogado.perm_dp ? "block" : "none";
-document.getElementById("btnSST").style.display = usuarioLogado.perm_sst ? "block" : "none";
-document.getElementById("btnADM").style.display = usuarioLogado.perm_adm ? "block" : "none";
+//document.getElementById("btnRH").style.display = usuarioLogado.perm_rh ? "block" : "none";
+//document.getElementById("btnDP").style.display = usuarioLogado.perm_dp ? "block" : "none";
+//document.getElementById("btnSST").style.display = usuarioLogado.perm_sst ? "block" : "none";
+//document.getElementById("btnADM").style.display = usuarioLogado.perm_adm ? "block" : "none";
 
 
 function showToast(message, tipo = "success") {
@@ -32,18 +32,53 @@ function abrirIndicadores() {
 }
 
 function abrirMeuRH() {
-    const u = JSON.parse(localStorage.getItem("usuarioLogado"));
-    window.location.href = `/meu_rh?email=${encodeURIComponent(u.email)}`;
+    /* const u = JSON.parse(localStorage.getItem("usuarioLogado"));
+    window.location.href = `/meu_rh?email=${encodeURIComponent(u.email)}`; */
+    const usuarioLogado = JSON.parse(localStorage.getItem("usuarioLogado"));
+
+    // Se não existir usuário ou se modrh === "N"
+    if (!usuarioLogado || usuarioLogado.modrh === "N") {
+
+      showToast("Você não possui permissão a este módulo RH", "error");
+        
+    } else {
+        
+      showToast("Acesso permitido", "sucess");
+      window.location.href = `/meu_rh?usuario=${encodeURIComponent(usuarioLogado.email)}`;
+
+    }
 }
 
 function abrirMeuDP() {
-    const u = JSON.parse(localStorage.getItem("usuarioLogado"));
-    window.location.href = `/meu_dp?email=${encodeURIComponent(u.email)}`;
+    const usuarioLogado = JSON.parse(localStorage.getItem("usuarioLogado"));
+
+    // Se não existir usuário ou se modrh === "N"
+    if (!usuarioLogado || usuarioLogado.moddp === "N") {
+
+      showToast("Você não possui permissão a este módulo DP", "error");
+        
+    } else {
+        
+      showToast("Acesso permitido", "sucess");
+      window.location.href = `/meu_dp?usuario=${encodeURIComponent(usuarioLogado.email)}`;
+
+    }
 }
 
 function abrirMeuSST() {
-    const u = JSON.parse(localStorage.getItem("usuarioLogado"));
-    window.location.href = `/meu_sst?email=${encodeURIComponent(u.email)}`;
+    const usuarioLogado = JSON.parse(localStorage.getItem("usuarioLogado"));
+
+    // Se não existir usuário ou se modrh === "N"
+    if (!usuarioLogado || usuarioLogado.modsst === "N") {
+
+      showToast("Você não possui permissão a este módulo SST", "error");
+        
+    } else {
+        
+      showToast("Acesso permitido", "sucess");
+      window.location.href = `/meu_sst?usuario=${encodeURIComponent(usuarioLogado.email)}`;
+
+    }
 }
 
 function abrirMeuADM() {
@@ -68,8 +103,11 @@ async function carregarTotais() {
     if (dados.sucesso) {
       const t = dados.totais;
       document.getElementById('totalUsuarios').textContent = t.usuarios;
+      showToast("Usuários: " + t.usuarios, "success");
       document.getElementById('totalChamados').textContent = t.chamados;
+      showToast("Chamados em aberto: " + t.chamados, "success");
       document.getElementById('totalIndicadores').textContent = t.indicadores;
+      showToast("Indicadores registrados: " + t.indicadores, "success");
       document.getElementById('totalAcoes').textContent = t.acoes;
       document.getElementById('totalTreinamentos').textContent = t.treinamentos;
       document.getElementById('totalRequisicoes').textContent = t.requisicoes;
@@ -126,6 +164,7 @@ document.getElementById('selectUnidade').addEventListener('change', (e) => {
   const select = e.target;
   const id = select.value;
   const nome = select.options[select.selectedIndex].text;
+  showToast("Unidade Selecionada: " + nome, "success");
   if (id) {
     localStorage.setItem('unidadeSelecionada', JSON.stringify({ id, nome }));
     carregarTotais();
@@ -179,6 +218,35 @@ async function salvarPerfil() {
     showToast("Erro de conexão ao salvar perfil.", "error");
   }
 }
+
+function verificarPermissaoRH() {
+    const usuarioLogado = JSON.parse(localStorage.getItem("usuarioLogado"));
+    const btnRH = document.getElementById("btnRH");
+
+    // Se não existir usuário ou se modrh === "N"
+    if (!usuarioLogado || usuarioLogado.modrh === "N") {
+
+        // Remove o onclick
+        btnRH.removeAttribute("onclick");
+
+        // Estética de bloqueado
+        btnRH.style.opacity = "0.5";
+        btnRH.style.pointerEvents = "none";
+        btnRH.style.cursor = "not-allowed";
+        
+    } else {
+        // Reativa
+        btnRH.setAttribute("onclick", "abrirIndicadores()");
+        btnRH.style.opacity = "1";
+        btnRH.style.pointerEvents = "auto";
+        btnRH.style.cursor = "pointer";
+    }
+}
+
+// Execute ao carregar a página
+document.addEventListener("DOMContentLoaded", verificarPermissaoRH);
+verificarPermissaoRH()
+
 
 /* 🔹 Fecha ao clicar fora */
 window.onclick = function(event) {

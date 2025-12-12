@@ -57,6 +57,7 @@
   async function salvarRequisicao(event){
     event.preventDefault();
     const unidadeSelecionada = JSON.parse(localStorage.getItem('unidadeSelecionada'));
+    const usuarioLogado = JSON.parse(localStorage.getItem('usuarioLogado'));
 
     const dados = {
       numero_requisicao: null, // backend gera se necessário
@@ -88,7 +89,8 @@
       responsavel_rh: document.getElementById("responsavel_rh").value,
       observacoes: document.getElementById("observacoes").value,
 
-      status: document.getElementById("status").value
+      status: document.getElementById("status").value,
+      usuario: usuarioLogado ? usuarioLogado.nome : null
     };
 
     try {
@@ -251,6 +253,8 @@
     document.getElementById("observacoes").value = reg.observacoes || "";
     document.getElementById("status").value = reg.status || "";
 
+    showToast(reg.usuario, "success");
+
     // alterar submit para atualizar
     document.getElementById("formRequisicao").onsubmit = (e) => atualizar(e, id);
   }
@@ -259,6 +263,7 @@
   async function atualizar(event, id){
     event.preventDefault();
     const unidadeSelecionada = JSON.parse(localStorage.getItem('unidadeSelecionada'));
+    const usuarioLogado = JSON.parse(localStorage.getItem('usuarioLogado'));
 
     const dados = {
       solicitante_nome: document.getElementById("solicitante_nome").value,
@@ -287,7 +292,8 @@
       responsavel_rh: document.getElementById("responsavel_rh").value,
       observacoes: document.getElementById("observacoes").value,
 
-      status: document.getElementById("status").value
+      status: document.getElementById("status").value,
+      usuario: usuarioLogado ? usuarioLogado.nome : null
     };
 
     const resp = await fetch(`${API}/${id}`, {
@@ -317,32 +323,6 @@
   const usuarioLog = JSON.parse(localStorage.getItem("usuarioLogado"));
 
 
-  async function carregarPermissao() {
-
-      const resp = await fetch(`/permissao_atualizar_requisicao?usuario=${usuarioLog.nome}`);
-      const dados = await resp.json();
-
-      // Caso retorno erro
-      if (dados.erro) {
-          console.error(dados.erro);
-          return;
-      }
-
-      // Chama função que exibe ou esconde o botão
-      configurarBotaoStatus(dados.permissao_status);
-  }
-
-  function configurarBotaoStatus(permissao) {
-      const botaoStatus = document.getElementById("status");
-
-      if (permissao === "S") {
-        botaoStatus.disabled = false;   // ativa
-        } else {
-            botaoStatus.disabled = true;    // mantém desativado
-      }
-  }
-
-  carregarPermissao();
 
 
   // === EXPORTAR ===

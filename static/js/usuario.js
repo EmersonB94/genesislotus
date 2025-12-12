@@ -97,6 +97,9 @@ const usuarioLogado = JSON.parse(localStorage.getItem("usuarioLogado"));
 
     /* === Salvar Usuário === */
     async function salvarUsuario(event){
+
+      const usuarioLogado = JSON.parse(localStorage.getItem('usuarioLogado'));
+
       event.preventDefault();
       const idEditar = idEditando;
       const payload = {
@@ -112,7 +115,9 @@ const usuarioLogado = JSON.parse(localStorage.getItem("usuarioLogado"));
         modrh: document.getElementById("modRH").checked ? "S" : "N",
         moddp: document.getElementById("modDP").checked ? "S" : "N",
         modsst: document.getElementById("modSST").checked ? "S" : "N",
-        modadm: document.getElementById("modAdm").checked ? "S" : "N"
+        modadm: document.getElementById("modAdm").checked ? "S" : "N", 
+
+        usuario: usuarioLogado ? usuarioLogado.nome : null
       };
 
       try {

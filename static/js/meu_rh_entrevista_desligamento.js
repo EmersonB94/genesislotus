@@ -57,6 +57,7 @@ const usuarioLogado = JSON.parse(localStorage.getItem("usuarioLogado")) || {};
   async function salvarRequisicao(event){
   event.preventDefault();
   const unidadeSelecionada = JSON.parse(localStorage.getItem('unidadeSelecionada'));
+  const usuarioLogado = JSON.parse(localStorage.getItem('usuarioLogado'));
 
   const dados = {
     empresa: unidadeSelecionada ? unidadeSelecionada.nome : null,
@@ -70,6 +71,8 @@ const usuarioLogado = JSON.parse(localStorage.getItem("usuarioLogado")) || {};
     r_voltaria_trabalhar: document.getElementById("r_voltaria_trabalhar").value,
     r_gostaria_exercer_atividades: document.getElementById("r_gostaria_exercer_atividades").value,
     r_cargo_gostaria_exercer: document.getElementById("r_cargo_gostaria_exercer").value, // corrigido também
+
+    usuario: usuarioLogado ? usuarioLogado.nome : null,
   };
 
   try {
@@ -228,6 +231,7 @@ async function atualizar(event, id) {
   event.preventDefault();
 
   const unidadeSelecionada = JSON.parse(localStorage.getItem('unidadeSelecionada'));
+  const usuarioLogado = JSON.parse(localStorage.getItem('usuarioLogado'));
 
   const dados = {
     empresa: unidadeSelecionada ? unidadeSelecionada.nome : null,
@@ -241,6 +245,8 @@ async function atualizar(event, id) {
     r_voltaria_trabalhar: document.getElementById("r_voltaria_trabalhar").value,
     r_gostaria_exercer_atividades: document.getElementById("r_gostaria_exercer_atividades").value,
     r_cargo_gostaria_exercer: document.getElementById("r_cargo_gostaria_exercer").value,
+
+    usuario: usuarioLogado ? usuarioLogado.nome : null
   };
 
   try {

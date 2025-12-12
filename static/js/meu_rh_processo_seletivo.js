@@ -36,10 +36,13 @@ const usuarioLogado = JSON.parse(localStorage.getItem("usuarioLogado")) || {};
   const API = "/api/processo_seletivo"; // base da API
 
   function abrirFormulario(){
+    const usuarioLogado = JSON.parse(localStorage.getItem('usuarioLogado'));
+
     document.getElementById("form-popup").style.display = "flex";
     document.getElementById("tituloForm").innerText = "Seleção";
     editandoId = null;
     document.getElementById("formRequisicao").reset();
+    psicologo.value = usuarioLogado ? usuarioLogado.nome : null
   }
 
   function fecharFormulario(){
@@ -125,7 +128,11 @@ async function editar(id){
   perfil_comportamental.value = r.perfil_comportamental || "";
   conclusao.value = r.conclusao || "";
   modo.value = r.modo || "Presencial";
+  psicologo.value = r.usuario || "Presencial";
   status.value = r.status || "Em processo";
+  
+
+  showToast("Psicólogo(a) responsável: " + r.usuario, "success");
 }
 
 // === ATUALIZAR REGISTRO ===
@@ -186,6 +193,7 @@ async function atualizar(event, id){
                 <th>Solicitante</th>
                 <th>Cargo</th>
                 <th>Fase</th>
+                <th>Psicólogo(a)</th>
                 <th>Ações</th>
               </tr>
             </thead>
@@ -198,7 +206,7 @@ async function atualizar(event, id){
                   <td>${i.nome || ''}</td>
                   <td>${i.cargo || ''}</td>
                   <td>${i.fase || ''}</td>
-                  
+                  <td>${i.usuario || ''}</td>
                   <td>
                     <button class="btn" onclick="editar(${i.id})">Editar</button>
                     <button class="btn" onclick="PDF(${i.id})">PDF</button>
