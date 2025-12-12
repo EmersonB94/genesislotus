@@ -13,7 +13,6 @@ from routes.rotas import rotas_bp
 from routes.powerbi import powerbi_bp
 from routes.analisedados import analise_bp
 from routes.acesso import acesso_bp
-from routes.exportar import exportar_tabelas
 
 agora = datetime.now()
 
@@ -2304,4 +2303,5 @@ def atualizar_cadindicador(id):
     return jsonify({"sucesso": True, "mensagem": "Indicador atualizado com sucesso!"})
 
 if __name__ == '__main__':
+
     app.run(debug=True)
